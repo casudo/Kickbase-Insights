@@ -1,0 +1,3 @@
+### Ignore Python related files
+venv/
+__pycache__/
