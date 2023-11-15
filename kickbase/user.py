@@ -1,10 +1,11 @@
 """
-module desc
+### This module holds all necessary functions to call Kickbase `/user/...` API endpoints.
+
+TODO: Maybe list all functions here automatically?
 """
 
 import requests
-from kickbase.models.user import User
-from kickbase.models.leagues import Leagues
+from kickbase.endpoints.user import User, League
 from kickbase import exceptions
 
 from pprint import pprint
@@ -34,7 +35,7 @@ def login(email: str, password: str):
     ### Call the User class from models/user.py with json_response["user"] as parameter (dict)
     user = User(json_response["user"])
     ### iterating over the json_response["leagues"] list, where each entry is expected to be a dictionary. For each entry, it creates a new Leagues object.
-    leagues = [Leagues(entry) for entry in json_response["leagues"]]
+    leagues = [League(entry) for entry in json_response["leagues"]]
     ### Save the token
     token = json_response["token"]
 
