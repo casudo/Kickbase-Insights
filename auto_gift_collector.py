@@ -1,4 +1,4 @@
-from kickbase import profile, miscellaneous, exceptions
+from kickbase import user, miscellaneous, exceptions, leagues
 
 import argparse
 
@@ -14,25 +14,23 @@ def main():
     try:
         ### Login
         print("Logging in...\n")
-        user, leagues, token = profile.login(args.email, args.password)
+        user_info, league_info, user_token = user.login(args.email, args.password)
 
-        print(f"Successfully logged in as {user.name}.")
-        print(f"Available leagues: ")
-        for league in leagues:
-            print(league.name)
+        print("\n\n=====================================")
+        print(f"Successfully logged in as {user_info.name}.\n")
         # miscellaneous.discord_notification("Kickbase Login", f"Successfully logged in as {user.name}.", 6617600)
+        print(f"Available leagues: {', '.join([league.name for league in league_info])}\n") # Print all available leagues the user is in
     
+        ### TODO: For loop for every league?
         ### Gift
-        gift = miscellaneous.is_gift_available(token, leagues[0].id)
+        gift = leagues.is_gift_available(user_token, league_info[0].id)
         ### Check if dict in gift has {'isAvailable': True}:
         if gift["isAvailable"]:
-            print("Gift available!")
-            print(gift)
+            print(f"Gift available in league {league_info[0].name}!\n")
             miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600)
-            miscellaneous.get_gift(token, leagues[0].id) # TODO: Try, except needed here?
+            leagues.get_gift(user_token, league_info[0].id) # TODO: Try, except needed here?, TODO: Check response
         else:
-            print("Gift not available!")
-            print(gift)
+            print(f"Gift has already been collected in league {league_info[0].name}!\n")
             miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600) # TODO: Change color   
     except exceptions.LoginException as e:
         print(e)

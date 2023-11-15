@@ -1,5 +1,5 @@
 """
-my cool exceptions
+### This module defines all custom exceptions that are used in this project.
 """
 
 class KickbaseException(Exception):
