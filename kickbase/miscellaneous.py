@@ -12,7 +12,7 @@ def discord_notification(title: str, message: str, color: int):
     """
     Send a notification to a Discord Webhook.
     """
-    url = "https://discord.com/api/webhooks/1116847708423082094/k8cZXC0PTbQ-g5dihenaXEINWg5Irk67UICMmw-HlIblSdYTBPIanUTFF4BRutoewghV"
+    url = "url"
     headers = {"Content-Type": "application/json"}
     payload = {
         "username": "Kickbase",
