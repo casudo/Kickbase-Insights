@@ -92,7 +92,8 @@ class Meta:
 
     def __init__(self, meta_dict: dict, type: int):
         if type == 12: # when a player is sold 
-            self.bi = meta_dict["bi"]
+            if "bi" in meta_dict:
+                self.bi = meta_dict["bi"] # only set profile pic if it exists
             self.bid = meta_dict["bid"]
             self.bn = meta_dict["bn"]
             self.p = meta_dict["p"] 
@@ -143,3 +144,6 @@ class League_Feed:
 
         ### Create a new object with all its attributes for everything stored in the meta dict
         self.meta = Meta(league_feed_dict["meta"], self.type)
+
+### End of League Feed stuff
+### ===============================================================================
