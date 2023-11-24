@@ -6,11 +6,12 @@ This project is a used to gather data from [Kickbase](https://www.kickbase.com/)
 ## Planned for the future
 **Frontend:**  
 - Market table: Add fitness, maybe ligainsider rating?
-- Docker container for easy deployment
+- Lineup planner: Add fitness
+- Docker container for easy deployment  
 **Backend:**  
-- Fix all TODOs
-**Misc:**
-- Add Postman workspace
+- Fix all TODOs  
+**Misc:**  
+- Add Postman workspace  
 
 ### Thanks to
 - [@fabfischer](https://github.com/fabfischer) for the inspiration and the currently great and working [Kickbase+ web client](https://github.com/fabfischer/kickbase-plus)
