@@ -1,8 +1,9 @@
-from kickbase import exceptions, user, miscellaneous, leagues
+from kickbase import exceptions, user, miscellaneous, leagues, competition
 from kickbase import __author__, __version__
 
 from pprint import pprint
 import json
+from datetime import datetime, timedelta
 
 ### -------------------------------------------------------------------
 
@@ -78,28 +79,70 @@ def main():
 
         for player in players_on_market:
             ### Check if player is listed by user
-            if player.username:
+            if not player.username:
                 ### Create a custom json dict for every player listed by real users
-                players_listed_by_user.append({
-                    "id": player.id,
+                players_listed_by_kickbase.append({
+                    "teamId": player.teamId,
+                    "position": miscellaneous.POSITIONS[player.position],
                     "firstName": f"{player.firstName}", 
                     "lastName": f"{player.lastName}",
                     "price": player.price,
-                    "listedBy": f"{player.username}",
+                    "trend": player.marketValueTrend,
+                    "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
                 })
             else:
                 ### Create a custom json dict for every player listed by kickbase
-                players_listed_by_kickbase.append({
-                    "id": player.id,
+                players_listed_by_user.append({
+                    "teamId": player.teamId,
+                    "position": miscellaneous.POSITIONS[player.position],
                     "firstName": f"{player.firstName}", 
                     "lastName": f"{player.lastName}",
                     "price": player.price,
+                    "trend": player.marketValueTrend,
+                    "seller": player.username,
+                    "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
                 })
         ### Write the json dicts to a file. These will be read by the frontend.
-        with open("market_players.json", "w") as f:
+        with open("frontend/data/market_players.json", "w") as f:
             f.write(json.dumps(players_listed_by_user, indent=2))
-        with open("market_kickbase.json", "w") as f:
+        with open("frontend/data/market_kickbase.json", "w") as f:
             f.write(json.dumps(players_listed_by_kickbase, indent=2))
+        ### ----------------------------
+
+
+        ### ---------- Market Value Changes ----------
+        players_LIST = []
+
+        ### Loop through all teams
+        for team in miscellaneous.TEAM_IDS:
+            ### Loop through all players in the team
+            for player in competition.team_players(user_token, team):
+                ### Get the market value changes for the player
+                player_stats = leagues.player_statistics(user_token, league_info[0].id, player.p.id)
+
+                ### Check if player is owned by user
+                if "leaguePlayer" in player_stats:
+                    manager = player_stats["leaguePlayer"]["userName"]
+                else:
+                    manager = "Kickbase"
+
+                ### Create a custom json dict for every player
+                players_LIST.append({
+                    "teamId": player_stats["teamId"],
+                    "position": miscellaneous.POSITIONS[player_stats["position"]],
+                    "firstName": player_stats["firstName"], # "firstName": f"{player.p.firstName}", 
+                    "lastName": player_stats["lastName"], # "lastName": f"{player.p.lastName}",
+                    "marketValue": player_stats["marketValue"], # "marketValue": player.p.marketValue,
+                    "today": (player_stats["marketValue"] - player_stats["marketValues"][-2]["m"]), # "today": (player.p.marketValue - player_stats[-2].m),
+                    "yesterday": (player_stats["marketValues"][-2]["m"] - player_stats["marketValues"][-3]["m"]),
+                    "twoDays": (player_stats["marketValues"][-3]["m"] - player_stats["marketValues"][-4]["m"]),
+                    "SevenDaysAvg": (player_stats["marketValue"] - player_stats["marketValues"][-8]["m"]),
+                    "ThirtyDaysAvg": (player_stats["marketValue"] - player_stats["marketValues"][-31]["m"]),
+                    "manager": manager,
+                })
+        ### Write the json dicts to a file. These will be read by the frontend.
+        with open("frontend/data/market_value_changes.json", "w") as f:
+            f.write(json.dumps(players_LIST, indent=2))
         ### ----------------------------
         
     except exceptions.LoginException as e:
