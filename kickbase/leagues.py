@@ -174,3 +174,65 @@ def get_market(token: str, league_id: str):
     #     f.write(json.dumps(response, indent=2))
 
     return players_on_market
+
+
+def player_statistics(token: str, league_id: str, player_id: str):
+    """
+    Get the statistics of a given player.
+
+    Expected response:
+    ```json
+    {
+        "mvHigh": 22898922.0,
+        "mvHighDate": "2022-12-09T00:00:00Z",
+        "mvLow": 500000.0,
+        "mvLowDate": "2023-04-07T00:00:00Z",
+        "marketValues": [ 
+            {
+                "d": "2022-11-23T00:00:00Z",
+                "m": 22415981.0
+            },
+            {
+                "d": "2022-11-24T00:00:00Z",
+                "m": 22496548.0
+            },
+            { ... },
+        ],
+        "f": false,
+        "id": "237",
+        "teamId": "2",
+        "userFlags": 0,
+        "firstName": "Manuel",
+        "lastName": "Neuer",
+        "profileUrl": "https://kickbase.b-cdn.net/pool/players/237.jpg",
+        "teamUrl": "https://kickbase.b-cdn.net/team/2013/07/30/3ebe44c53c3f4c87bd605da69e743fb8.jpg",
+        "teamCoverUrl": "https://kickbase.b-cdn.net/team/2013/08/01/ec8377d89197450e89fa942e4e36d48c.png",
+        "status": 0,
+        "position": 1,
+        "number": 1,
+        "points": 381,
+        "averagePoints": 127,
+        "marketValue": 19422256.0,
+        "mvTrend": 1,
+        "seasons": [ ... ],
+        "nm": [ ... ],
+        "sl": true,
+    }
+    ```
+    The given attributes may change if the player is owned by a user!
+    """
+    url = f"https://api.kickbase.com/leagues/{league_id}/players/{player_id}/stats"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+    # payload = { }
+
+    ### Send GET request to get the market value changes of ALL players in the league
+    try:
+        response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+    return response
