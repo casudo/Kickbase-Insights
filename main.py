@@ -10,7 +10,7 @@ def main():
     try:
         ### Login
         print("Logging in...\n")
-        user_info, league_info, user_token = user.login("fakefrank5@web.de", "Wasser30lol_")
+        user_info, league_info, user_token = user.login("user", "pass")
         
         ### DEBUG
         print("\n\n### DEBUG")
