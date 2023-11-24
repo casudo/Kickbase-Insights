@@ -147,3 +147,57 @@ class League_Feed:
 
 ### End of League Feed stuff
 ### ===============================================================================
+
+
+class Market_Players:
+    """
+    ### Create an object for a player on the market with all its attributes.
+    
+    Used for endpoint URL:
+    `/leagues/{league_id}/market` -> get the whole market
+    """
+    id: str = None
+    teamId: str = None
+    userId: str = None # Set if player is listed by a user
+    userProfile: str = None # Set if player is listed by a user
+    username: str = None # Set if player is listed by a user
+    firstName: str = None
+    lastName: str = None
+    profile: str = None # Somehow not always present e.g. Kevin Müller
+    status: int = None
+    position: int = None
+    number: int = None
+    totalPoints: int = None
+    averagePoints: int = None
+    marketValue: float = None
+    price: float = None
+    date: str = None
+    expiry: str = None
+    offers: list = None
+    lus: int = None
+    marketValueTrend: int = None
+
+    def __init__(self, market_players_dict: dict):
+        self.id = market_players_dict["id"]
+        self.teamId = market_players_dict["teamId"]
+        if "userId" in market_players_dict:
+            self.userId = market_players_dict["userId"]
+            self.userProfile = market_players_dict["userProfile"]
+            self.username = market_players_dict["username"]
+        self.firstName = market_players_dict["firstName"]
+        self.lastName = market_players_dict["lastName"]
+        if "profile" in market_players_dict: 
+            self.profile = market_players_dict["profile"]
+        self.status = market_players_dict["status"]
+        self.position = market_players_dict["position"]
+        self.number = market_players_dict["number"]
+        self.totalPoints = market_players_dict["totalPoints"]
+        self.averagePoints = market_players_dict["averagePoints"]
+        self.marketValue = market_players_dict["marketValue"]
+        self.price = market_players_dict["price"]
+        self.date = market_players_dict["date"]
+        self.expiry = market_players_dict["expiry"]
+        if "offers" in market_players_dict:
+            self.offers = market_players_dict["offers"]
+        self.lus = market_players_dict["lus"]
+        self.marketValueTrend = market_players_dict["marketValueTrend"]

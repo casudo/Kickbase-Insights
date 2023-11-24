@@ -7,7 +7,9 @@ TODO: Maybe list all functions here automatically?
 import requests
 from kickbase import exceptions
 
-from kickbase.endpoints.leagues import League_User_Info, League_Feed
+from kickbase.endpoints.leagues import League_User_Info, League_Feed, Market_Players
+
+import json
 
 
 def league_user_info(token: str, league_id: str):
@@ -131,3 +133,44 @@ def get_gift(token: str, league_id: str):
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
     
     return response
+
+
+def get_market(token: str, league_id: str):
+    """
+    Get the current players on the market in the league
+
+    Expected response:
+    ```json
+    {
+        "c": false,
+        "players": [ ... ],
+        "mvud": "2023-11-24T21:00:00Z",
+        "dt": "2023-11-24T19:30:00Z",
+        "day": 12   
+    }
+    Obviously the "players" list is filled with all players on the market.
+    ```
+    """
+    url = f"https://api.kickbase.com/leagues/{league_id}/market"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+    # payload = { }
+
+    ### Send GET request to get all free players in the given league
+    try:
+        response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+    ### Create a new object for every entry in the response["players"] list.
+    players_on_market = [Market_Players(player) for player in response["players"]]
+
+    ### TODO: In case we want to use the whole response, we can do it here.
+    ### Paste the whole response into market_whole.json
+    # with open("market_whole.json", "w") as f:
+    #     f.write(json.dumps(response, indent=2))
+
+    return players_on_market

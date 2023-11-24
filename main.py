@@ -2,6 +2,7 @@ from kickbase import exceptions, user, miscellaneous, leagues
 from kickbase import __author__, __version__
 
 from pprint import pprint
+import json
 
 ### -------------------------------------------------------------------
 
@@ -9,7 +10,7 @@ def main():
     try:
         ### Login
         print("Logging in...\n")
-        user_info, league_info, user_token = user.login("user", "password")
+        user_info, league_info, user_token = user.login("fakefrank5@web.de", "Wasser30lol_")
         
         ### DEBUG
         print("\n\n### DEBUG")
@@ -48,7 +49,7 @@ def main():
         print(f"Points: {league_user_info.points}")
         print(f"Rank: {league_user_info.placement}")
 
-        ### Feed
+        ### ---------- Feed ----------
         league_feed = leagues.league_feed(user_token, league_info[0].id)
         ### Loop through all feed entries and print them
         print("=====FEED START=====")
@@ -68,6 +69,38 @@ def main():
         ### TODO: Feed (?), Info, Stats, Users, User Profile and Stats (?), Me (?), Quickstats (?)
 
         ### TODO: Remove & add player to market, accept & decline offer, update price (?), place & remove offer 
+
+        ### ---------- Market ----------
+        players_on_market = leagues.get_market(user_token, league_info[0].id)
+
+        players_listed_by_user = []
+        players_listed_by_kickbase = []
+
+        for player in players_on_market:
+            ### Check if player is listed by user
+            if player.username:
+                ### Create a custom json dict for every player listed by real users
+                players_listed_by_user.append({
+                    "id": player.id,
+                    "firstName": f"{player.firstName}", 
+                    "lastName": f"{player.lastName}",
+                    "price": player.price,
+                    "listedBy": f"{player.username}",
+                })
+            else:
+                ### Create a custom json dict for every player listed by kickbase
+                players_listed_by_kickbase.append({
+                    "id": player.id,
+                    "firstName": f"{player.firstName}", 
+                    "lastName": f"{player.lastName}",
+                    "price": player.price,
+                })
+        ### Write the json dicts to a file. These will be read by the frontend.
+        with open("market_players.json", "w") as f:
+            f.write(json.dumps(players_listed_by_user, indent=2))
+        with open("market_kickbase.json", "w") as f:
+            f.write(json.dumps(players_listed_by_kickbase, indent=2))
+        ### ----------------------------
         
     except exceptions.LoginException as e:
         print(e)
