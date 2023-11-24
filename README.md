@@ -4,10 +4,13 @@
 This project is a used to gather data from [Kickbase](https://www.kickbase.com/) API endpoint and automate various interactions. It is planned to add a nice GUI in the feature, acting as a dashboard for your Kickbase team.
 
 ## Planned for the future
-- GUI to visualize data collected from the API
-- Collect more data from the API
+**Frontend:**  
+- Market table: Add fitness, maybe ligainsider rating?
 - Docker container for easy deployment
-- More to come...
+**Backend:**  
+- Fix all TODOs
+**Misc:**
+- Add Postman workspace
 
 ### Thanks to
 - [@fabfischer](https://github.com/fabfischer) for the inspiration and the currently great and working [Kickbase+ web client](https://github.com/fabfischer/kickbase-plus)

@@ -74,7 +74,7 @@ class Meta:
             "source": 12,
             "type": 12
         },
-        ..next entry..
+        { ... },
     ]}
 
     Everything that is stored directly under "items" is handled by the League_Feed class.
