@@ -236,3 +236,122 @@ def player_statistics(token: str, league_id: str, player_id: str):
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
     
     return response
+
+
+def league_users(token: str, league_id: str):
+    """
+    Get all users in the given league.
+
+    Expected response:
+    ```json
+    {
+        "users": [
+            {
+                "pt": 10261,
+                "isu": false,
+                "cbu": false,
+                "id": "xxxx",
+                "name": "COOLUSERNAME",
+                "email": "coolmail@gmail.com",
+                "status": 1,
+                "profile": "https://kickbase.b-cdn.net/user/xxxx.jpeg",
+                "cover": "https://kickbase.b-cdn.net/user/xxxx.jpeg",
+                "flags": 1,
+                "perms": [
+                    1000
+            },
+            { ... },
+        ]
+    }
+    ```
+    Obviously, some user information have been redacted due to safety in the above response.
+    """
+    url = f"https://api.kickbase.com/leagues/{league_id}/users"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+    # payload = { }
+
+    ### Send GET request to get all users in the given league
+    try:
+        response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+    return response
+
+
+def user_players(token: str, league_id: str, user_id: str):
+    """
+    Get all players of a given user in the given league.
+
+    Expected response:
+    ```json
+    {
+        "items": [
+            {
+                "id": "0",
+                "comments": 0,
+                "date": "2023-11-25T10:16:16Z",
+                "age": 7338,
+                "type": 2,
+                "source": 0,
+                "meta": {
+                    "sid": "2757595",
+                    "pid": "2300",
+                    "tid": "7",
+                    "pfn": "Josip",
+                    "pln": "Stanisic",
+                    "p": 7328200.0
+                },
+                "seasonId": 0
+            },
+            { ... },
+        ]
+    }
+    ```
+    If the player was bought from a user, the following attributes are added to the "meta" dict:
+    ```json
+    meta: {
+        "sid": "SELLERS_ID",
+        "sn": "SELLERS_USERNAME",
+        "si": "SELLERS_PROFILE_PIC"
+    }
+    ```
+    If the player was sold to a user, the following attributes are added to the "meta" dict:
+    ```json
+    meta: {
+        "bid": "BUYERS_ID",
+        "bn": "BUYERS_USERNAME"
+        "bi": "BUYERS_PROFILE_PIC"
+    }
+    ```
+    """
+    ### TODO: What does filter 12 do? 
+    ### The feed always lists 25 entries, so we need to set start to 0 to get the first 25 entries. Then we can set start to 25 to get the next 25 entries and so on.
+    start_point = 0
+    query_params = f"?filter=12&start={start_point}"
+    url = f"https://api.kickbase.com/leagues/{league_id}/users/{user_id}/feed{query_params}"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the first 25 players of a given user in the given league
+    try:
+        response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+
+    user_transfers = []
+    ### As long as there are more than 25 entries, we need to send another GET request to get the next 25 entries.
+    while response["items"]:
+        user_transfers += response["items"]
+        start_point += 25
+        response = requests.get(f"https://api.kickbase.com/leagues/{league_id}/users/{user_id}/feed?filter=12&start={start_point}", headers=headers).json()
+
+    return user_transfers
