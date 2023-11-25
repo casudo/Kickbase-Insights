@@ -5,14 +5,22 @@ TODO: Maybe list all functions here automatically?
 """
 
 import requests
-from kickbase import exceptions
+from kickbase import exceptions, competition
+import json
 
 ### ===============================================================================
 
 POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 ### TREND?
 ### STATUS
+
 ### TYPE
+# Type 2: Verkauft an Kickbase
+# Type 2 + meta[bn]: Verkauft an Spieler (bn = buyerName)
+# Type 12: Gekauft von Kickbase
+# Type 12 + meta[sn]: Gekauft von Spieler (sn = sellerName)
+
+
 
 ### TEAM_IDS
 ### TODO: Update with missing teams
@@ -63,3 +71,34 @@ def discord_notification(title: str, message: str, color: int):
         requests.post(url, json=payload, headers=headers)
     except:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.")
+    
+
+def get_free_players(token: str, league_id: str, taken_players):
+    """
+    TODO: Add docstring
+    """
+    free_players = []
+
+    ### Get all taken player ids
+    taken_player_ids = [player["playerId"] for player in taken_players]
+
+    ### Cycle through all teams and get the players who are not taken
+    for team_id in TEAM_IDS:
+        ### Cycle through all players of the team
+        for player in competition.team_players(token, team_id):
+            ### Check if the player is not taken
+            if player.p.id not in taken_player_ids:
+
+                free_players.append({
+                    "playerId": player.p.id,
+                    "teamId": player.p.teamId,
+                    "position": POSITIONS[player.p.position],
+                    "firstName": player.p.firstName,
+                    "lastName": player.p.lastName,
+                    "marketValue": player.p.marketValue,
+                    "trend": player.p.marketValueTrend,
+                    "points": player.p.totalPoints,
+                })
+
+    with open("frontend/data/free_players.json", "w") as file:
+        file.write(json.dumps(free_players, indent=2))
