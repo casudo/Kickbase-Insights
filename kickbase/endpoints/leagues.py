@@ -159,7 +159,7 @@ class Market_Players:
     id: str = None
     teamId: str = None
     userId: str = None # Set if player is listed by a user
-    userProfile: str = None # Set if player is listed by a user
+    userProfile: str = None # OPTIONAL: Set if player is listed by a user
     username: str = None # Set if player is listed by a user
     firstName: str = None
     lastName: str = None
@@ -182,8 +182,9 @@ class Market_Players:
         self.teamId = market_players_dict["teamId"]
         if "userId" in market_players_dict:
             self.userId = market_players_dict["userId"]
-            self.userProfile = market_players_dict["userProfile"]
             self.username = market_players_dict["username"]
+        if "userProfile" in market_players_dict:
+            self.userProfile = market_players_dict["userProfile"]
         self.firstName = market_players_dict["firstName"]
         self.lastName = market_players_dict["lastName"]
         if "profile" in market_players_dict: 
