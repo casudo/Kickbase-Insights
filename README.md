@@ -8,8 +8,11 @@ This project is a used to gather data from [Kickbase](https://www.kickbase.com/)
 - Market table: Add fitness, maybe ligainsider rating?
 - Lineup planner: Add fitness
 - Docker container for easy deployment  
+- Add battles  
 **Backend:**  
 - Fix all TODOs  
+- Measure time of API calls and display them under Misc?  
+- Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)  
 **Misc:**  
 - Add Postman workspace  
 
