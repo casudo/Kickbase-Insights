@@ -9,10 +9,12 @@ This project is a used to gather data from [Kickbase](https://www.kickbase.com/)
 - Lineup planner: Add fitness
 - Docker container for easy deployment  
 - Add battles  
+- Transfererlöse: Hold player for X days  
 **Backend:**  
 - Fix all TODOs  
 - Measure time of API calls and display them under Misc?  
 - Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)  
+- Use `main.py` only as starting point and move all code to different files (mabye in the modules?)   
 **Misc:**  
 - Add Postman workspace  
 

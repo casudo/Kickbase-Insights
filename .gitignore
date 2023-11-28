@@ -5,3 +5,6 @@ __pycache__/
 ### Test
 frontend/
 *.json
+Dockerfile
+entrypoint.py
+.dockerignore
