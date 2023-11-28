@@ -10,6 +10,9 @@ This project is a used to gather data from [Kickbase](https://www.kickbase.com/)
 - Docker container for easy deployment  
 - Add battles  
 - Transfererlöse: Hold player for X days  
+- Sum. Transfererlöse: Add custom scale for chart  
+- Dev: Timestamp of all JSON files + Execution time  
+- Misc: Unsold starter players    
 **Backend:**  
 - Fix all TODOs  
 - Measure time of API calls and display them under Misc?  
@@ -17,6 +20,7 @@ This project is a used to gather data from [Kickbase](https://www.kickbase.com/)
 - Use `main.py` only as starting point and move all code to different files (mabye in the modules?)   
 **Misc:**  
 - Add Postman workspace  
+- Add Workflow chart  
 
 ### Thanks to
 - [@fabfischer](https://github.com/fabfischer) for the inspiration and the currently great and working [Kickbase+ web client](https://github.com/fabfischer/kickbase-plus)
