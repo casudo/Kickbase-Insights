@@ -80,30 +80,48 @@ class Meta:
     Everything that is stored directly under "items" is handled by the League_Feed class.
     Everything under "meta" is handled by this class.
     """
-
+    ### TODO: Add same for sold (Type 2)
+    # si
+    # sn
+    # sid
+    ### TODO: Add same for final matchday points (Type 8)
+    # day
+    # a
+    # t
+    # m
+    ### Meta attributes for buy feed entry (Type 12)
     bi: str = None # Buyers profile pic
     bid: str = None # Buyers id
     bn: str = None # Buyers name
     p: str = None # For how much the player was sold
-    pfn: str = None # First name of the player
+    ### Standard attributes for all types (except Type 8)
     pid: str = None # Player id
+    tid: str = None # Team id
+    pfn: str = None # First name of the player
     pln: str = None # Last name of the player
-    tid: str = None # Team id ?????
+    pi: str = None # Player image
 
     def __init__(self, meta_dict: dict, type: int):
-        if type == 12: # when a player is sold 
-            if "bi" in meta_dict:
-                self.bi = meta_dict["bi"] # only set profile pic if it exists
-            self.bid = meta_dict["bid"]
-            self.bn = meta_dict["bn"]
-            self.p = meta_dict["p"] 
+        ### First of all, check the type of the feed entry
+        if type != 8: 
+            if type == 12: # when a player is sold 
+                if "bi" in meta_dict:
+                    self.bi = meta_dict["bi"] # only set profile pic if it exists
+                self.bid = meta_dict["bid"]
+                self.bn = meta_dict["bn"]
+                self.p = meta_dict["p"] 
+                if "pi" in meta_dict: 
+                    self.pi = meta_dict["pi"] # not always set
 
-        ### Standard attributes for all types    
-        self.pfn = meta_dict["pfn"]
-        self.pid = meta_dict["pid"]
-        self.pln = meta_dict["pln"]
-        self.tid = meta_dict["tid"]
+            ### TODO: Add same for sold (Type 2)
 
+            ### Standard attributes for all types    
+            self.pfn = meta_dict["pfn"]
+            self.pid = meta_dict["pid"]
+            self.pln = meta_dict["pln"]
+            self.tid = meta_dict["tid"]
+        else: ### TODO: Necessary?
+            print("Skipping this feed entry because it is a final matchday points entry.")
 
 class League_Feed:
     """
