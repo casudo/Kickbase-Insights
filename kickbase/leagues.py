@@ -355,3 +355,143 @@ def user_players(token: str, league_id: str, user_id: str):
         response = requests.get(f"https://api.kickbase.com/leagues/{league_id}/users/{user_id}/feed?filter=12&start={start_point}", headers=headers).json()
 
     return user_transfers
+
+
+def user_stats(token: str, league_id: str, user_id: str):
+    """
+    Get the statistics of a given user in the given league.
+
+    Expected response:
+    ```json
+    {
+        "name": "xxx",
+        "flags": 0,
+        "profileUrl": "https://kickbase.b-cdn.net/user/xxxx.jpeg",
+        "coverUrl": "https://kickbase.b-cdn.net/user/xxxx.jpeg",
+        "placement": 6,
+        "points": 7589,
+        "teamValue": 287974376.0,
+        "seasons": [
+            {
+                "seasonId": "20",
+                "season": "2023/2024",
+                "points": 7589,
+                "averagePoints": 632,
+                "maxPoints": 1045,
+                "minPoints": 0,
+                "wins": 1,
+                "bought": 124,
+                "sold": 109,
+                "pointsGoalKeeper": 986,
+                "pointsDefenders": 3331,
+                "pointsMidFielders": 2452,
+                "pointsForwards": 820,
+                "averageGoalKeeper": 825,
+                "averageDefenders": 2829,
+                "averageMidFielders": 2622,
+                "averageForwards": 1254
+            },
+            { evtl. mehrere Saisons },
+        ],
+        "teamValues": [
+            {
+                "d": "2023-11-28T23:00:00Z",
+                "v": 273206442.0
+            },
+            {
+                "d": "2023-11-27T23:00:00Z",
+                "v": 264211798.0
+            },
+            { ... },
+        ],
+        "leagueUser": {
+            "maxTeamValue": 287974376.0,
+            "maxTeamValueDate": "2023-11-29T07:23:06Z",
+            "maxBuyPrice": 35040052.0,
+            "maxBuyPlayerId": "2383",
+            "maxBuyFirstName": "Nico",
+            "maxBuyLastName": "Schlotterbeck",
+            "maxSellPrice": 22737700.0,
+            "maxSellPlayerId": "163",
+            "maxSellFirstName": "Niklas",
+            "maxSellLastName": "Süle"
+        }    
+    }
+    ```
+    """
+    url = f"https://api.kickbase.com/leagues/{league_id}/users/{user_id}/stats"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the statistics of a given user in the given league
+    try:
+        response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
+    
+    return response
+
+
+### TODO: Unused?
+def league_stats(token: str, league_id: str):
+    """
+    Get the league statistics.
+
+    This includes the current match day, information about every previous match day and the users in the league.
+
+    Expected response:
+    ```json
+    {
+        "currentDay": 12,
+        "matchDays": [
+            {
+                "day": 1,
+                "users": [
+                    {
+                        "userId": "xxxx",
+                        "dayPlacement": 0,
+                        "dayTendency": 0,
+                        "teamValue": 98354477.0,
+                        "points": 0,
+                        "placement": 1,
+                        "tendency": 0,
+                        "flags": 1
+                    },
+                    { the other users },
+                ]
+            },
+            { the other days },
+        ],
+        "users": [
+            {
+                "id": "xxxx",
+                "name": "xxxx",
+                "email": "usermail",
+                "status": 1,
+                "profile": "https://kickbase.b-cdn.net/user/xxxx.jpeg",
+                "cover": "https://kickbase.b-cdn.net/user/xxxx.jpeg",
+                "flags": 1,
+                "perms": []
+            },
+            { the other users },
+        ]
+    }
+    ```
+    """
+    url = f"https://api.kickbase.com/leagues/{league_id}/stats"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the league statistics
+    try:
+        response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+    return response

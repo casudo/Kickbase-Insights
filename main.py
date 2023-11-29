@@ -55,7 +55,7 @@ def main():
         ### TODO: Print stats for the leagues here
 
         ### TODO: For loop for every league?
-        ### Gift
+        ### ---------- Gift ----------
         gift = leagues.is_gift_available(user_token, league_info[0].id)
         ### Check if dict in gift has {'isAvailable': True}:
         if gift["isAvailable"]:
@@ -65,6 +65,7 @@ def main():
         else:
             print(f"Gift has already been collected in league {league_info[0].name}!\n")
             miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, args.discord if args.discord else discord_webhook) # TODO: Change color   
+        ### ----------------------------
 
         ### =====================================================================================================
         ### League stuff
@@ -90,6 +91,7 @@ def main():
             ### TODO: Player bought from Player
             ### TODO: Player sold to Kickbase
         # print("=====FEED END=====")
+        ### ----------------------------
 
         ### TODO: Player Info, Feed (?), Points, Stats
 
@@ -376,6 +378,38 @@ def main():
 
         ### Calculate revenue data for the graph
         miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
+        ### ----------------------------
+
+
+        ### ---------- Calculate Team Value per Match Day ----------
+        final_team_value = {}
+
+        ### Loop through all users in the league
+        for real_user in league_users.get("users"):
+            ### Get last (current) match day
+            last_match_day = leagues.league_stats(user_token, league_info[0].id)["currentDay"]
+
+            ### Get team value for each match day
+            team_value = {match_day: 0 for match_day in range(1, last_match_day + 1)}
+            for match_day in miscellaneous.MATCH_DAYS:
+
+                ### TODO: Reverse userstats["teamValues"] since the below for loop iterates from newest to oldest
+                user_stats = leagues.user_stats(user_token, league_info[0].id, real_user["id"])
+
+                team_value_on_match_day = 0
+                ### Loop through all team values (per day) of the user
+                for teamValues in user_stats["teamValues"]:
+                    ### Check if the date of the team value matches the date of the match day
+                    if miscellaneous.MATCH_DAYS[match_day].date() == datetime.fromisoformat(teamValues["d"][:-1]).date():
+                        team_value_on_match_day = teamValues["v"]
+                
+                if (len(team_value) >= match_day):
+                    team_value[match_day] = team_value_on_match_day
+
+            final_team_value[real_user["name"]] = team_value
+
+        with open("frontend/data/team_values.json", "w") as f:
+            f.write(json.dumps(final_team_value, indent=2))
         ### ----------------------------
 
     except exceptions.LoginException as e:

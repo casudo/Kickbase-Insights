@@ -54,13 +54,36 @@ TEAM_IDS = [2, 3, 4, 5, 7, 9, 10, 11, 13, 14, 15, 18, 24, 28, 40, 42, 43, 50]
 ### DEBUG
 TIMEZONE_DE = pytz.timezone("Europe/Berlin")
 
+MATCH_DAYS = {
+    1: datetime(2023, 8, 18, 20, 30, tzinfo=TIMEZONE_DE),
+    2: datetime(2023, 8, 25, 20, 30, tzinfo=TIMEZONE_DE),
+    3: datetime(2023, 9, 1, 20, 30, tzinfo=TIMEZONE_DE),
+    4: datetime(2023, 9, 15, 20, 30, tzinfo=TIMEZONE_DE),
+    5: datetime(2023, 9, 22, 20, 30, tzinfo=TIMEZONE_DE),
+    6: datetime(2023, 9, 29, 20, 30, tzinfo=TIMEZONE_DE),
+    7: datetime(2023, 10, 6, 20, 30, tzinfo=TIMEZONE_DE),
+    8: datetime(2023, 10, 20, 20, 30, tzinfo=TIMEZONE_DE),
+    9: datetime(2023, 10, 27, 20, 30, tzinfo=TIMEZONE_DE),
+    10: datetime(2023, 11, 3, 20, 30, tzinfo=TIMEZONE_DE),
+    11: datetime(2023, 11, 10, 20, 30, tzinfo=TIMEZONE_DE),
+    12: datetime(2023, 11, 24, 20, 30, tzinfo=TIMEZONE_DE),
+    13: datetime(2023, 12, 1, 20, 30, tzinfo=TIMEZONE_DE),
+    14: datetime(2023, 12, 8, 20, 30, tzinfo=TIMEZONE_DE),
+    15: datetime(2023, 12, 15, 20, 30, tzinfo=TIMEZONE_DE),
+    16: datetime(2023, 12, 19, 18, 30, tzinfo=TIMEZONE_DE),
+    17: datetime(2024, 1, 12, 20, 30, tzinfo=TIMEZONE_DE),
+}  
+
+
 ### ===============================================================================
 
 def discord_notification(title: str, message: str, color: int, dc_url: str = None):
     """
     ### Send a notification to a Discord Webhook.
     """
-    url = dc_url
+    # url = dc_url
+    ### DEBUG
+    url = "https://discord.com/api/webhooks/1116847708423082094/k8cZXC0PTbQ-g5dihenaXEINWg5Irk67UICMmw-HlIblSdYTBPIanUTFF4BRutoewghV"
     headers = {"Content-Type": "application/json"}
     payload = {
         "username": "Kickbase",
@@ -115,7 +138,7 @@ def get_free_players(token: str, league_id: str, taken_players):
 def calculate_revenue_data_daily(turnovers, manager):
     """
     ### This function calculates the daily revenue for each user
-    
+
     The data is stored as dict in JSON file and is later used to create a graph in the frontend.
     """
     ### Create an empty dict with all users as keys
