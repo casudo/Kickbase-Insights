@@ -81,9 +81,7 @@ def discord_notification(title: str, message: str, color: int, dc_url: str = Non
     """
     ### Send a notification to a Discord Webhook.
     """
-    # url = dc_url
-    ### DEBUG
-    url = "https://discord.com/api/webhooks/1116847708423082094/k8cZXC0PTbQ-g5dihenaXEINWg5Irk67UICMmw-HlIblSdYTBPIanUTFF4BRutoewghV"
+    url = dc_url
     headers = {"Content-Type": "application/json"}
     payload = {
         "username": "Kickbase",
@@ -131,7 +129,7 @@ def get_free_players(token: str, league_id: str, taken_players):
                     "points": player.p.totalPoints,
                 })
 
-    with open("frontend/data/free_players.json", "w") as file:
+    with open("frontend/src/data/free_players.json", "w") as file:
         file.write(json.dumps(free_players, indent=2))
 
 
@@ -178,6 +176,6 @@ def calculate_revenue_data_daily(turnovers, manager):
             data[user].append((entry[0], entry[1]))
 
     ### Finally, the data dictionary is written to a JSON file named 'revenue_sum.json'.
-    with open('frontend/data/revenue_sum.json', 'w') as f:
+    with open('frontend/src/data/revenue_sum.json', 'w') as f:
         f.writelines(json.dumps(data, indent=2))
     
