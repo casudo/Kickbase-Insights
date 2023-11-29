@@ -37,7 +37,7 @@ def main():
         ### else when script is executed in Docker, use the environment variables
         else:
             user_info, league_info, user_token = user.login(kb_mail, kb_password)
-        
+
         ### DEBUG
         print("\n\n### DEBUG")
         print(user_info.name)
@@ -131,9 +131,9 @@ def main():
                     "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
                 })
         ### Write the json dicts to a file. These will be read by the frontend.
-        with open("frontend/data/market_user.json", "w") as f:
+        with open("frontend/src/data/market_user.json", "w") as f:
             f.write(json.dumps(players_listed_by_user, indent=2))
-        with open("frontend/data/market_kickbase.json", "w") as f:
+        with open("frontend/src/data/market_kickbase.json", "w") as f:
             f.write(json.dumps(players_listed_by_kickbase, indent=2))
         ### ----------------------------
 
@@ -169,7 +169,7 @@ def main():
                     "manager": manager,
                 })
         ### Write the json dicts to a file. These will be read by the frontend.
-        with open("frontend/data/market_value_changes.json", "w") as f:
+        with open("frontend/src/data/market_value_changes.json", "w") as f:
             f.write(json.dumps(players_LIST, indent=2))
         ### ----------------------------
 
@@ -275,7 +275,7 @@ def main():
         final_result = (user_transfers_result + team_players_result) 
         
         ### Write the json dicts to a file. These will be read by the frontend.
-        with open("frontend/data/taken_players.json", "w") as f:
+        with open("frontend/src/data/taken_players.json", "w") as f:
             f.write(json.dumps(final_result, indent=2))
 
         ### Based on all taken players, we can now get all free players
@@ -373,7 +373,7 @@ def main():
 
             final_turnovers += turnovers
 
-        with open("frontend/data/turnovers.json", "w") as f:
+        with open("frontend/src/data/turnovers.json", "w") as f:
             f.write(json.dumps(final_turnovers, indent=2))
 
         ### Calculate revenue data for the graph
@@ -408,7 +408,7 @@ def main():
 
             final_team_value[real_user["name"]] = team_value
 
-        with open("frontend/data/team_values.json", "w") as f:
+        with open("frontend/src/data/team_values.json", "w") as f:
             f.write(json.dumps(final_team_value, indent=2))
         ### ----------------------------
 
@@ -443,8 +443,8 @@ if __name__ == "__main__":
 
     ### Timestamp for frontend
     ### TODO: Possible to use file creation timestamp in frontend, so that this can be removed?
-    with open('timestamp.json', 'w') as f:
-        f.writelines(json.dumps({'time': datetime.now().isoformat()}))
+    with open("frontend/src/data/timestamp.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
 
     ### TODO: Change format 
     print(f"\n\n\nExecution time: {round((time.time() - start_time), 2)}s")  
