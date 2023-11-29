@@ -1,17 +1,42 @@
+### TODO: Fix imports
 from kickbase import exceptions, user, miscellaneous, leagues, competition
-from kickbase import __author__, __version__
 
 from pprint import pprint
 import json
 from datetime import datetime, timedelta
 
+import time
+
+from os import getenv
+import argparse
+
+from art import tprint
+
 ### -------------------------------------------------------------------
+
+### Try to get the logins and Discord URL from the environment variables (Docker)
+kb_mail = getenv("KB_MAIL")
+kb_password = getenv("KB_PASSWORD")
+discord_webhook = getenv("DISCORD_WEBHOOK_URL")
+
+### Try to get the logins and Discord URL from the start arguments (local)
+parser = argparse.ArgumentParser(description="A free alternative to Kickbase Member/Pro.")
+parser.add_argument("-u", "--usermail", help="Your Kickbase E-Mail.")
+parser.add_argument("-p", "--password", help="Your Kickbase password.")
+parser.add_argument("-d", "--discord", help="Your Discord Webhook URL.")
+args = parser.parse_args()
 
 def main():
     try:
         ### Login
         print("Logging in...\n")
-        user_info, league_info, user_token = user.login("user", "pass")
+
+        ### If script is executed locally, use the arguments from the command line
+        if args.usermail and args.password:
+            user_info, league_info, user_token = user.login(args.usermail, args.password)
+        ### else when script is executed in Docker, use the environment variables
+        else:
+            user_info, league_info, user_token = user.login(kb_mail, kb_password)
         
         ### DEBUG
         print("\n\n### DEBUG")
@@ -35,11 +60,11 @@ def main():
         ### Check if dict in gift has {'isAvailable': True}:
         if gift["isAvailable"]:
             print(f"Gift available in league {league_info[0].name}!\n")
-            miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600)
+            miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600, args.discord if args.discord else discord_webhook) # TODO: Change color
             leagues.get_gift(user_token, league_info[0].id) # TODO: Try, except needed here?, TODO: Check response
         else:
             print(f"Gift has already been collected in league {league_info[0].name}!\n")
-            miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600) # TODO: Change color   
+            miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, args.discord if args.discord else discord_webhook) # TODO: Change color   
 
         ### =====================================================================================================
         ### League stuff
@@ -55,6 +80,7 @@ def main():
         ### Loop through all feed entries and print them
         print("=====FEED START=====")
         for feed_entry in league_feed:
+            ### TODO: Add type 8 (final matchday points)
             print("------------------------")
             print(f"| {feed_entry.meta.pfn} {feed_entry.meta.pln}") # | Manuel Neuer
             if feed_entry.type == 3: # Type 3 = Listed by Kickbase
@@ -256,18 +282,101 @@ def main():
         ### ----------------------------
         
 
+        ### ---------- Get Turnovers (Gewinn & Verlust) ----------
+        final_turnovers = []
 
+        ### Loop through all users in the league
+        for real_user in league_users.get("users"):
+            print(f"\n\nDEBUG Username: {real_user['name']}")
+            print("DEBUG: Real user id: " + str(real_user["id"]))
 
+            transfers = []
+            
+            ### Get all transfers of a user
+            user_transfers = leagues.user_players(user_token, league_info[0].id, real_user["id"])
+            print(f"DEBUG in turnovers: Found {len(user_transfers)} transfers for user {real_user['name']}")
 
+            ### Cycle through all transfers of a user
+            for buy in user_transfers:
+                ### Check if the transfer type is a buy
+                transfer_type = "buy" if buy["type"] == 12 else "sell"
 
+                ### Get the trade partner
+                if "bn" in buy["meta"]:
+                    trade_partner = buy["meta"]["bn"]
+                elif "sn" in buy["meta"]:
+                    trade_partner = buy["meta"]["sn"]
+                else:
+                    trade_partner = "Kickbase"
 
+                ### Create a custom json dict for every transfer
+                transfers.append({
+                    "date": buy["date"],
+                    "type": transfer_type,
+                    "user": real_user["name"],
+                    "tradePartner": trade_partner,
+                    "price": buy["meta"]["p"],
+                    "playerId": buy["meta"]["pid"],
+                    "teamId": buy["meta"]["tid"],
+                    "firstName": f"{buy['meta']['pfn']}", 
+                    "lastName": f"{buy['meta']['pln']}",
+                })  
 
+            ### Removes duplicates given by the API
+            transfers = list({frozenset(item.items()): item for item in transfers}.values())
+            transfers.reverse() ### Oldest is first.
 
+            turnovers = []
 
+            ### Iterate over every element in the "transfers" list (where "i" is the index) and save it to "buy_transfer"
+            for i, buy_transfer in enumerate(transfers):
+                ### Skip if the transfer is type "sell"
+                if buy_transfer["type"] == "sell":
+                    continue
 
+                ### This nested loop iterates over the remaining transfers (starting from the current buy transfer).
+                ### It compares each of these transfers with the current buy transfer
+                for sell_transfer in transfers[i:]:
+                    if sell_transfer['type'] == 'buy':
+                        continue   
 
+                    ### This condition checks if the player ID of the current sell transfer matches the player ID of the current buy transfer. 
+                    ### If there is a match, it means a corresponding buy-sell pair is found.
+                    if sell_transfer['playerId'] == buy_transfer['playerId']:
+                        turnovers.append((buy_transfer, sell_transfer))
+                        break
 
+            ### Revenue generated by randomly assigned players
+            for transfer in transfers:
+                ### Skip buy transfers
+                if transfer['type'] == 'buy':
+                    continue
 
+                ### This condition checks if the current sell transfer is not already part of a buy-sell pair in the turnovers list.
+                if transfer not in [turnover[1] for turnover in turnovers]:
+
+                    ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
+                    date = datetime(2023, 8, 22).isoformat() ### TODO: Change Startday at the end of the season ???
+                    buy_transfer = {"date": date,
+                                    "type": "buy",
+                                    "user": transfer["user"],
+                                    "tradePartner": "Kickbase",
+                                    "price": transfer["price"], # "price": 0.0,
+                                    "playerId": transfer["playerId"],
+                                    "teamId": transfer["teamId"],
+                                    "firstName": transfer["firstName"],
+                                    "lastName": transfer["lastName"]}
+
+                    turnovers.append((buy_transfer, transfer))
+
+            final_turnovers += turnovers
+
+        with open("frontend/data/turnovers.json", "w") as f:
+            f.write(json.dumps(final_turnovers, indent=2))
+
+        ### Calculate revenue data for the graph
+        miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
+        ### ----------------------------
 
     except exceptions.LoginException as e:
         print(e)
@@ -285,6 +394,23 @@ def main():
 ### -------------------------------------------------------------------
 
 if __name__ == "__main__":
-    print(f"Running {__version__} by {__author__}\n\n") # print version from kickbase/__init__.py
 
+    tprint("KB-Insights")
+    print("\x1B[3mby casudo\x1B[0m\n\n")
+    # print(f"\x1B[3m{VERSION}\x1B[0m\n\n")    
+
+
+    start_time = time.time()
+
+    ### All functions here
     main()
+    ### TODO: Modify main() to only call other functions such as get_feed()?
+
+
+    ### Timestamp for frontend
+    ### TODO: Possible to use file creation timestamp in frontend, so that this can be removed?
+    with open('timestamp.json', 'w') as f:
+        f.writelines(json.dumps({'time': datetime.now().isoformat()}))
+
+    ### TODO: Change format 
+    print(f"\n\n\nExecution time: {round((time.time() - start_time), 2)}s")  

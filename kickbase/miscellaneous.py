@@ -8,6 +8,10 @@ import requests
 from kickbase import exceptions, competition
 import json
 
+from datetime import datetime
+import pandas as pd
+import pytz
+
 ### ===============================================================================
 
 POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
@@ -17,9 +21,10 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 ### TYPE
 # Type 2: Verkauft an Kickbase
 # Type 2 + meta[bn]: Verkauft an Spieler (bn = buyerName)
+# Type 3: Free player listed by Kickbase
+# Type 8: Final matchday points
 # Type 12: Gekauft von Kickbase
 # Type 12 + meta[sn]: Gekauft von Spieler (sn = sellerName)
-
 
 
 ### TEAM_IDS
@@ -46,13 +51,16 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 # 50 Heidenheim
 TEAM_IDS = [2, 3, 4, 5, 7, 9, 10, 11, 13, 14, 15, 18, 24, 28, 40, 42, 43, 50]
 
+### DEBUG
+TIMEZONE_DE = pytz.timezone("Europe/Berlin")
+
 ### ===============================================================================
 
-def discord_notification(title: str, message: str, color: int):
+def discord_notification(title: str, message: str, color: int, dc_url: str = None):
     """
-    Send a notification to a Discord Webhook.
+    ### Send a notification to a Discord Webhook.
     """
-    url = "url"
+    url = dc_url
     headers = {"Content-Type": "application/json"}
     payload = {
         "username": "Kickbase",
@@ -102,3 +110,51 @@ def get_free_players(token: str, league_id: str, taken_players):
 
     with open("frontend/data/free_players.json", "w") as file:
         file.write(json.dumps(free_players, indent=2))
+
+
+def calculate_revenue_data_daily(turnovers, manager):
+    """
+    ### This function calculates the daily revenue for each user
+    
+    The data is stored as dict in JSON file and is later used to create a graph in the frontend.
+    """
+    ### Create an empty dict with all users as keys
+    user_transfer_revenue = {user["name"]: [] for user in manager}
+
+    ### This loop iterates over each buy-sell pair in the turnovers list. It calculates the revenue by subtracting the buy value from the sell value.
+    ### The revenue and the date of the sell transfer are then appended to the corresponding user's list in user_transfer_revenue.
+    
+    for buy, sell in turnovers:
+        revenue = sell['price'] - buy['price']
+        user_transfer_revenue[buy['user']].append((revenue, sell['date']))
+
+    ### Add start and end points for the graph
+    for _, data in user_transfer_revenue.items():
+        data.append((0, datetime(2023, 8, 22))) ### TODO: Change Startday at the end of the season ???
+        data.append((0, datetime.now()))
+
+    ### This section converts the data in user_transfer_revenue into Pandas DataFrames.
+    ### It performs operations to aggregate daily revenues and calculates cumulative sums.
+    ### The resulting DataFrames are stored in the dataframes dictionary.
+    dataframes = {}
+    for user, data in user_transfer_revenue.items():
+        df = pd.DataFrame(data, columns=['revenue', 'date'])
+        df['date'] = pd.to_datetime(df['date'], utc=True)
+        df = df.groupby(pd.Grouper(key='date', freq='D'))['revenue'] \
+            .sum().reset_index().sort_values('date')
+        df['revenue'] = df['revenue'].cumsum()
+        df['date'] = df['date'].dt.strftime('%Y-%m-%d')
+
+        dataframes[user] = df
+
+    ### Here, the data is formatted into a dictionary called data.
+    ### Each user's name is a key, and the corresponding value is a list of tuples containing revenue and date information
+    data = {user["name"]: [] for user in manager}
+    for user, df in dataframes.items():
+        for entry in df.to_numpy().tolist():
+            data[user].append((entry[0], entry[1]))
+
+    ### Finally, the data dictionary is written to a JSON file named 'revenue_sum.json'.
+    with open('frontend/data/revenue_sum.json', 'w') as f:
+        f.writelines(json.dumps(data, indent=2))
+    
