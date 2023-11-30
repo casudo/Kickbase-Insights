@@ -1,0 +1,17 @@
+### Dockerfiles
+Dockerfile
+.dockerignore
+
+### Git files
+.git/
+.gitignore
+
+### Random misc files
+auto_gift_collector.py
+README.md
+venv/
+__pycache__/
+
+### Ignore auto generated files
+frontend/node_modules/
+frontend/src/data/*.json
