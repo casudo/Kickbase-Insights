@@ -2,9 +2,6 @@
 venv/
 __pycache__/
 
-### Test
-frontend/
+### Ignore auto generated files
+node_modules/
 *.json
-Dockerfile
-entrypoint.py
-.dockerignore
