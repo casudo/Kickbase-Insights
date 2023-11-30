@@ -5,3 +5,5 @@ __pycache__/
 ### Ignore auto generated files
 node_modules/
 *.json
+!package.json
+!package-lock.json

@@ -1,0 +1,53 @@
+{
+    "name": "kickbase-insights",
+    "version": "1.0.0",
+    "homepage": "https://github.com/casudo/Kickbase-Insights",
+    "private": true,
+    "dependencies": {
+        "@emotion/react": "^11.10.4",
+        "@emotion/styled": "^11.10.4",
+        "@mui/icons-material": "^5.10.9",
+        "@mui/lab": "^5.0.0-alpha.106",
+        "@mui/material": "^5.10.12",
+        "@mui/x-data-grid": "^5.17.8",
+        "@nivo/bar": "^0.83.0",
+        "@nivo/bump": "^0.80.0",
+        "@nivo/core": "^0.80.0",
+        "@nivo/heatmap": "^0.80.0",
+        "@nivo/line": "^0.80.0",
+        "@testing-library/jest-dom": "^5.16.5",
+        "@testing-library/react": "^13.4.0",
+        "@testing-library/user-event": "^13.5.0",
+        "eslint": "^8.54.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-number-format": "^5.1.1",
+        "react-scripts": "5.0.1",
+        "web-vitals": "^2.1.4"
+    },
+    "scripts": {
+        "predeploy": "npm run build",
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test",
+        "eject": "react-scripts eject"
+    },
+    "eslintConfig": {
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ]
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    }
+}
