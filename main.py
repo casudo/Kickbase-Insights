@@ -1,7 +1,6 @@
 ### TODO: Fix imports
 from kickbase import exceptions, user, miscellaneous, leagues, competition
 
-from pprint import pprint
 import json
 from datetime import datetime, timedelta
 
@@ -130,11 +129,18 @@ def main():
                     "seller": player.username,
                     "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
                 })
+
         ### Write the json dicts to a file. These will be read by the frontend.
-        with open("frontend/src/data/market_user.json", "w") as f:
+        with open("/code/frontend/src/data/market_user.json", "w") as f:
             f.write(json.dumps(players_listed_by_user, indent=2))
-        with open("frontend/src/data/market_kickbase.json", "w") as f:
+        with open("/code/frontend/src/data/market_kickbase.json", "w") as f:
             f.write(json.dumps(players_listed_by_kickbase, indent=2))
+
+        ### Timestamp for frontend
+        with open("/code/frontend/src/data/timestamps/ts_market_user.json", "w") as f:
+            f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        with open("/code/frontend/src/data/timestamps/ts_market_kickbase.json", "w") as f:
+            f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
         ### ----------------------------
 
 
@@ -169,8 +175,12 @@ def main():
                     "manager": manager,
                 })
         ### Write the json dicts to a file. These will be read by the frontend.
-        with open("frontend/src/data/market_value_changes.json", "w") as f:
+        with open("/code/frontend/src/data/market_value_changes.json", "w") as f:
             f.write(json.dumps(players_LIST, indent=2))
+
+        ### Timestamp for frontend
+        with open("/code/frontend/src/data/timestamps/ts_market_value_changes.json", "w") as f:
+            f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
         ### ----------------------------
 
 
@@ -275,8 +285,12 @@ def main():
         final_result = (user_transfers_result + team_players_result) 
         
         ### Write the json dicts to a file. These will be read by the frontend.
-        with open("frontend/src/data/taken_players.json", "w") as f:
+        with open("/code/frontend/src/data/taken_players.json", "w") as f:
             f.write(json.dumps(final_result, indent=2))
+
+        ### Timestamp for frontend
+        with open("/code/frontend/src/data/timestamps/ts_taken_players.json", "w") as f:
+            f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
 
         ### Based on all taken players, we can now get all free players
         miscellaneous.get_free_players(user_token, league_info[0].id, final_result)
@@ -373,8 +387,12 @@ def main():
 
             final_turnovers += turnovers
 
-        with open("frontend/src/data/turnovers.json", "w") as f:
+        with open("/code/frontend/src/data/turnovers.json", "w") as f:
             f.write(json.dumps(final_turnovers, indent=2))
+        
+        ### Timestamp for frontend
+        with open("/code/frontend/src/data/timestamps/ts_turnovers.json", "w") as f:
+            f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
 
         ### Calculate revenue data for the graph
         miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
@@ -408,8 +426,12 @@ def main():
 
             final_team_value[real_user["name"]] = team_value
 
-        with open("frontend/src/data/team_values.json", "w") as f:
+        with open("/code/frontend/src/data/team_values.json", "w") as f:
             f.write(json.dumps(final_team_value, indent=2))
+
+        ### Timestamp for frontend
+        with open("/code/frontend/src/data/timestamps/ts_team_values.json", "w") as f:
+            f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
         ### ----------------------------
 
     except exceptions.LoginException as e:
@@ -443,7 +465,7 @@ if __name__ == "__main__":
 
     ### Timestamp for frontend
     ### TODO: Possible to use file creation timestamp in frontend, so that this can be removed?
-    with open("frontend/src/data/timestamp.json", "w") as f:
+    with open("/code/frontend/src/data/timestamps/ts_main.json", "w") as f:
         f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
 
     ### TODO: Change format 

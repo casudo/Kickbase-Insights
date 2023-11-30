@@ -129,8 +129,12 @@ def get_free_players(token: str, league_id: str, taken_players):
                     "points": player.p.totalPoints,
                 })
 
-    with open("frontend/src/data/free_players.json", "w") as file:
+    with open("/code/frontend/src/data/free_players.json", "w") as file:
         file.write(json.dumps(free_players, indent=2))
+
+    ### Timestamp for frontend
+    with open("/code/frontend/src/data/timestamps/ts_free_players.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()}))
 
 
 def calculate_revenue_data_daily(turnovers, manager):
@@ -176,6 +180,10 @@ def calculate_revenue_data_daily(turnovers, manager):
             data[user].append((entry[0], entry[1]))
 
     ### Finally, the data dictionary is written to a JSON file named 'revenue_sum.json'.
-    with open('frontend/src/data/revenue_sum.json', 'w') as f:
+    with open('/code/frontend/src/data/revenue_sum.json', 'w') as f:
         f.writelines(json.dumps(data, indent=2))
+
+    ### Timestamp for frontend
+    with open("/code/frontend/src/data/timestamps/ts_revenue_sum.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()}))
     
