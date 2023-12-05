@@ -91,6 +91,7 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Sum. Transfererlöse: Add custom scale for chart  
 - Dev: Execution time  
 - Misc: Unsold starter players    
+- Icon and title for browser tab  
 
 **Backend:**  
 - Fix all TODOs  
@@ -99,10 +100,13 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Use `main.py` only as starting point and move all code to different files (mabye in the modules?)  
 - Fix TZ in Ubuntu image ([Stackoverflow](https://serverfault.com/questions/683605/docker-container-time-timezone-will-not-reflect-changes))  
 - Fix "DEBUG" prints  
+- Discord notifications  
 
 **Misc:**  
 - Add Postman workspace  
 - Add Workflow chart  
+- Add ./data and ./data/timestamp folders to git  
+- Automatically disable caching  
 
 ### Thanks to
 - [@fabfischer](https://github.com/fabfischer) for the inspiration and the currently great and working [Kickbase+ web client](https://github.com/fabfischer/kickbase-plus)  
