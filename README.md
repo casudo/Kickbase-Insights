@@ -98,13 +98,12 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)  
 - Use `main.py` only as starting point and move all code to different files (mabye in the modules?)  
 - Fix TZ in Ubuntu image ([Stackoverflow](https://serverfault.com/questions/683605/docker-container-time-timezone-will-not-reflect-changes))  
-- Fix "DEBUG" prints  
 - Discord notifications  
 
 **Misc:**  
 - Add Postman workspace  
 - Add Workflow chart  
-- Add ./data and ./data/timestamp folders to git  
+- Add ./data, ./data/timestamp and logs/ folders to git  
 - Automatically disable caching  
 
 ### Thanks to

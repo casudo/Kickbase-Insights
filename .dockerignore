@@ -11,6 +11,7 @@ auto_gift_collector.py
 README.md
 venv/
 __pycache__/
+*.log
 
 ### Ignore auto generated files
 frontend/node_modules/

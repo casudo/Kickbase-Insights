@@ -4,13 +4,11 @@
 TODO: Maybe list all functions here automatically?
 """
 
-import requests
-from kickbase import exceptions, competition
-import json
-
-from datetime import datetime
+import requests, json, pytz, logging
 import pandas as pd
-import pytz
+from datetime import datetime
+
+from kickbase import exceptions, competition
 
 ### ===============================================================================
 
@@ -104,7 +102,7 @@ def get_free_players(token: str, league_id: str, taken_players):
     """
     TODO: Add docstring
     """
-    print("[INFO] Getting free players...")
+    logging.info("Getting free players...")
 
     free_players = []
 
@@ -129,16 +127,16 @@ def get_free_players(token: str, league_id: str, taken_players):
                     "points": player.p.totalPoints,
                 })
 
-    print("[INFO] Got all free players.\n")
+    logging.info("Got all free players.\n")
 
     with open("/code/frontend/src/data/free_players.json", "w") as file:
         file.write(json.dumps(free_players, indent=2))
-        ### TODO: DEBUG log that the file was created
+        logging.debug("Created file free_players.json")
 
     ### Timestamp for frontend
     with open("/code/frontend/src/data/timestamps/ts_free_players.json", "w") as f:
         f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()}))
-        ### TODO: DEBUG log that the file was created
+        logging.debug("Created file ts_free_players.json")
 
 
 def calculate_revenue_data_daily(turnovers, manager):
@@ -147,7 +145,7 @@ def calculate_revenue_data_daily(turnovers, manager):
 
     The data is stored as dict in JSON file and is later used to create a graph in the frontend.
     """
-    print("[INFO] Calculating daily revenue data...")
+    logging.info("Calculating daily revenue data...")
 
     ### Create an empty dict with all users as keys
     user_transfer_revenue = {user["name"]: [] for user in manager}
@@ -185,14 +183,14 @@ def calculate_revenue_data_daily(turnovers, manager):
         for entry in df.to_numpy().tolist():
             data[user].append((entry[0], entry[1]))
 
-    print("[INFO] Calculated daily revenue data.\n")
+    logging.info("Calculated daily revenue data.\n")
 
     ### Finally, the data dictionary is written to a JSON file named 'revenue_sum.json'.
     with open('/code/frontend/src/data/revenue_sum.json', 'w') as f:
         f.writelines(json.dumps(data, indent=2))
-        ### TODO: DEBUG log that the file was created
+        logging.debug("Created file revenue_sum.json")
 
     ### Timestamp for frontend
     with open("/code/frontend/src/data/timestamps/ts_revenue_sum.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()}))
-        ### TODO: DEBUG log that the file was created    
+        f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()})) 
+        logging.debug("Created file ts_revenue_sum.json")
