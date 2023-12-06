@@ -91,7 +91,6 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Sum. Transfererlöse: Add custom scale for chart  
 - Dev: Execution time  
 - Misc: Unsold starter players    
-- Icon and title for browser tab  
 
 **Backend:**  
 - Fix all TODOs  
