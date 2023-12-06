@@ -18,14 +18,12 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 ### TREND?
 ### STATUS
 
-### TYPE
+### TYPE (from league feed)
 # Type 2: Verkauft an Kickbase
 # Type 2 + meta[bn]: Verkauft an Spieler (bn = buyerName)
 # Type 3: Free player listed by Kickbase
 # Type 8: Final matchday points
 # Type 12: Gekauft von Kickbase
-# Type 12 + meta[sn]: Gekauft von Spieler (sn = sellerName)
-
 
 ### TEAM_IDS
 ### TODO: Update with missing teams
@@ -51,9 +49,9 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 # 50 Heidenheim
 TEAM_IDS = [2, 3, 4, 5, 7, 9, 10, 11, 13, 14, 15, 18, 24, 28, 40, 42, 43, 50]
 
-### DEBUG
 TIMEZONE_DE = pytz.timezone("Europe/Berlin")
 
+### TODO: Update these manually??
 MATCH_DAYS = {
     1: datetime(2023, 8, 18, 20, 30, tzinfo=TIMEZONE_DE),
     2: datetime(2023, 8, 25, 20, 30, tzinfo=TIMEZONE_DE),
@@ -106,6 +104,8 @@ def get_free_players(token: str, league_id: str, taken_players):
     """
     TODO: Add docstring
     """
+    print("[INFO] Getting free players...")
+
     free_players = []
 
     ### Get all taken player ids
@@ -129,12 +129,16 @@ def get_free_players(token: str, league_id: str, taken_players):
                     "points": player.p.totalPoints,
                 })
 
+    print("[INFO] Got all free players.\n")
+
     with open("/code/frontend/src/data/free_players.json", "w") as file:
         file.write(json.dumps(free_players, indent=2))
+        ### TODO: DEBUG log that the file was created
 
     ### Timestamp for frontend
     with open("/code/frontend/src/data/timestamps/ts_free_players.json", "w") as f:
         f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()}))
+        ### TODO: DEBUG log that the file was created
 
 
 def calculate_revenue_data_daily(turnovers, manager):
@@ -143,6 +147,8 @@ def calculate_revenue_data_daily(turnovers, manager):
 
     The data is stored as dict in JSON file and is later used to create a graph in the frontend.
     """
+    print("[INFO] Calculating daily revenue data...")
+
     ### Create an empty dict with all users as keys
     user_transfer_revenue = {user["name"]: [] for user in manager}
 
@@ -179,11 +185,14 @@ def calculate_revenue_data_daily(turnovers, manager):
         for entry in df.to_numpy().tolist():
             data[user].append((entry[0], entry[1]))
 
+    print("[INFO] Calculated daily revenue data.\n")
+
     ### Finally, the data dictionary is written to a JSON file named 'revenue_sum.json'.
     with open('/code/frontend/src/data/revenue_sum.json', 'w') as f:
         f.writelines(json.dumps(data, indent=2))
+        ### TODO: DEBUG log that the file was created
 
     ### Timestamp for frontend
     with open("/code/frontend/src/data/timestamps/ts_revenue_sum.json", "w") as f:
         f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()}))
-    
+        ### TODO: DEBUG log that the file was created    

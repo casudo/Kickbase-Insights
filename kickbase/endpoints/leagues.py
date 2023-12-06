@@ -80,16 +80,16 @@ class Meta:
     Everything that is stored directly under "items" is handled by the League_Feed class.
     Everything under "meta" is handled by this class.
     """
-    ### TODO: Add same for sold (Type 2)
-    # si
-    # sn
-    # sid
+    ### Meta attributes for Type 2 SPECIFIC
+    si: str = None # Sellers profile pic
+    sn: str = None # Sellers name
+    sid: str = None # Sellers id
     ### TODO: Add same for final matchday points (Type 8)
     # day
     # a
     # t
     # m
-    ### Meta attributes for buy feed entry (Type 12)
+    ### Meta attributes for buy feed entry (Type 12) AND Type 2 IF user sold to user
     bi: str = None # Buyers profile pic
     bid: str = None # Buyers id
     bn: str = None # Buyers name
@@ -103,23 +103,43 @@ class Meta:
 
     def __init__(self, meta_dict: dict, type: int):
         ### First of all, check the type of the feed entry
-        if type != 8: 
-            if type == 12: # when a player is sold 
-                if "bi" in meta_dict:
-                    self.bi = meta_dict["bi"] # only set profile pic if it exists
+        if type != 8: # Not a final matchday points entry
+            ### Type 2: User sold to Kickbase AND User sold to User
+            if type == 2 and not "bn" in meta_dict: # User sold to Kickbase
+                self.sid = meta_dict["sid"]
+                self.sn = meta_dict["sn"]
+                if "si" in meta_dict:
+                    self.si = meta_dict["si"] # only set profile pic if it exists
+                self.p = meta_dict["p"] 
+                if "pi" in meta_dict: 
+                    self.pi = meta_dict["pi"] # not always set         
+            elif type == 2 and "bn" in meta_dict: # User sold to User
+                self.sid = meta_dict["sid"]
+                self.sn = meta_dict["sn"]
+                if "si" in meta_dict:
+                    self.si = meta_dict["si"] # only set profile pic if it exists
                 self.bid = meta_dict["bid"]
                 self.bn = meta_dict["bn"]
+                if "bi" in meta_dict:
+                    self.bi = meta_dict["bi"]
+                self.p = meta_dict["p"] 
+                if "pi" in meta_dict: 
+                    self.pi = meta_dict["pi"] # not always set                            
+
+            if type == 12: # User bought from Kickbase
+                self.bid = meta_dict["bid"]
+                self.bn = meta_dict["bn"]
+                if "bi" in meta_dict:
+                    self.bi = meta_dict["bi"] # only set profile pic if it exists
                 self.p = meta_dict["p"] 
                 if "pi" in meta_dict: 
                     self.pi = meta_dict["pi"] # not always set
 
-            ### TODO: Add same for sold (Type 2)
-
             ### Standard attributes for all types    
-            self.pfn = meta_dict["pfn"]
             self.pid = meta_dict["pid"]
-            self.pln = meta_dict["pln"]
             self.tid = meta_dict["tid"]
+            self.pfn = meta_dict["pfn"]
+            self.pln = meta_dict["pln"]
         else: ### TODO: Necessary?
             print("Skipping this feed entry because it is a final matchday points entry.")
 
@@ -142,26 +162,26 @@ class League_Feed:
         print(f"First name: {feed_entry.meta.pfn}
     ```
     """
-    age: int = None # How long ago the event happened (in seconds)
+    id: str = None
     comments: int = None
     date: str = None
-    id: str = None
+    age: int = None # How long ago the event happened (in seconds)
+    type: int = None
+    source: int = None
     meta: dict = None
     seasonId: int = None
-    source: int = None
-    type: int = None
 
     def __init__(self, league_feed_dict: dict):
-        self.age = league_feed_dict["age"]
+        self.id = league_feed_dict["id"]
         self.comments = league_feed_dict["comments"]
         self.date = league_feed_dict["date"]
-        self.id = league_feed_dict["id"]
-        self.seasonId = league_feed_dict["seasonId"]
-        self.source = league_feed_dict["source"]
+        self.age = league_feed_dict["age"]
         self.type = league_feed_dict["type"]
-
+        self.source = league_feed_dict["source"]
         ### Create a new object with all its attributes for everything stored in the meta dict
         self.meta = Meta(league_feed_dict["meta"], self.type)
+        self.seasonId = league_feed_dict["seasonId"]
+
 
 ### End of League Feed stuff
 ### ===============================================================================

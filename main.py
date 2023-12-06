@@ -12,11 +12,13 @@ import argparse
 from art import tprint
 
 ### -------------------------------------------------------------------
+### -------------------------------------------------------------------
+### -------------------------------------------------------------------
 
 ### Try to get the logins and Discord URL from the environment variables (Docker)
 kb_mail = getenv("KB_MAIL")
 kb_password = getenv("KB_PASSWORD")
-discord_webhook = getenv("DISCORD_WEBHOOK_URL")
+discord_webhook = getenv("DISCORD_WEBHOOK")
 
 ### Try to get the logins and Discord URL from the start arguments (local)
 parser = argparse.ArgumentParser(description="A free alternative to Kickbase Member/Pro.")
@@ -25,10 +27,11 @@ parser.add_argument("-p", "--password", help="Your Kickbase password.")
 parser.add_argument("-d", "--discord", help="Your Discord Webhook URL.")
 args = parser.parse_args()
 
+
 def main():
     try:
         ### Login
-        print("Logging in...\n")
+        print("[INFO] Logging in...")
 
         ### If script is executed locally, use the arguments from the command line
         if args.usermail and args.password:
@@ -38,59 +41,91 @@ def main():
             user_info, league_info, user_token = user.login(kb_mail, kb_password)
 
         ### DEBUG
-        print("\n\n### DEBUG")
-        print(user_info.name)
-        print(league_info[0].name)
-        print(league_info[0].pub)
-        print(user_token)
-        print("\n\n")
+        ### TODO: Remove/Reuse with logging
+        # print("\n\n### DEBUG")
+        # print(user_info.name)
+        # print(league_info[0].name)
+        # print(league_info[0].pub)
+        # print(user_token)
+        # print("\n\n")
 
-        print("\n\n=====================================")
-        print(f"Successfully logged in as {user_info.name}.\n")
+        print(f"[INFO] Successfully logged in as {user_info.name}\n")
         # miscellaneous.discord_notification("Kickbase Login", f"Successfully logged in as {user.name}.", 6617600)
-        print(f"Available leagues: {', '.join([league.name for league in league_info])}\n") # Print all available leagues the user is in
+        print(f"[INFO] Available leagues: {', '.join([league.name for league in league_info])}") # Print all available leagues the user is in
 
 
         ### TODO: Print stats for the leagues here
+
 
         ### TODO: For loop for every league?
         ### ---------- Gift ----------
         gift = leagues.is_gift_available(user_token, league_info[0].id)
         ### Check if dict in gift has {'isAvailable': True}:
         if gift["isAvailable"]:
-            print(f"Gift available in league {league_info[0].name}!\n")
+            print(f"[INFO] Gift available in league {league_info[0].name}!\n")
             miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600, args.discord if args.discord else discord_webhook) # TODO: Change color
             leagues.get_gift(user_token, league_info[0].id) # TODO: Try, except needed here?, TODO: Check response
         else:
-            print(f"Gift has already been collected in league {league_info[0].name}!\n")
-            miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, args.discord if args.discord else discord_webhook) # TODO: Change color   
+            print(f"[INFO] Gift has already been collected in league {league_info[0].name}!\n")
+            # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, args.discord if args.discord else discord_webhook) # TODO: Change color   
         ### ----------------------------
 
-        ### =====================================================================================================
-        ### League stuff
-        league_user_info = leagues.league_user_info(user_token, league_info[0].id)
-        print(f"=== Statistics for {user_info.name} in league {league_info[0].name} ===")
-        print(f"Budget: {league_user_info.budget}€")
-        print(f"Team value: {league_user_info.teamValue}€")
-        print(f"Points: {league_user_info.points}")
-        print(f"Rank: {league_user_info.placement}")
 
-        ### ---------- Feed ----------
+        ### ---------- User stats in league ----------
+        ### TODO: Will only list stats for the user the hosts the script, therefore not really needed.
+        ### Could be included via logging debug?
+        # league_user_info = leagues.league_user_info(user_token, league_info[0].id)
+        # print(f"=== Statistics for {user_info.name} in league {league_info[0].name} ===")
+        # print(f"Budget: {league_user_info.budget}€")
+        # print(f"Team value: {league_user_info.teamValue}€")
+        # print(f"Points: {league_user_info.points}")
+        # print(f"Rank: {league_user_info.placement}")
+        ### ----------------------------
+
+
+        ### ---------- League Feed ----------
+        ### Get the 30 latest feed entries
         league_feed = leagues.league_feed(user_token, league_info[0].id)
-        ### Loop through all feed entries and print them
+        ### Loop through the feed entries and print them
+        print(f"[INFO] {league_info[0].name}'s feed (latest 30):")
         print("=====FEED START=====")
         for feed_entry in league_feed:
-            ### TODO: Add type 8 (final matchday points)
             print("------------------------")
             print(f"| {feed_entry.meta.pfn} {feed_entry.meta.pln}") # | Manuel Neuer
-            if feed_entry.type == 3: # Type 3 = Listed by Kickbase
-                print(f"| Listed since: {feed_entry.age}") # | Listed since: 435345
-            if feed_entry.type == 12: # Type 12 = Player bought from Kickbase
-                print(f"| Sold for: {feed_entry.meta.p}€ to {feed_entry.meta.bn} from Kickbase") # | Sold for: 5000561€ to Frank from Kickbase
-            ### TODO: Player bought from Player
-            ### TODO: Player sold to Kickbase
-        # print("=====FEED END=====")
+            ### Type 2: User sold to Kickbase AND User sold to User
+            if feed_entry.type == 2 and not feed_entry.meta.bn: # Type 2 = User sold to Kickbase
+                print(f"| Sold from {feed_entry.meta.sn} to Kickbase for {feed_entry.meta.p}€") # | Sold from USER to Kickbase for 5000561.0€
+            elif feed_entry.type == 2 and feed_entry.meta.bn: # Type 2 = User sold to User
+                print(f"| Sold from {feed_entry.meta.sn} to {feed_entry.meta.bn} for {feed_entry.meta.p}€") # | Sold from USER to USER for 5000561.0€
+            
+            ### Type 3: Listed by Kickbase
+            if feed_entry.type == 3: 
+                raw_age = feed_entry.age
+
+                ### Calculate days, hours, and minutes
+                days, remainder = divmod(raw_age, 86400)
+                hours, remainder = divmod(remainder, 3600)
+                minutes, _ = divmod(remainder, 60)
+
+                ### Create a formatted string based on the calculated values
+                formatted_age = ""
+                if days > 0:
+                    formatted_age += f"{days}d "
+                if hours > 0:
+                    formatted_age += f"{hours}h "
+                if minutes > 0 or (days == 0 and hours == 0):  # Show minutes if no days or hours
+                    formatted_age += f"{minutes}m"
+
+                print(f"| Listed since: {formatted_age}")
+
+            ### TODO: Add type 8 (final matchday points)
+
+            ### Type 12: User bought from Kickbase
+            if feed_entry.type == 12: 
+                print(f"| Sold from Kickbase to {feed_entry.meta.bn} for {feed_entry.meta.p}€") # | Sold for: 5000561€ to Frank from Kickbase
+        print("=====FEED END=====\n")
         ### ----------------------------
+
 
         ### TODO: Player Info, Feed (?), Points, Stats
 
@@ -98,7 +133,10 @@ def main():
 
         ### TODO: Remove & add player to market, accept & decline offer, update price (?), place & remove offer 
 
+
         ### ---------- Market ----------
+        print("[INFO] Getting players listed on transfer market...")
+        ### Get all players on the market
         players_on_market = leagues.get_market(user_token, league_info[0].id)
 
         players_listed_by_user = []
@@ -117,6 +155,7 @@ def main():
                     "trend": player.marketValueTrend,
                     "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
                 })
+                ### TODO: DEBUG print the player listed by kickbase
             else:
                 ### Create a custom json dict for every player listed by kickbase
                 players_listed_by_user.append({
@@ -129,22 +168,31 @@ def main():
                     "seller": player.username,
                     "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
                 })
+                ### TODO: DEBUG print the player listed by user
+
+        print("[INFO] Got all players listed on transfer market!\n")
 
         ### Write the json dicts to a file. These will be read by the frontend.
         with open("/code/frontend/src/data/market_user.json", "w") as f:
             f.write(json.dumps(players_listed_by_user, indent=2))
+            ### TODO: DEBUG log that the file was created
         with open("/code/frontend/src/data/market_kickbase.json", "w") as f:
             f.write(json.dumps(players_listed_by_kickbase, indent=2))
+            ### TODO: DEBUG log that the file was created
 
         ### Timestamp for frontend
         with open("/code/frontend/src/data/timestamps/ts_market_user.json", "w") as f:
             f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+            ### TODO: DEBUG log that the file was created
         with open("/code/frontend/src/data/timestamps/ts_market_kickbase.json", "w") as f:
             f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+            ### TODO: DEBUG log that the file was created
         ### ----------------------------
 
 
         ### ---------- Market Value Changes ----------
+        print("[INFO] Getting market value changes for all players...")
+
         players_LIST = []
 
         ### Loop through all teams
@@ -174,13 +222,19 @@ def main():
                     "ThirtyDaysAvg": (player_stats["marketValue"] - player_stats["marketValues"][-31]["m"]),
                     "manager": manager,
                 })
+                ### TODO: DEBUG print the player
+
+        print("[INFO] Got all market value changes for all players!\n")
+
         ### Write the json dicts to a file. These will be read by the frontend.
         with open("/code/frontend/src/data/market_value_changes.json", "w") as f:
             f.write(json.dumps(players_LIST, indent=2))
+            ### TODO: DEBUG log that the file was created
 
         ### Timestamp for frontend
         with open("/code/frontend/src/data/timestamps/ts_market_value_changes.json", "w") as f:
             f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+            ## TODO: DEBUG log that the file was created
         ### ----------------------------
 
 
@@ -188,6 +242,8 @@ def main():
         ### To get the taken players, we first cycle through the individual users BUY/SELL feed to determine which players are bought by the user.
         ### In case a player was assigned to the user on league join, the player is not in the BUY/SELL feed.
         ### To indicate these players, we cycle through ALL players of a team and check if the player is owned by a user.
+
+        print("[INFO] Getting taken players...")
 
         ### We start by cycling through the users BUY/SELL feed. The players will be stored in the below list.
         user_transfers_result = []
@@ -200,19 +256,21 @@ def main():
 
         ### Get all users in the league
         league_users = leagues.league_users(user_token, league_info[0].id)
-        # print(f"DEBUG of USERS: {league_users['users'][0]}")
+        ### TODO: print(f"DEBUG of USERS: {league_users['users'][0]}")
 
         ### Loop through all users in the league
         for real_user in league_users.get("users"):
-            print(f"\n\nDEBUG Username: {real_user['name']}")
-            print("DEBUG: Real user id: " + str(real_user["id"]))
+            ### TODO: Remove debug or use them with logging debug
+            # print(f"\n\nDEBUG Username: {real_user['name']}")
+            # print("DEBUG: Real user id: " + str(real_user["id"]))
 
             taken_players = []
             user_has_sold = set()
 
             ### Get all transfers of a user
             user_transfers = leagues.user_players(user_token, league_info[0].id, real_user["id"])
-            print(f"DEBUG: Found {len(user_transfers)} transfers for user {real_user['name']}")
+            ### TODO: Remove debug or use them with logging debug
+            # print(f"DEBUG: Found {len(user_transfers)} transfers for user {real_user['name']}")
 
             ### Loop through all transfers of a user (done by getting the user specific BUY/SELL feed)
             for transfer in user_transfers:
@@ -265,7 +323,7 @@ def main():
 
                 ### If the player Id is NOT SOMEWHERE in the list of taken players (user_transfers_result) AND the player has a username attribute (is owned by a user)
                 if not any(player_id == player.get("playerId") for player in user_transfers_result) and player_stats.get("userName") is not None:
-                    print(f"DEBUG: Player {player.p.firstName} {player.p.lastName} isn't on the list of taken players, but is owned by user {player_stats.get('userName')}!")
+                    # print(f"DEBUG: Player {player.p.firstName} {player.p.lastName} isn't on the list of taken players, but is owned by user {player_stats.get('userName')}!")
 
                     ### Create a custom json dict for every starter player. This will be passed to the frontend later.
                     starter_players.append({
@@ -283,34 +341,40 @@ def main():
         ### Now we add the list of both checks to the final_result list.
         team_players_result += starter_players
         final_result = (user_transfers_result + team_players_result) 
+
+        print("[INFO] Got all taken players!\n")
         
         ### Write the json dicts to a file. These will be read by the frontend.
         with open("/code/frontend/src/data/taken_players.json", "w") as f:
             f.write(json.dumps(final_result, indent=2))
+            ### TODO: DEBUG log that the file was created
 
         ### Timestamp for frontend
         with open("/code/frontend/src/data/timestamps/ts_taken_players.json", "w") as f:
             f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+            ### TODO: DEBUG log that the file was created
 
         ### Based on all taken players, we can now get all free players
         miscellaneous.get_free_players(user_token, league_info[0].id, final_result)
-
         ### ----------------------------
         
 
         ### ---------- Get Turnovers (Gewinn & Verlust) ----------
+        print("[INFO] Getting turnovers...")
+
         final_turnovers = []
 
         ### Loop through all users in the league
         for real_user in league_users.get("users"):
-            print(f"\n\nDEBUG Username: {real_user['name']}")
-            print("DEBUG: Real user id: " + str(real_user["id"]))
+            ### TODO: Remove debug or use them with logging debug
+            # print(f"\n\nDEBUG Username: {real_user['name']}")
+            # print("DEBUG: Real user id: " + str(real_user["id"]))
 
             transfers = []
             
             ### Get all transfers of a user
             user_transfers = leagues.user_players(user_token, league_info[0].id, real_user["id"])
-            print(f"DEBUG in turnovers: Found {len(user_transfers)} transfers for user {real_user['name']}")
+            # print(f"DEBUG in turnovers: Found {len(user_transfers)} transfers for user {real_user['name']}")
 
             ### Cycle through all transfers of a user
             for buy in user_transfers:
@@ -387,12 +451,16 @@ def main():
 
             final_turnovers += turnovers
 
+        print("[INFO] Got all turnovers!\n")
+
         with open("/code/frontend/src/data/turnovers.json", "w") as f:
             f.write(json.dumps(final_turnovers, indent=2))
+            ### TODO: DEBUG log that the file was created
         
         ### Timestamp for frontend
         with open("/code/frontend/src/data/timestamps/ts_turnovers.json", "w") as f:
             f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+            ### TODO: DEBUG log that the file was created
 
         ### Calculate revenue data for the graph
         miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
@@ -400,6 +468,8 @@ def main():
 
 
         ### ---------- Calculate Team Value per Match Day ----------
+        print("[INFO] Calculating team value per match day...")
+
         final_team_value = {}
 
         ### Loop through all users in the league
@@ -426,12 +496,16 @@ def main():
 
             final_team_value[real_user["name"]] = team_value
 
+        print("[INFO] Calculated team value per match day!\n")
+
         with open("/code/frontend/src/data/team_values.json", "w") as f:
             f.write(json.dumps(final_team_value, indent=2))
+            ### TODO: DEBUG log that the file was created
 
         ### Timestamp for frontend
         with open("/code/frontend/src/data/timestamps/ts_team_values.json", "w") as f:
             f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+            ### TODO: DEBUG log that the file was created
         ### ----------------------------
 
     except exceptions.LoginException as e:
@@ -451,10 +525,9 @@ def main():
 
 if __name__ == "__main__":
 
-    tprint("KB-Insights")
+    tprint("\n\nKB-Insights")
     print("\x1B[3mby casudo\x1B[0m\n\n")
     # print(f"\x1B[3m{VERSION}\x1B[0m\n\n")    
-
 
     start_time = time.time()
 
@@ -462,11 +535,12 @@ if __name__ == "__main__":
     main()
     ### TODO: Modify main() to only call other functions such as get_feed()?
 
-
     ### Timestamp for frontend
-    ### TODO: Possible to use file creation timestamp in frontend, so that this can be removed?
     with open("/code/frontend/src/data/timestamps/ts_main.json", "w") as f:
         f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        ### TODO: DEBUG log that the file was created
 
     ### TODO: Change format 
-    print(f"\n\n\nExecution time: {round((time.time() - start_time), 2)}s")  
+    # print(f"\n\n\nExecution time: {round((time.time() - start_time), 2)}s")  
+    # Print the execution time in the following format: "Execution time: 00:00m". The first 2 digits are the minutes, the last 2 digits are the seconds.
+    print(f"\n\[INFO] DONE! Execution time: {round((time.time() - start_time) / 60, 2)}m")
