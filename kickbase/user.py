@@ -5,6 +5,7 @@ TODO: Maybe list all functions here automatically?
 """
 
 import requests
+
 from kickbase.endpoints.user import User, League
 from kickbase import exceptions
 
