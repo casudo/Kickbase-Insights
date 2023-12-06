@@ -199,8 +199,8 @@ function App() {
                 Taken Players: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_taken_players.time).toLocaleString('de-DE')}</Typography><br/>
                 Free Players: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_free_players.time).toLocaleString('de-DE')}</Typography><br/>
                 Turnovers: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_turnovers.time).toLocaleString('de-DE')}</Typography><br/>
-                Team Values: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_team_values.time).toLocaleString('de-DE')}</Typography><br/>
                 Revenue Sum: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_revenue_sum.time).toLocaleString('de-DE')}</Typography><br/>
+                Team Values: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_team_values.time).toLocaleString('de-DE')}</Typography><br/>
               </Typography>
             </Paper>
           </TabPanel>          

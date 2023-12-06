@@ -8,7 +8,8 @@ import requests
 from kickbase.endpoints.user import User, League
 from kickbase import exceptions
 
-from pprint import pprint
+### -------------------------------------------------------------------
+
 
 def login(email: str, password: str):
     """
@@ -28,9 +29,8 @@ def login(email: str, password: str):
     ### Try to login with the given credentials via POST request
     try:
         json_response = requests.post(url, json=payload, headers=headers).json() # Save response as json
-        pprint(json_response)
     except:
-        raise exceptions.LoginException("Login failed! Please check your credentials.")
+        raise exceptions.LoginException("[CRITICAL] Login failed! Please check your credentials.")
 
     ### Call the User class from models/user.py with json_response["user"] as parameter (dict)
     user = User(json_response["user"])

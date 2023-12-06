@@ -9,8 +9,6 @@ from kickbase import exceptions
 
 from kickbase.endpoints.leagues import League_User_Info, League_Feed, Market_Players
 
-import json
-
 
 def league_user_info(token: str, league_id: str):
     """
@@ -109,14 +107,19 @@ def is_gift_available(token: str, league_id: str):
 
 def get_gift(token: str, league_id: str):
     """
-    Get the current gift.
+    ### Collect the current gift.
 
-    Expected response:
-    IF NOT COLLECTED:
-    TODO: Add response
-    
-    IF COLLECTED:
-    {"err":2080,"errMsg":"GiftAlreadyTaken"}
+    #### Expected response:  
+
+    If not collected:
+    ```json
+        TODO: Add response
+    ```
+
+    If collected:
+    ```json
+        {"err":2080,"errMsg":"GiftAlreadyTaken"}
+    ```
     """
     url = f"https://api.kickbase.com/leagues/{league_id}/collectgift"
     headers = {
@@ -137,7 +140,7 @@ def get_gift(token: str, league_id: str):
 
 def get_market(token: str, league_id: str):
     """
-    Get the current players on the market in the league
+    ### Get the current players on the market in the league
 
     Expected response:
     ```json
