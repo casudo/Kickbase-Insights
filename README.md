@@ -20,10 +20,10 @@ If you want to run this in a Docker container, you'll first need to set some man
 | Variable | Required | Description |
 | --- | --- | --- |
 | `KB_MAIL` | **Yes** | Your Kickbase E-Mail. |
-| `KB_PASS` | **Yes** | Your Kickbase password. |
+| `KB_PASSWORD` | **Yes** | Your Kickbase password. |
 | `DISCORD_WEBHOOK` | **Yes** | The Discord webhook URL to send notifications to. |
 | `RUN_SCHEDULE` | No | The cron expression when the script should fetch new information from the API. If not set, defaults to `10 2,6,10,14,18,22 * * *`. |
-| `WATCHPACK_POLLING` | **Yes** | Used to [apply new changes](https://stackoverflow.com/a/72661752) in the filesystem on runtime. |
+| `WATCHPACK_POLLING` | **Yes** | Used to [apply new changes](https://stackoverflow.com/a/72661752) in the filesystem on runtime. If not set, defaults to `true`. |
 
 ### docker run
 ```bash
@@ -32,7 +32,7 @@ docker run -d \
     --restart=unless-stopped \
     -p <port>:3000 \
     -e KB_MAIL=<kickbase_email> \
-    -e KB_PASS=<kickbase_password> \
+    -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
     -e RUN_SCHEDULE=<your_schedule> \ 
     -e WATCHPACK_POLLING=true \
@@ -91,14 +91,15 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Sum. Transfererlöse: Add custom scale for chart  
 - Dev: Execution time  
 - Misc: Unsold starter players    
+- Display version from container image version   
 
 **Backend:**  
 - Fix all TODOs  
 - Measure time of API calls and display them under Misc?  
 - Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)  
-- Use `main.py` only as starting point and move all code to different files (mabye in the modules?)  
 - Fix TZ in Ubuntu image ([Stackoverflow](https://serverfault.com/questions/683605/docker-container-time-timezone-will-not-reflect-changes))  
 - Discord notifications  
+- Logging module for entrypoint.py  
 
 **Misc:**  
 - Add Postman workspace  
