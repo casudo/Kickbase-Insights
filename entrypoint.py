@@ -1,8 +1,8 @@
+import subprocess
 from os import getenv, chdir
 from time import sleep
 from croniter import croniter
 from datetime import datetime
-import subprocess
 
 ### ===============================================================================
 
@@ -25,8 +25,7 @@ DISCORD_WEBHOOK = getenv("DISCORD_WEBHOOK")
 RUN_SCHEDULE = getenv("RUN_SCHEDULE", "10 2,6,10,14,18,22 * * *")
 ### 10 */8 * * * -> At minute 10 past every 8th hour
 ### 10 2,6,10,14,18,22 * * * -> At minute 10 past every 4th hour starting from 2am
-
-### ===============================================================================
+WATCHPACK_POLLING = getenv("WATCHPACK_POLLING", "true")
 
 ### Display a welcoming message in Docker logs
 print("👍 Container started. Welcome!")
@@ -53,20 +52,25 @@ if RUN_SCHEDULE == "10 2,6,10,14,18,22 * * *":
 else:
     print("  ⚠️ RUN_SCHEDULE has been set to a custom value:", RUN_SCHEDULE)
 
+### Check if WATCHPACK_POLLING is set by user
+if WATCHPACK_POLLING == "true":
+    print("  ✅ WATCHPACK_POLLING is set to true.")
+else:
+    print("  ✅ Using default value for WATCHPACK_POLLING.")
+
 ### ===============================================================================
 
-print("DEBUG ep.py: Running main")
+# print("\nDEBUG ep.py: Running main")
 subprocess.run(["python3", "-u", "/code/main.py"])
-# sleep??
 
-print("DEBUG ep.py: Changing directiry")
+# print("\nDEBUG ep.py: Changing directiry")
 chdir("/code/frontend")
 
-print("DEBUG ep.py: npm install")
+# print("\nDEBUG ep.py: npm install")
 subprocess.run(["npm", "install"])
+# subprocess.run(["npm", "install", "jest"])
 
-print("DEBUG ep.py: npm start")
-# subprocess.run(["npm", "start"])
+# print("\nDEBUG ep.py: npm start")
 npm_process = subprocess.Popen(["npm", "start"])
 
 ### Sleep here to give the frontend time to start
@@ -80,7 +84,7 @@ while True:
     
     if current_time_timestamp >= next_execution_timestamp:
         ### Run the python script (auto_entry.py)
-        print("  🚀 Running main.py...\n\n")
+        print("\n  🚀 Running main.py...\n\n")
         ### TODO: Log output
         subprocess.run(["python3", "-u", "/code/main.py"])
         
@@ -89,9 +93,9 @@ while True:
     else:
         ### Log the next scheduled execution time
         next_execution_readable = datetime.fromtimestamp(next_execution_timestamp).strftime('%A, %B %d, %Y %I:%M %p')
-        print("\n\n▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼")
+        print("\n\n▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼")
         print(f"👀 Next execution will be on: {next_execution_readable}")
-        print("▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲")
+        print("▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲")
 
         ### Sleep until the next scheduled time
         sleep_duration = next_execution_timestamp - current_time_timestamp
