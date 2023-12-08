@@ -8,6 +8,7 @@ import TextField from '@mui/material/TextField'
 import Grid from '@mui/material/Grid'
 import { NumericFormat } from 'react-number-format'
 import Paper from '@mui/material/Paper'
+import Tooltip from '@mui/material/Tooltip'
 
 import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
 
@@ -92,7 +93,11 @@ function LineupPlanner() {
             headerAlign: 'center',
             align: 'center',
             flex: 1,
-            renderCell: (params) => statusIcons[params.value]
+            renderCell: (params) => (
+                <Tooltip title={statusIcons[params.value].tooltip} arrow>
+                    {statusIcons[params.value].icon}
+                </Tooltip>
+            )
         },
         {
             field: 'buyPrice',

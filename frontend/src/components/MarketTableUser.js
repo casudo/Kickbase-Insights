@@ -1,4 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid'
+import Tooltip from '@mui/material/Tooltip'
 import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
 
 // Import data
@@ -42,7 +43,11 @@ function MarketTableUser() {
             headerAlign: 'center',
             align: 'center',
             flex: 1,
-            renderCell: (params) => statusIcons[params.value]
+            renderCell: (params) => (
+                <Tooltip title={statusIcons[params.value].tooltip} arrow>
+                    {statusIcons[params.value].icon}
+                </Tooltip>
+            )
         },           
         {
             field: 'price',

@@ -28,6 +28,7 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 # 8: Rote Karte (Red Card)
 # 32: 5. Gelbe Karte (Yellow Card)
 # TODO: Add "Raus aus der Liga"
+### Conversion from number to icon for the frontend in "SharedConstants.js"
 
 ### TYPE (from league feed)
 # Type 2: Verkauft an Kickbase
