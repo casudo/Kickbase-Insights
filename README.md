@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
     environment:
         - KB_MAIL=<kickbase_email>
-        - KB_PASS=<kickbase_password>
+        - KB_PASSWORD=<kickbase_password>
         - DISCORD_WEBHOOK=<discord_webhook>
         - RUN_SCHEDULE=<your_schedule>
         - WATCHPACK_POLLING=true
