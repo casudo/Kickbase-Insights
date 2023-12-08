@@ -223,6 +223,9 @@ def player_statistics(token: str, league_id: str, player_id: str):
     }
     ```
     The given attributes may change if the player is owned by a user!
+
+    #### Explanations:
+    nm = next match
     """
     url = f"https://api.kickbase.com/leagues/{league_id}/players/{player_id}/stats"
     headers = {
