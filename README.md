@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
     environment:
         - KB_MAIL=<kickbase_email>
-        - KB_PASS=<kickbase_password>
+        - KB_PASSWORD=<kickbase_password>
         - DISCORD_WEBHOOK=<discord_webhook>
         - RUN_SCHEDULE=<your_schedule>
         - WATCHPACK_POLLING=true
@@ -84,14 +84,14 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 
 ## Planned for the future
 **Frontend:**  
-- Market table: Add fitness, maybe ligainsider rating?
-- Lineup planner: Add fitness
+- Market table: Maybe add ligainsider rating?
 - Add battles  
 - Transfererlöse: Hold player for X days  
 - Sum. Transfererlöse: Add custom scale for chart  
 - Dev: Execution time  
 - Misc: Unsold starter players    
 - Display version from container image version   
+- Add stats for users in the league  
 
 **Backend:**  
 - Fix all TODOs  

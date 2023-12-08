@@ -8,8 +8,9 @@ import TextField from '@mui/material/TextField'
 import Grid from '@mui/material/Grid'
 import { NumericFormat } from 'react-number-format'
 import Paper from '@mui/material/Paper'
+import Tooltip from '@mui/material/Tooltip'
 
-import { trendIcons, currencyFormatter } from './SharedConstants'
+import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
 
 import data from '../data/taken_players.json'
 
@@ -87,6 +88,18 @@ function LineupPlanner() {
             flex: 2
         },
         {
+            field: "status",
+            headerName: "Status",
+            headerAlign: 'center',
+            align: 'center',
+            flex: 1,
+            renderCell: (params) => (
+                <Tooltip title={statusIcons[params.value].tooltip} arrow>
+                    {statusIcons[params.value].icon}
+                </Tooltip>
+            )
+        },
+        {
             field: 'buyPrice',
             headerName: 'Kaufpreis',
             type: 'number',
@@ -125,6 +138,7 @@ function LineupPlanner() {
             position: row.position,
             firstName: row.firstName,
             lastName: row.lastName,
+            status: row.status,
             buyPrice: row.buyPrice, // row.buyPrice === 0 ? row.market_value : row.buy_price,
             marketValue: row.marketValue,
             turnover: row.buyPrice === 0 ? 0 : row.marketValue - row.buyPrice,

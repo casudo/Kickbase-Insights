@@ -13,8 +13,22 @@ from kickbase import exceptions, competition
 ### ===============================================================================
 
 POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
-### TREND?
-### STATUS
+
+### TREND (can be found via player stats)
+# 0: Gleichbleibend (500k player) (Welcher Zeitraum?)
+# 1: Steigt
+# 2: Sinkt
+### Conversion from number to icon for the frontend in "SharedConstants.js"
+
+### STATUS (can be found via player stats)
+# 0: Fit (Green Checkmark)
+# 1: Verletzt (Red Cross)
+# 2: Angeschlagen (bandage)
+# 4: Aufbautraining (Orange Cone)
+# 8: Rote Karte (Red Card)
+# 32: 5. Gelbe Karte (Yellow Card)
+# TODO: Add "Raus aus der Liga"
+### Conversion from number to icon for the frontend in "SharedConstants.js"
 
 ### TYPE (from league feed)
 # Type 2: Verkauft an Kickbase
@@ -124,6 +138,7 @@ def get_free_players(token: str, league_id: str, taken_players):
                     "lastName": player.p.lastName,
                     "marketValue": player.p.marketValue,
                     "trend": player.p.marketValueTrend,
+                    "status": player.p.status,
                     "points": player.p.totalPoints,
                 })
 
