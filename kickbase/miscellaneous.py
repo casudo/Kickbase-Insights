@@ -13,8 +13,19 @@ from kickbase import exceptions, competition
 ### ===============================================================================
 
 POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
-### TREND?
-### STATUS
+
+### TREND (can be found via player stats)
+# 0: Gleichbleibend (500k player) (Welcher Zeitraum?)
+# 1: Steigt
+# 2: Sinkt
+### Conversion from number to icon for the frontend in "SharedConstants.js"
+
+### STATUS (can be found via player stats)
+# 0: Fit (Green Checkmark)
+# 1: Verletzt (Red Cross)
+# 2: Angeschlagen (bandage)
+# 4: Aufbautraining (Orange Cone)
+# TODO: Add "Raus aus der Liga"
 
 ### TYPE (from league feed)
 # Type 2: Verkauft an Kickbase
