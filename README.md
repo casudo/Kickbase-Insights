@@ -99,7 +99,8 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)  
 - Fix TZ in Ubuntu image ([Stackoverflow](https://serverfault.com/questions/683605/docker-container-time-timezone-will-not-reflect-changes))  
 - Discord notifications  
-- Logging module for entrypoint.py  
+- Logging module for entrypoint.py   
+- Add linter/formatter  
 
 **Misc:**  
 - Add Postman workspace  
