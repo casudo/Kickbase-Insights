@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid'
-import { trendIcons, currencyFormatter } from './SharedConstants'
+import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
 
 // Import data
 import data from '../data/market_user.json'
@@ -36,6 +36,14 @@ function MarketTableUser() {
             align: 'center',
             flex: 2
         },
+        {
+            field: "status",
+            headerName: "Status",
+            headerAlign: 'center',
+            align: 'center',
+            flex: 1,
+            renderCell: (params) => statusIcons[params.value]
+        },           
         {
             field: 'price',
             headerName: 'Preis',
@@ -78,6 +86,7 @@ function MarketTableUser() {
             firstName: row.firstName,
             lastName: row.lastName,
             price: row.price,
+            status: row.status,
             trend: row.trend,
             seller: row.seller,
             date: row.expiration,

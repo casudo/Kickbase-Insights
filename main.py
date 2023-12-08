@@ -196,6 +196,7 @@ def market(user_token, league_info):
                 "firstName": f"{player.firstName}", 
                 "lastName": f"{player.lastName}",
                 "price": player.price,
+                "status": player.status,
                 "trend": player.marketValueTrend,
                 "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
             })
@@ -208,6 +209,7 @@ def market(user_token, league_info):
                 "firstName": f"{player.firstName}", 
                 "lastName": f"{player.lastName}",
                 "price": player.price,
+                "status": player.status,
                 "trend": player.marketValueTrend,
                 "seller": player.username,
                 "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
