@@ -137,6 +137,7 @@ def get_free_players(token: str, league_id: str, taken_players):
                     "lastName": player.p.lastName,
                     "marketValue": player.p.marketValue,
                     "trend": player.p.marketValueTrend,
+                    "status": player.p.status,
                     "points": player.p.totalPoints,
                 })
 

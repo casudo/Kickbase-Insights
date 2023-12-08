@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid'
-import { trendIcons, currencyFormatter } from './SharedConstants'
+import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
 import { Box } from '@mui/material'
 
 import data from '../data/taken_players.json'
@@ -28,6 +28,14 @@ function TakenPlayersTable() {
             align: 'center',
             flex: 2
         },
+        {
+            field: "status",
+            headerName: "Status",
+            headerAlign: 'center',
+            align: 'center',
+            flex: 1,
+            renderCell: (params) => statusIcons[params.value]
+        },        
         {
             field: 'buyPrice',
             headerName: 'Kaufpreis',
@@ -85,6 +93,7 @@ function TakenPlayersTable() {
             teamLogo: process.env.PUBLIC_URL + "/images/" + row.teamId + ".png",
             firstName: row.firstName,
             lastName: row.lastName,
+            status: row.status,
             buyPrice: row.buyPrice,
             marketValue: row.marketValue,
             turnover: row.buyPrice === 0 ? 0 : row.marketValue - row.buyPrice,

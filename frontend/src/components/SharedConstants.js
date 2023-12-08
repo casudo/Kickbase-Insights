@@ -8,7 +8,8 @@ import StatusFitIcon from '@mui/icons-material/CheckCircle'
 import StatusVerletztIcon from '@mui/icons-material/Cancel'
 import StatusAngeschlagenIcon from '@mui/icons-material/Healing'
 import StatusAufbautrainingIcon from '@mui/icons-material/Construction'
-import { StatusRedCardIcon, Status5YellowCardIcon } from '@mui/icons-material/Square'
+import StatusRedCardIcon from '@mui/icons-material/Square'
+import Status5YellowCardIcon from '@mui/icons-material/Square'
 
 
 export const trendIcons = {
@@ -24,7 +25,7 @@ export const statusIcons = {
     4: <StatusAufbautrainingIcon sx={{ color: 'brown' }} />,
     // 5: <StatusRausAusDerLiga sx={{ color: 'blue' }} />,
     8: <StatusRedCardIcon sx={{ color: "red" }} />,
-    32: <Status5YellowCardIcon sx={{ color: "gold" }} />,
+    32: <Status5YellowCardIcon sx={{ color: "gold" }} />
 }
 
 export const currencyFormatter = new Intl.NumberFormat('de-DE',

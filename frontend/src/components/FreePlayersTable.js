@@ -1,6 +1,6 @@
 import { DataGrid } from '@mui/x-data-grid'
 
-import { trendIcons, currencyFormatter } from './SharedConstants'
+import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
 
 import data from '../data/free_players.json'
 
@@ -36,6 +36,14 @@ function FreePlayersTable() {
             flex: 2
         },
         {
+            field: "status",
+            headerName: "Status",
+            headerAlign: 'center',
+            align: 'center',
+            flex: 1,
+            renderCell: (params) => statusIcons[params.value]
+        },  
+        {
             field: 'marketValue',
             headerName: 'Marktwert',
             type: 'number',
@@ -67,6 +75,7 @@ function FreePlayersTable() {
             teamLogo: process.env.PUBLIC_URL + "/images/" + row.teamId + ".png",
             firstName: row.firstName,
             lastName: row.lastName,
+            status: row.status,
             marketValue: row.marketValue,
             points: row.points,
             position: row.position,
