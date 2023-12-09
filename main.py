@@ -83,6 +83,7 @@ def main():
         league_users = taken_free_players(user_token, league_info)
         turnovers(user_token, league_info, league_users)
         team_value_per_match_day(user_token, league_info, league_users)
+        league_user_stats_tables(user_token, league_info, league_users)
 
     except exceptions.LoginException as e:
         print(e)
@@ -550,6 +551,59 @@ def team_value_per_match_day(user_token, league_info, league_users):
         f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
         logging.debug("Created file ts_team_values.json")
 
+
+def league_user_stats_tables(user_token, league_info, league_users):
+    logging.info("Getting league user stats...")
+
+    final_user_stats = []
+
+    ### Loop through all users in the league
+    for real_user in league_users.get("users"):
+        ### Get stats for each user
+        user_stats = leagues.user_stats(user_token, league_info[0].id, real_user["id"])
+
+        ### Create a custom json dict for every user
+        final_user_stats.append({
+            ### Shared stats
+            "user": real_user["name"],
+            "profilePic": user_stats.get("profileUrl", ""),
+            ### Stats for the League Users Table
+            "placement": user_stats["placement"],
+            "points": user_stats["points"],
+            "teamValue": user_stats["teamValue"],
+            # "maxBuyPrice": user_stats["leagueUser"]["maxBuyPrice"],
+            # "maxBuyFirstName": user_stats["leagueUser"]["maxBuyFirstName"],
+            # "maxBuyLastName": user_stats["leagueUser"]["maxBuyLastName"],
+            # "maxSellPrice": user_stats["leagueUser"]["maxSellPrice"],
+            # "maxSellFirstName": user_stats["leagueUser"]["maxSellFirstName"],
+            # "maxSellLastName": user_stats["leagueUser"]["maxSellLastName"]
+            ### Stats for the Season Stats Table
+            "avgPoints": user_stats["seasons"][0]["averagePoints"],
+            "maxPoints": user_stats["seasons"][0]["maxPoints"],
+            "minPoints": user_stats["seasons"][0]["minPoints"],
+            "mdWins": user_stats["seasons"][0]["wins"],
+            "bought": user_stats["seasons"][0]["bought"],
+            "sold": user_stats["seasons"][0]["sold"],
+            # "pointsGoalKeeper": user_stats["seasons"][0]["pointsGoalKeeper"],
+            # "pointsDefenders": user_stats["seasons"][0]["pointsDefenders"],
+            # "pointsMidFielders": user_stats["seasons"][0]["pointsMidFielders"],
+            # "pointsForwards": user_stats["seasons"][0]["pointsForwards"],
+            # "avgGoalKeeper": user_stats["seasons"][0]["averageGoalKeeper"],
+            # "avgDefenders": user_stats["seasons"][0]["averageDefenders"],
+            # "avgMidFielders": user_stats["seasons"][0]["averageMidFielders"],
+            # "avgForwards": user_stats["seasons"][0]["averageForwards"],
+        })            
+
+    logging.info("Got league user stats.\n")
+
+    with open("/code/frontend/src/data/league_user_stats.json", "w") as f:
+        f.write(json.dumps(final_user_stats, indent=2))
+        logging.debug("Created file league_user_stats.json")
+
+    ### Timestamp for frontend
+    with open("/code/frontend/src/data/timestamps/ts_league_user_stats.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        logging.debug("Created file ts_league_user_stats.json")
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
