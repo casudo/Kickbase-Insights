@@ -16,6 +16,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Grid from '@mui/material/Grid'
 import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/Close'
+import Button from '@mui/material/Button';
 
 // Import custom components from the project
 import MarketTableKickbase from "./components/MarketTableKickbase"
@@ -31,6 +32,7 @@ import TeamValueLineChart from './components/TeamValueLineChart'
 import Changelog from './components/Changelog'
 import LeagueUserTable from './components/LeagueUserTable'
 import SeasonStatsTable from './components/SeasonStatsTable'
+import LivePoints from './components/LivePoints'
 
 // Import timestamps
 import timestamp_main from './data/timestamps/ts_main.json'
@@ -43,6 +45,7 @@ import timestamp_turnovers from './data/timestamps/ts_turnovers.json'
 import timestamp_team_values from './data/timestamps/ts_team_values.json'
 import timestamp_revenue_sum from './data/timestamps/ts_revenue_sum.json'
 import timestamp_league_user_stats from './data/timestamps/ts_league_user_stats.json'
+import timestamp_live_points from './data/timestamps/ts_live_points.json'
 
 // Create dark and light themes using Material-UI
 const darkTheme = createTheme({ palette: { mode: 'dark' } })
@@ -50,6 +53,41 @@ const lightTheme = createTheme({ palette: { mode: 'light' } })
 
 // Main App component
 function App() {
+
+  // DEBUG
+  // State to manage refreshing
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Function to handle refresh button click
+  const handleRefresh = async () => {
+      // Set refreshing to true to indicate the refresh is in progress
+      setRefreshing(true);
+
+      try {
+          // TODO: Make a request to your backend API to fetch updated live points data
+          // Example: const response = await fetch('/api/livepoints');
+          // Update the 'data' state with the new data
+          // const newData = await response.json();
+          // setData(newData);
+          const response = await fetch('http://127.0.0.1:5000/api/livepoints');
+          const data = await response.json();
+          // Handle the retrieved data (update state, etc.)
+          console.log(data);
+      } catch (error) {
+          console.error('Error refreshing live points data:', error);
+      } finally {
+          // Set refreshing to false once the refresh is complete
+          setRefreshing(false);
+      }
+  };
+
+  // Render the refresh button
+  const RefreshButton = () => (
+    <Button onClick={handleRefresh} disabled={refreshing}>
+        {refreshing ? 'Refreshing...' : 'Refresh Live Points'}
+    </Button>
+  );
+
   // State variables
   const [selectedTab, setSelectedTab] = useState("1")
   const [darkModeEnabled, setDarkModeEnabled] = useState(false)
@@ -107,9 +145,10 @@ function App() {
                 <Tab label="Transfers" value="1" />
                 <Tab label="Transfererlöse" value="2" />
                 <Tab label="Spieler" value="3" />
-                <Tab label="Liga" value="4" />
-                <Tab label="Changelog" value="5" />
-                <Tab label="Dev" value="6" />
+                <Tab label="LIVE" value="4" />
+                <Tab label="Liga" value="5" />
+                <Tab label="Changelog" value="6" />
+                <Tab label="Dev" value="7" />
               </TabList>
             </Grid>
 
@@ -170,6 +209,14 @@ function App() {
           </TabPanel>
 
           <TabPanel sx={{ padding: 0 }} value="4">
+            {/* "Live" related components */}
+            <Paper sx={{ marginTop: "25px"}} elevation={5}>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Live Points <RefreshButton/></Typography>
+              <LivePoints />
+            </Paper>
+          </TabPanel>
+
+          <TabPanel sx={{ padding: 0 }} value="5">
             {/* "Liga" related components */}
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
               <Typography variant="h4" sx={{ padding: '15px' }}>Tabelle <HelpIcon text="Die Statistiken beziehen sich auf die aktuell laufende Saison."/></Typography>
@@ -187,7 +234,7 @@ function App() {
             </Paper>        
           </TabPanel>
 
-          <TabPanel sx={{ padding: 0 }} value="5">
+          <TabPanel sx={{ padding: 0 }} value="6">
             {/* "Changelog" related components */}
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
               <Typography variant="h4" sx={{ padding: '15px' }}>Changelog</Typography>
@@ -195,7 +242,7 @@ function App() {
             </Paper>
           </TabPanel>
 
-          <TabPanel sx={{ padding: 0 }} value="6">
+          <TabPanel sx={{ padding: 0 }} value="7">
             {/* "Dev" related components */}
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
               <Typography variant="h4" sx={{ padding: '15px' }}>Development</Typography>
@@ -213,6 +260,7 @@ function App() {
                 Revenue Sum: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_revenue_sum.time).toLocaleString('de-DE')}</Typography><br/>
                 Team Values: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_team_values.time).toLocaleString('de-DE')}</Typography><br/>
                 League User Stats: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_league_user_stats.time).toLocaleString('de-DE')}</Typography><br/>
+                Live Points: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_live_points.time).toLocaleString('de-DE')}</Typography><br/>
               </Typography>
             </Paper>
           </TabPanel>          
