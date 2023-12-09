@@ -1,7 +1,18 @@
-> Note: This is a hobby project to test stuff with JSON and the cores of Python. Feel free to create issues and contribute.  
+<div align="center">
+  <a href="https://de.kickbase.com/"><img width="400" alt="Logo" src="kickbase.jpg"></a>
+  <br>
+  <h1>Kickbase Insights</h1>
+  This project is a used to gather data from <a href="https://www.kickbase.com/">Kickbase</a> API endpoint and visualize it in a web interface, acting as alternative for the pro/member membership.
 
-# Kickbase Insights
-This project is a used to gather data from [Kickbase](https://www.kickbase.com/) API endpoint and automate various interactions. It is planned to add a nice GUI in the feature, acting as a dashboard for your Kickbase team.
+  ---
+
+  <!-- Placeholder for badges -->
+  ![GitHub License](https://img.shields.io/github/license/casudo/kickbase-insights) ![GitHub release (with filter)](https://img.shields.io/github/v/release/casudo/kickbase-insights)
+
+
+</div>
+
+> Note: This is a hobby project to test stuff with JSON and the cores of Python. Feel free to create issues and contribute.  
 
 ##### Table of Contents
 - [Docker](#docker)
