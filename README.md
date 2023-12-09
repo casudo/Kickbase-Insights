@@ -85,7 +85,13 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 ## Planned for the future
 **Frontend:**  
 - Market table: Maybe add ligainsider rating?
-- Add battles  
+- Add base features
+  - Feed
+  - Lineup
+  - Battles
+  - Next matches
+  - League table
+  - Top players
 - Transfererlöse: Hold player for X days  
 - Sum. Transfererlöse: Add custom scale for chart  
 - Dev: Execution time  
@@ -107,6 +113,7 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Add Workflow chart  
 - Add ./data, ./data/timestamp and logs/ folders to git  
 - Automatically disable caching  
+- Create a clean README.md 8-)  
 
 ### Thanks to
 - [@fabfischer](https://github.com/fabfischer) for the inspiration and the currently great and working [Kickbase+ web client](https://github.com/fabfischer/kickbase-plus)  
