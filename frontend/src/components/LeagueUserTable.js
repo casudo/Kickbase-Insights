@@ -3,7 +3,7 @@ import { currencyFormatter } from "./SharedConstants"
 import Avatar from "@mui/material/Avatar"
 
 // Import data
-import data from "../data/league_user_table.json"
+import data from "../data/league_user_stats.json"
 
 ////// Calculate the difference in points between the users
 // Sort the data by points in descending order
