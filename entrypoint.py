@@ -72,6 +72,7 @@ subprocess.run(["npm", "install"])
 
 # print("\nDEBUG ep.py: npm start")
 npm_process = subprocess.Popen(["npm", "start"])
+flask_api = subprocess.Popen(["python3", "-u", "/code/backendAPI.py"])
 
 ### Sleep here to give the frontend time to start
 sleep(300)

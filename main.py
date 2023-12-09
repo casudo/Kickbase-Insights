@@ -5,7 +5,12 @@ from os import getenv
 from art import tprint
 from sys import stdout
 
+# from backendAPI import backendAPI
+# from backendAPI import app
+
 from kickbase import exceptions, user, miscellaneous, leagues, competition
+
+global user_token, league_info
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
@@ -84,6 +89,8 @@ def main():
         turnovers(user_token, league_info, league_users)
         team_value_per_match_day(user_token, league_info, league_users)
         league_user_stats_tables(user_token, league_info, league_users)
+        ### RUN To first get the points??
+        # live_points(user_token, league_info)
 
     except exceptions.LoginException as e:
         print(e)
@@ -99,13 +106,13 @@ def main():
 def login():
     logging.info("Logging in...")
 
-    # ### If script is executed locally, use the arguments from the command line
+    ### If script is executed locally, use the arguments from the command line
     if args.usermail and args.password:
         user_info, league_info, user_token = user.login(args.usermail, args.password)
     ### else when script is executed in Docker, use the environment variables
     else:
         user_info, league_info, user_token = user.login(kb_mail, kb_password)
-    
+
     ### TODO: Format?
     logging.debug(f"{user_info.name}")
     logging.debug(f"{league_info[0].name}")
@@ -605,6 +612,58 @@ def league_user_stats_tables(user_token, league_info, league_users):
         f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
         logging.debug("Created file ts_league_user_stats.json")
 
+
+def live_points(user_token, league_info):
+    logging.info("Getting live points...")
+
+    ### Get the current live points
+    live_points = leagues.live_points(user_token, league_info[0].id)
+
+    ### Create a custom json dict for every user and his players
+    final_live_points = []
+
+    for user in live_points["u"]:
+        ### Create a custom json dict for every player of the user
+        players = []
+
+        for player in user["pl"]:
+            players.append({
+                "playerId": player["id"],
+                "teamId": player["tid"],
+                "firstName": player.get("fn", ""),  # Use an empty string if "fn" is not present
+                "lastName": player["n"],
+                "number": player["nr"],
+                "points": player["t"],
+                "goals": player["g"],
+                "assists": player["a"],
+                "redCards": player["r"],
+                "yellowCards": player["y"],
+                "yellowRedCards": player["yr"],
+                ### Custom attributes for the frontend
+                "fullName": f"{player.get('fn', '')} {player['n']} ({player['nr']})",
+            })
+
+        final_live_points.append({
+            "userId": user["id"],
+            "userName": user["n"],
+            # Profile Pic?
+            "livePoints": user["t"],
+            "totalPoints": user["st"],
+            "players": players,
+        })
+
+    logging.info("Got live points.\n")
+
+    with open("/code/frontend/src/data/live_points.json", "w") as f:
+        f.write(json.dumps(final_live_points, indent=2))
+        logging.debug("Created file live_points.json")
+
+    ### Timestamp for frontend
+    with open("/code/frontend/src/data/timestamps/ts_live_points.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        logging.debug("Created file ts_live_points.json")
+
+
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
@@ -632,6 +691,11 @@ if __name__ == "__main__":
     start_time = time.time()
 
     main()
+
+    ### DEBUG
+    # logging.info("DEBUG: Starting Flask server...")
+    # app.run(host='0.0.0.0', port=5000, debug=True)
+    # logging.info("DEBUG: Flask server started!")
 
     ### Timestamp for frontend
     with open("/code/frontend/src/data/timestamps/ts_main.json", "w") as f:
