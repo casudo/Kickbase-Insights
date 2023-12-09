@@ -101,6 +101,7 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Discord notifications  
 - Logging module for entrypoint.py   
 - Add linter/formatter  
+- Categorize components to frontend menu  
 
 **Misc:**  
 - Add Postman workspace  
