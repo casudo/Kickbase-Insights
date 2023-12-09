@@ -29,6 +29,7 @@ import HelpIcon from './components/HelpIcon'
 import MarketValueChangesTable from './components/MarketValueChangesTable'
 import TeamValueLineChart from './components/TeamValueLineChart'
 import Changelog from './components/Changelog'
+import LeagueUserTable from './components/LeagueUserTable'
 
 // Import timestamps
 import timestamp_main from './data/timestamps/ts_main.json'
@@ -40,6 +41,7 @@ import timestamp_free_players from './data/timestamps/ts_free_players.json'
 import timestamp_turnovers from './data/timestamps/ts_turnovers.json'
 import timestamp_team_values from './data/timestamps/ts_team_values.json'
 import timestamp_revenue_sum from './data/timestamps/ts_revenue_sum.json'
+import timestamp_league_user_table from './data/timestamps/ts_league_user_table.json'
 
 // Create dark and light themes using Material-UI
 const darkTheme = createTheme({ palette: { mode: 'dark' } })
@@ -104,7 +106,7 @@ function App() {
                 <Tab label="Transfers" value="1" />
                 <Tab label="Transfererlöse" value="2" />
                 <Tab label="Spieler" value="3" />
-                <Tab label="Extras" value="4" />
+                <Tab label="Liga" value="4" />
                 <Tab label="Changelog" value="5" />
                 <Tab label="Dev" value="6" />
               </TabList>
@@ -167,13 +169,17 @@ function App() {
           </TabPanel>
 
           <TabPanel sx={{ padding: 0 }} value="4">
-            {/* "Misc" related components */}
+            {/* "Liga" related components */}
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
-              <Typography variant="h4" sx={{ padding: '15px' }}>Extras</Typography>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Tabelle</Typography>
+              <LeagueUserTable />
+            </Paper>            
+            <Paper sx={{ marginTop: "25px"}} elevation={5}>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Battles</Typography>
               <Typography variant="body1" sx={{ padding: '0px 15px 15px 15px' }}>
                 In Arbeit...
               </Typography>
-            </Paper>
+            </Paper>            
           </TabPanel>
 
           <TabPanel sx={{ padding: 0 }} value="5">
@@ -201,6 +207,7 @@ function App() {
                 Turnovers: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_turnovers.time).toLocaleString('de-DE')}</Typography><br/>
                 Revenue Sum: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_revenue_sum.time).toLocaleString('de-DE')}</Typography><br/>
                 Team Values: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_team_values.time).toLocaleString('de-DE')}</Typography><br/>
+                League User Table: <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_league_user_table.time).toLocaleString('de-DE')}</Typography><br/>
               </Typography>
             </Paper>
           </TabPanel>          
