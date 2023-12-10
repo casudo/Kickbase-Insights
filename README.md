@@ -21,6 +21,7 @@
 - [Local usage](#local-usage)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
+- [Development](#development)
 - [Planned for the future](#planned-for-the-future)
 - [Thanks to](#thanks-to)
 - [License](#license)
@@ -43,7 +44,7 @@ If you want to run this in a Docker container, you'll first need to set some man
 docker run -d \
     --name=kickbase_insights \
     --restart=unless-stopped \
-    -p <frontend_port>:3000 <backend_port>:5000 \
+    -p <frontend_port>:3000 -p <backend_port>:5000 \
     -e KB_MAIL=<kickbase_email> \
     -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
@@ -107,6 +108,22 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
     - `npm install`  
     - `npm start`  
 6. Visit the GUI at `localhost:3000`  
+
+---
+
+## Development
+If you want to contribute to this project, you can follow the steps below to start the development environment.  
+```bash
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true ubuntu
+```  
+Run this long command to setup the container:  
+```bash
+mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano python3 pip nodejs npm git -y && git clone https://github.com/casudo/Kickbase-Insights.git . && pip install -r requirements.txt && mkdir -p frontend/data/timestamps && mkdir logs && cd frontend && npm install
+```  
+
+Now you're ready to go. Keep in mind that you'll first need to run `main.py` to get the required data for the frontend.  
+
+You'll also need to manually run `npm start` in the `frontend` folder as well as `python3 -u -m flask run --host=0.0.0.0 --port=5000` in the `/code` folder.  
 
 ---
 
