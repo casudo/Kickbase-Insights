@@ -74,4 +74,4 @@ def get_live_points():
     return jsonify(final_live_points)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
