@@ -122,7 +122,7 @@ function App() {
             </Grid>
 
             <Grid item sx={{ textAlign: 'right' }}>
-              <Typography variant="button" style={{ color: 'green' }}>V1.3.0</Typography><br/>
+              <Typography variant="button" style={{ color: 'green' }}>V1.4.0</Typography><br/>
               <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_main.time).toLocaleString('de-DE')}</Typography>
             </Grid>
           </Grid>
