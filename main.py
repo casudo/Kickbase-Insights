@@ -5,12 +5,7 @@ from os import getenv
 from art import tprint
 from sys import stdout
 
-# from backendAPI import backendAPI
-# from backendAPI import app
-
 from kickbase import exceptions, user, miscellaneous, leagues, competition
-
-global user_token, league_info
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
@@ -89,8 +84,7 @@ def main():
         turnovers(user_token, league_info, league_users)
         team_value_per_match_day(user_token, league_info, league_users)
         league_user_stats_tables(user_token, league_info, league_users)
-        ### RUN To first get the points??
-        # live_points(user_token, league_info)
+        live_points(user_token, league_info) # needs to be run first to initialize the live_points.json file
 
     except exceptions.LoginException as e:
         print(e)
@@ -691,11 +685,6 @@ if __name__ == "__main__":
     start_time = time.time()
 
     main()
-
-    ### DEBUG
-    # logging.info("DEBUG: Starting Flask server...")
-    # app.run(host='0.0.0.0', port=5000, debug=True)
-    # logging.info("DEBUG: Flask server started!")
 
     ### Timestamp for frontend
     with open("/code/frontend/src/data/timestamps/ts_main.json", "w") as f:

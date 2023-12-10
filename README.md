@@ -109,6 +109,7 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Misc: Unsold starter players    
 - Display version from container image version   
 - Add stats for users in the league  
+- Fix TZ on frontend (market table)  
 
 **Backend:**  
 - Fix all TODOs  
