@@ -53,48 +53,38 @@ const lightTheme = createTheme({ palette: { mode: 'light' } })
 
 // Main App component
 function App() {
+  // State variables
+  const [selectedTab, setSelectedTab] = useState("1")
+  const [darkModeEnabled, setDarkModeEnabled] = useState(false)
+  const [disclaimerVisible, setDisclaimerVisible] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // State to manage refreshing
+  
+  // Handlers
+  const handleCloseDisclaimer = () => setDisclaimerVisible(false);
 
-  // DEBUG
-  // State to manage refreshing
-  const [refreshing, setRefreshing] = useState(false);
-
-  // Function to handle refresh button click
-  const handleRefresh = async () => {
-      // Set refreshing to true to indicate the refresh is in progress
-      setRefreshing(true);
-
-      try {
-          // TODO: Make a request to your backend API to fetch updated live points data
-          // Example: const response = await fetch('/api/livepoints');
-          // Update the 'data' state with the new data
-          // const newData = await response.json();
-          // setData(newData);
-          const response = await fetch('http://127.0.0.1:5000/api/livepoints');
-          const data = await response.json();
-          // Handle the retrieved data (update state, etc.)
-          console.log(data);
-      } catch (error) {
-          console.error('Error refreshing live points data:', error);
-      } finally {
-          // Set refreshing to false once the refresh is complete
-          setRefreshing(false);
-      }
-  };
-
-  // Render the refresh button
   const RefreshButton = () => (
     <Button onClick={handleRefresh} disabled={refreshing}>
         {refreshing ? 'Refreshing...' : 'Refresh Live Points'}
     </Button>
   );
 
-  // State variables
-  const [selectedTab, setSelectedTab] = useState("1")
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false)
-  const [disclaimerVisible, setDisclaimerVisible] = useState(true);
+  // Function to handle refresh button click
+  const handleRefresh = async () => {
+    // Set refreshing to true to indicate the refresh is in progress
+    setRefreshing(true);
 
-  // Handlers
-  const handleCloseDisclaimer = () => setDisclaimerVisible(false);
+    try {
+      const response = await fetch('/api/livepoints')
+      const data = await response.json();
+      // Handle the retrieved data (update state, etc.)
+      console.log(data);
+    } catch (error) {
+      console.error('Error refreshing live points data:', error);
+    } finally {
+      // Set refreshing to false once the refresh is complete
+      setRefreshing(false);
+    }
+  };
 
   // Return the JSX for the App component
   // TODO: The what?
@@ -211,7 +201,7 @@ function App() {
           <TabPanel sx={{ padding: 0 }} value="4">
             {/* "Live" related components */}
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
-              <Typography variant="h4" sx={{ padding: '15px' }}>Live Points <RefreshButton/></Typography>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Live Punkte <HelpIcon text="Um die Live Punkte zu benutzen, aktualisiert die Punkte mit den dafür vorgesehenen Knopf. Anschließend muss die Website einmal neu geladen werden."/> <RefreshButton/></Typography>
               <LivePoints />
             </Paper>
           </TabPanel>
