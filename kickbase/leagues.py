@@ -441,6 +441,86 @@ def user_stats(token: str, league_id: str, user_id: str):
     return response
 
 
+def live_points(token: str, league_id: str):
+    """
+    Get the live points of all users in the given league.
+
+    Expected response:
+    ```json
+    {
+        "rtc": {
+            "sk": "xxxx",
+            "t": "rt",
+            "st": "pubnub"
+        },
+        "lcn": "xxxx",
+        "scn": "StatsV2C1",
+        "epp": 1000.0,
+        "md": [ ... ],   
+        "u": [
+            {
+                "id": "xxxx",
+                "n": "USERNAME",
+                "i": "https://kickbase.b-cdn.net/user/xxxx.jpeg",
+                "t": 419,
+                "st": 12199,
+                "b": 1.0,
+                "pl": [
+                    {
+                        "id": "497",
+                        "tid": "11",
+                        "n": "Casteels",
+                        "fn": "Koen",
+                        "nr": 1,
+                        "p": 1,
+                        "t": 16,
+                        "g": 0,
+                        "r": 0,
+                        "y": 0,
+                        "yr": 0,
+                        "a": 0,
+                        "s": 1,
+                        "mdst": 5
+                    },
+                    {
+                        "id": "6668",
+                        "tid": "2",
+                        "n": "Kim",
+                        "fn": "Min-Jae",
+                        "nr": 3,
+                        "p": 2,
+                        "t": 42,
+                        "g": 0,
+                        "r": 0,
+                        "y": 1,
+                        "yr": 0,
+                        "a": 0,
+                        "s": 1,
+                        "mdst": 5
+                    },
+                    { ..next player.. },
+                ]
+            },
+            { ..next user.. },
+        ]
+    }
+    ```
+    """
+    url = f"https://api.kickbase.com/leagues/{league_id}/live"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the live points of all users in the given league
+    try:
+        response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
+    
+    return response
+
 ### TODO: Unused?
 def league_stats(token: str, league_id: str):
     """

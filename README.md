@@ -25,6 +25,8 @@
 - [Thanks to](#thanks-to)
 - [License](#license)
 
+---
+
 ## Docker
 If you want to run this in a Docker container, you'll first need to set some mandatory environment variables:  
 
@@ -41,7 +43,7 @@ If you want to run this in a Docker container, you'll first need to set some man
 docker run -d \
     --name=kickbase_insights \
     --restart=unless-stopped \
-    -p <port>:3000 \
+    -p <frontend_port>:3000 <backend_port>:5000 \
     -e KB_MAIL=<kickbase_email> \
     -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
@@ -59,6 +61,9 @@ services:
     image: ghcr.io/casudo/kickbase-insights:<tag>
     container_name: kickbase_insights
     restart: unless-stopped
+    ports:
+      - <frontend_port>:3000 # Frontend
+      - <backend_port>:5000 # Backend API
     environment:
         - KB_MAIL=<kickbase_email>
         - KB_PASSWORD=<kickbase_password>
@@ -67,13 +72,23 @@ services:
         - WATCHPACK_POLLING=true
 ```  
 
-Save the above as `docker-compose.yml` and run it with `docker-compose up -d`.   
+If you run this container in your LAN (via IP), you'll need to change the following line in the `App.js` file in the `frontend/src` folder to this (obv. change `<backend_port>`):     
+```js
+const response = await fetch('http://localhost:<backend_port>/api/livepoints')
+```  
 
-That's it.  
+If you make this container publically available via a domain, you'll need to create/update the following entry in your reverse proxy:  
+`your.domain.com -> <container_ip_or_hostname>:3000`  
+`your.domain.com/api/livepoints -> <container_ip_or_hostname>:5000`  
+> Note: In order to this to work, both your reverse proxy and the container need to be in the same network.  
 
-> Note: It may take some time to first run the container, so check the logs!  
+> Additional note: It may take some time to first run the container, so check the logs!  
+
+---
 
 ## Local usage
+> :warning: **Outdated and not recommended as of v1.4.0!**  
+
 To run Kickbase Insights on your local machine, you can follow the steps described below.  
 
 ### Prerequisites
@@ -93,6 +108,8 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
     - `npm start`  
 6. Visit the GUI at `localhost:3000`  
 
+---
+
 ## Planned for the future
 **Frontend:**  
 - Market table: Maybe add ligainsider rating?
@@ -108,7 +125,7 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Dev: Execution time  
 - Misc: Unsold starter players    
 - Display version from container image version   
-- Add stats for users in the league  
+- Fix TZ on frontend (market table)  
 
 **Backend:**  
 - Fix all TODOs  
@@ -116,21 +133,25 @@ To run Kickbase Insights on your local machine, you can follow the steps describ
 - Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)  
 - Fix TZ in Ubuntu image ([Stackoverflow](https://serverfault.com/questions/683605/docker-container-time-timezone-will-not-reflect-changes))  
 - Discord notifications  
-- Logging module for entrypoint.py   
+- Logging module for entrypoint.py and app.py    
 - Add linter/formatter  
 - Categorize components to frontend menu  
+- Better performance for some API calls (e.g. taken/free players)  
 
 **Misc:**  
 - Add Postman workspace  
 - Add Workflow chart  
 - Add ./data, ./data/timestamp and logs/ folders to git  
 - Automatically disable caching  
-- Create a clean README.md 8-)  
+
+---
 
 ### Thanks to
 - [@fabfischer](https://github.com/fabfischer) for the inspiration and the currently great and working [Kickbase+ web client](https://github.com/fabfischer/kickbase-plus)  
 - [@kevinskyba](https://github.com/kevinskyba) for providing the excellent [Kickbase API documentation](https://kevinskyba.github.io/kickbase-api-doc)  
 - [@roman-la](https://github.com/roman-la) for the base of the frontend  
+
+---
 
 ### License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details

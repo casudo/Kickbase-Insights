@@ -65,7 +65,6 @@ subprocess.run(["python3", "-u", "/code/main.py"])
 
 # print("\nDEBUG ep.py: Changing directiry")
 chdir("/code/frontend")
-
 # print("\nDEBUG ep.py: npm install")
 subprocess.run(["npm", "install"])
 # subprocess.run(["npm", "install", "jest"])
@@ -74,7 +73,15 @@ subprocess.run(["npm", "install"])
 npm_process = subprocess.Popen(["npm", "start"])
 
 ### Sleep here to give the frontend time to start
-sleep(300)
+sleep(120)
+
+# print("\nDEBUG ep.py: Changing directiry")
+chdir("/code/")
+# print("\nDEBUG ep.py: Starting flask api")
+flask_api = subprocess.Popen(["python3", "-u", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"])
+
+### Sleep here to give the flask server time to start
+sleep(120)
 
 next_execution_timestamp = convert_cron_to_timestamp(RUN_SCHEDULE)
 # print(f"DB: WHILE -> next execution timestamp: {next_execution_timestamp}")
