@@ -1,5 +1,5 @@
 <div align="center">
-  <a href="https://de.kickbase.com/"><img width="400" alt="Logo" src="kickbase.jpg"></a>
+  <a href="https://de.kickbase.com/"><img width="400" alt="Logo" src="repo_pictures/kickbase.jpg"></a>
   <br>
   <h1>Kickbase Insights</h1>
   This project is a used to gather data from <a href="https://www.kickbase.com/">Kickbase</a> API endpoint and visualize it in a web interface, acting as alternative for the pro/member membership.
@@ -15,6 +15,7 @@
 > Note: This is a hobby project to test stuff with JSON and the cores of Python. Feel free to create issues and contribute.  
 
 ##### Table of Contents
+- [Screenshots](#screenshots)
 - [Docker](#docker)
   - [docker run](#docker-run)
   - [Docker Compose](#docker-compose)
@@ -27,6 +28,16 @@
 - [License](#license)
 
 ---
+
+## Screenshots
+You can find some screenshots of the frontend below, not all features are shown.  
+
+> :information_source: As of v1.4.0  
+
+![Transfers](repo_pictures/transfers.png)  
+![MarketValue](repo_pictures/marketvalue.png)  
+![Revenue](repo_pictures/revenue.png)  
+![LivePoints](repo_pictures/livepoints.png)  
 
 ## Docker
 If you want to run this in a Docker container, you'll first need to set some mandatory environment variables:  
@@ -143,6 +154,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Misc: Unsold starter players    
 - Display version from container image version   
 - Fix TZ on frontend (market table)  
+- Reformat changelog  
 
 **Backend:**  
 - Fix all TODOs  

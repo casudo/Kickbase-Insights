@@ -12,7 +12,7 @@ README.md
 venv/
 __pycache__/
 *.log
-kickbase.jpg
+repo_pictures/
 
 ### Ignore auto generated files
 frontend/node_modules/
