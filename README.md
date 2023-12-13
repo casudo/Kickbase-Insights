@@ -155,6 +155,10 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Display version from container image version   
 - Fix TZ on frontend (market table)  
 - Reformat changelog  
+- Other menu layout (+ mobile responsive)  
+- Back to top button  
+- ToC on pages with lot of content  
+- Market value graph for players  
 
 **Backend:**  
 - Fix all TODOs  
