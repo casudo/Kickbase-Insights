@@ -170,6 +170,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Add linter/formatter  
 - Categorize components to frontend menu  
 - Better performance for some API calls (e.g. taken/free players)  
+- Remove argparse  
 
 **Misc:**  
 - Add Postman workspace  

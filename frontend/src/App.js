@@ -1,5 +1,5 @@
 // Import necessary dependencies from React
-import React, { useState } from 'react'
+import React, { useState, useEffect} from 'react'
 
 // Import Material-UI Components
 import Box from '@mui/material/Box'
@@ -33,6 +33,7 @@ import Changelog from './components/Changelog'
 import LeagueUserTable from './components/LeagueUserTable'
 import SeasonStatsTable from './components/SeasonStatsTable'
 import LivePoints from './components/LivePoints'
+import MarketValueChart from './components/MarketValueChart'
 
 // Import timestamps
 import timestamp_main from './data/timestamps/ts_main.json'
@@ -58,6 +59,7 @@ function App() {
   const [darkModeEnabled, setDarkModeEnabled] = useState(false)
   const [disclaimerVisible, setDisclaimerVisible] = useState(true);
   const [refreshing, setRefreshing] = useState(false); // State to manage refreshing
+  const [playerData, setPlayerData] = useState([]);
   
   // Handlers
   const handleCloseDisclaimer = () => setDisclaimerVisible(false);
@@ -85,6 +87,29 @@ function App() {
       setRefreshing(false);
     }
   };
+
+  // Function to fetch player data for a specific player ID
+  const fetchPlayerData = async (playerId) => {
+    try {
+      const response = await fetch(`/data/player_market_values/${playerId}.json`);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error(`Error fetching player data for player ID ${playerId}:`, error);
+      return null;
+    }
+  };
+  // Function to fetch data for all players
+  const fetchAllPlayerData = async () => {
+    // Replace 'playerIds' with an array of your actual player IDs
+    const playerIds = ['7288', '1234', '5678']; // example player IDs
+    const allPlayerData = await Promise.all(playerIds.map(fetchPlayerData));
+    setPlayerData(allPlayerData.filter((data) => data !== null));
+  };
+  // Fetch player data on component mount
+  useEffect(() => {
+    fetchAllPlayerData();
+  }, []);
 
   // Return the JSX for the App component
   // TODO: The what?
@@ -163,6 +188,10 @@ function App() {
             <Paper sx={{ marginTop: '25px' }} elevation={5}>
               <Typography variant="h4" sx={{ padding: '15px' }}>Marktwertveränderungen</Typography>
               <MarketValueChangesTable />
+            </Paper>
+            <Paper sx={{ marginTop: '25px' }} elevation={5}>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Marktwertveränderungen Graph</Typography>
+              <MarketValueChart playerData={playerData} />
             </Paper>
             <Paper sx={{ marginTop: '25px' }} elevation={5}>
               <Typography variant="h4" sx={{ padding: '15px' }}>Aufstellungsplaner <HelpIcon text="Der aktuelle Kontostand kann eingegeben und Spieler in der letzten Spalte zum Verkaufen markiert werden. Der neue Kontostand wird dynamisch ausgerechnet. Mögliche Formationen werden über der Tabelle angezeigt: Spieler im Kader (blau), mögliche Formation (grün), nicht mögliche Formation (rot)" /></Typography>

@@ -77,14 +77,22 @@ def main():
         logging.debug(f"Points: {league_user_info.points}")
         logging.debug(f"Rank: {league_user_info.placement}")
 
-        league_feed(user_token, league_info)
-        market(user_token, league_info)
-        market_value_changes(user_token, league_info)
-        league_users = taken_free_players(user_token, league_info)
-        turnovers(user_token, league_info, league_users)
-        team_value_per_match_day(user_token, league_info, league_users)
-        league_user_stats_tables(user_token, league_info, league_users)
-        live_points(user_token, league_info) # needs to be run first to initialize the live_points.json file
+        # league_feed(user_token, league_info)
+        # market(user_token, league_info)
+        # market_value_changes(user_token, league_info)
+        # league_users = taken_free_players(user_token, league_info)
+        # turnovers(user_token, league_info, league_users)
+        # team_value_per_match_day(user_token, league_info, league_users)
+        # league_user_stats_tables(user_token, league_info, league_users)
+        # live_points(user_token, league_info) # needs to be run first to initialize the live_points.json file
+
+        ### Measure time
+        start_time = time.time()
+        player_market_values(user_token, league_info)
+        elapsed_time_seconds = time.time() - start_time
+        minutes = int(elapsed_time_seconds // 60)
+        seconds = int(elapsed_time_seconds % 60)
+        logging.info(f"Execution time of DEBUG: {minutes}m {seconds}s")
 
     except exceptions.LoginException as e:
         print(e)
@@ -658,6 +666,45 @@ def live_points(user_token, league_info):
         logging.debug("Created file ts_live_points.json")
 
 
+def player_market_values(user_token, league_info):
+    logging.info("Getting market values for all players...")
+
+    all_player_data = []
+
+    ### Get the player ID of every player by going through all teams
+    player_id = []
+    for team_id in miscellaneous.TEAM_IDS:
+        for player in competition.team_players(user_token, team_id):
+            player_id.append(player.p.id)
+
+    ### Get market values for every player ID
+    for pid in player_id:
+        player_stats = leagues.player_statistics(user_token, league_info[0].id, pid)
+
+        ### Create a custom dictionary for every player
+        player_market_values = {
+            "playerId": player_stats["id"],
+            "firstName": player_stats.get("firstName", ""),
+            "lastName": player_stats["lastName"],
+            "marketValues": player_stats["marketValues"],
+        }
+
+        all_player_data.append(player_market_values)
+        logging.debug(f"Added data for player {pid} ({player_stats['firstName']} {player_stats['lastName']})")
+
+    logging.info("Got market values for all players.\n")
+
+    ### Write all player data to a single JSON file
+    with open("/code/frontend/src/data/all_players_data.json", "w") as f:
+        f.write(json.dumps(all_player_data, indent=2))
+        logging.debug("Created file all_players_data.json")
+    ### Timestamp for frontend
+    with open("/code/frontend/src/data/timestamps/ts_all_players_data.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        logging.debug("Created file ts_all_players_data.json")
+
+
+            
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------

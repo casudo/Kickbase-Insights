@@ -521,7 +521,7 @@ def live_points(token: str, league_id: str):
     
     return response
 
-### TODO: Unused?
+
 def league_stats(token: str, league_id: str):
     """
     Get the league statistics.
