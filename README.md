@@ -129,7 +129,7 @@ docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -
 ```  
 Run this long command to setup the container:  
 ```bash
-mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano python3 pip nodejs npm git -y && git clone https://github.com/casudo/Kickbase-Insights.git . && pip install -r requirements.txt && mkdir -p frontend/data/timestamps && mkdir logs && cd frontend && npm install
+mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano python3 pip nodejs npm git -y && git clone https://github.com/casudo/Kickbase-Insights.git . && pip install -r requirements.txt && mkdir -p frontend/src/data/timestamps && mkdir logs && cd frontend && npm install
 ```  
 
 Now you're ready to go. Keep in mind that you'll first need to run `main.py` to get the required data for the frontend.  
