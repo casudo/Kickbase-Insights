@@ -15,8 +15,8 @@ RUN pip install -r requirements.txt
 
 ### Set environment variables / build arguments
 ### Will later be read from frontend
-ARG VERSION
-ENV VERSION=$VERSION
+ARG REACT_APP_VERSION
+ENV REACT_APP_VERSION=$REACT_APP_VERSION
 
 ### Set entrypoint
 ### https://stackoverflow.com/a/29745541
