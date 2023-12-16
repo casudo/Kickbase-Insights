@@ -154,6 +154,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Add linter/formatter  
 - Categorize components to frontend menu  
 - Better performance for some API calls (e.g. taken/free players)  
+- Battles: Spieltagsdominator: Fix placements being wrong for people with the same amount of mdWins  
 
 **Misc:**  
 - Add Postman workspace  

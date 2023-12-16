@@ -16,7 +16,7 @@ function SeasonStatsTable() {
             // Display profile picture and username
             renderCell: (params) => (
                 <div style={{ display: "flex", alignItems: "center" }}>
-                    <Avatar src={params.row.profilePic} alt={params.row.user} sx={{ marginRight: 1 }} />
+                    <Avatar src={params.row.profilePic} alt={params.row.userName} sx={{ marginRight: 1 }} />
                     {params.value}
                 </div>
             ),            
@@ -99,7 +99,7 @@ function SeasonStatsTable() {
     const rows = data.map((row, i) => (
         {
             id: i,
-            user: row.user,
+            user: row.userName,
             profilePic: row.profilePic,
             avgPoints: row.avgPoints,
             maxPoints: row.maxPoints,
