@@ -565,10 +565,13 @@ def league_user_stats_tables(user_token, league_info, league_users):
 
         ### Create a custom json dict for every user
         final_user_stats.append({
-            ### Shared stats
-            "user": real_user["name"],
+            ### Shared stats 
+            "userId": real_user["id"],
+            "userName": real_user["name"],
             "profilePic": user_stats.get("profileUrl", ""),
-            ### Stats for the League Users Table
+            "mdWins": user_stats["seasons"][0]["wins"], # for current season
+            "maxPoints": user_stats["seasons"][0]["maxPoints"], # for current season
+            ### Stats for "Liga -> Tabelle" ONLY
             "placement": user_stats["placement"],
             "points": user_stats["points"],
             "teamValue": user_stats["teamValue"],
@@ -578,17 +581,17 @@ def league_user_stats_tables(user_token, league_info, league_users):
             # "maxSellPrice": user_stats["leagueUser"]["maxSellPrice"],
             # "maxSellFirstName": user_stats["leagueUser"]["maxSellFirstName"],
             # "maxSellLastName": user_stats["leagueUser"]["maxSellLastName"]
-            ### Stats for the Season Stats Table
-            "avgPoints": user_stats["seasons"][0]["averagePoints"],
-            "maxPoints": user_stats["seasons"][0]["maxPoints"],
-            "minPoints": user_stats["seasons"][0]["minPoints"],
-            "mdWins": user_stats["seasons"][0]["wins"],
-            "bought": user_stats["seasons"][0]["bought"],
-            "sold": user_stats["seasons"][0]["sold"],
-            # "pointsGoalKeeper": user_stats["seasons"][0]["pointsGoalKeeper"],
-            # "pointsDefenders": user_stats["seasons"][0]["pointsDefenders"],
-            # "pointsMidFielders": user_stats["seasons"][0]["pointsMidFielders"],
-            # "pointsForwards": user_stats["seasons"][0]["pointsForwards"],
+            ### Stats for "Liga -> Saison Statistiken" ONLY
+            "avgPoints": user_stats["seasons"][0]["averagePoints"], # for current season
+            "minPoints": user_stats["seasons"][0]["minPoints"], # for current season
+            "bought": user_stats["seasons"][0]["bought"], # for current season
+            "sold": user_stats["seasons"][0]["sold"], # for current season
+            ### Stats for "Liga -> Battles" ONLY
+            "pointsGoalKeeper": user_stats["seasons"][0]["pointsGoalKeeper"], # for current season
+            "pointsDefenders": user_stats["seasons"][0]["pointsDefenders"], # for current season
+            "pointsMidFielders": user_stats["seasons"][0]["pointsMidFielders"], # for current season
+            "pointsForwards": user_stats["seasons"][0]["pointsForwards"], # for current season
+            "combinedTransfers": user_stats["seasons"][0]["bought"] + user_stats["seasons"][0]["sold"], # for current season
             # "avgGoalKeeper": user_stats["seasons"][0]["averageGoalKeeper"],
             # "avgDefenders": user_stats["seasons"][0]["averageDefenders"],
             # "avgMidFielders": user_stats["seasons"][0]["averageMidFielders"],

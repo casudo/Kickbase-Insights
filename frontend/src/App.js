@@ -33,6 +33,7 @@ import Changelog from './components/Changelog'
 import LeagueUserTable from './components/LeagueUserTable'
 import SeasonStatsTable from './components/SeasonStatsTable'
 import LivePoints from './components/LivePoints'
+import Battles from "./components/Battles"
 
 // Import timestamps
 import timestamp_main from './data/timestamps/ts_main.json'
@@ -218,9 +219,7 @@ function App() {
             </Paper>                   
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
               <Typography variant="h4" sx={{ padding: '15px' }}>Battles</Typography>
-              <Typography variant="body1" sx={{ padding: '0px 15px 15px 15px' }}>
-                In Arbeit...
-              </Typography>
+              <Battles />
             </Paper>        
           </TabPanel>
 
