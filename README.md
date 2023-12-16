@@ -133,7 +133,6 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Add base features
   - Feed
   - Lineup
-  - Battles
   - Next matches
   - League table
   - Top players
@@ -141,7 +140,6 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Sum. Transfererlöse: Add custom scale for chart  
 - Dev: Execution time  
 - Misc: Unsold starter players    
-- Display version from container image version   
 - Fix TZ on frontend (market table)  
 
 **Backend:**  

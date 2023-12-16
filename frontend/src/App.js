@@ -123,7 +123,7 @@ function App() {
             </Grid>
 
             <Grid item sx={{ textAlign: 'right' }}>
-              <Typography variant="button" style={{ color: 'green' }}>V1.4.0</Typography><br/>
+              <Typography variant="button" style={{ color: 'green' }}>{process.env.VERSION || 'development'}</Typography><br/>
               <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_main.time).toLocaleString('de-DE')}</Typography>
             </Grid>
           </Grid>
@@ -218,7 +218,7 @@ function App() {
               <SeasonStatsTable />
             </Paper>                   
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
-              <Typography variant="h4" sx={{ padding: '15px' }}>Battles</Typography>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Battles <HelpIcon text="Herausragende Leistungen von Spielern in der Liga."/></Typography>
               <Battles />
             </Paper>        
           </TabPanel>
