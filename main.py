@@ -1,4 +1,4 @@
-import json, time, argparse, logging
+import json, time, logging
 from logging.config import dictConfig
 from datetime import datetime, timedelta
 from os import getenv
@@ -100,12 +100,8 @@ def main():
 def login():
     logging.info("Logging in...")
 
-    ### If script is executed locally, use the arguments from the command line
-    if args.usermail and args.password:
-        user_info, league_info, user_token = user.login(args.usermail, args.password)
-    ### else when script is executed in Docker, use the environment variables
-    else:
-        user_info, league_info, user_token = user.login(kb_mail, kb_password)
+    ### Login to Kickbase using the credentials from the environment variables
+    user_info, league_info, user_token = user.login(kb_mail, kb_password)
 
     ### TODO: Format?
     logging.debug(f"{user_info.name}")
@@ -565,10 +561,13 @@ def league_user_stats_tables(user_token, league_info, league_users):
 
         ### Create a custom json dict for every user
         final_user_stats.append({
-            ### Shared stats
-            "user": real_user["name"],
+            ### Shared stats 
+            "userId": real_user["id"],
+            "userName": real_user["name"],
             "profilePic": user_stats.get("profileUrl", ""),
-            ### Stats for the League Users Table
+            "mdWins": user_stats["seasons"][0]["wins"], # for current season
+            "maxPoints": user_stats["seasons"][0]["maxPoints"], # for current season
+            ### Stats for "Liga -> Tabelle" ONLY
             "placement": user_stats["placement"],
             "points": user_stats["points"],
             "teamValue": user_stats["teamValue"],
@@ -578,17 +577,17 @@ def league_user_stats_tables(user_token, league_info, league_users):
             # "maxSellPrice": user_stats["leagueUser"]["maxSellPrice"],
             # "maxSellFirstName": user_stats["leagueUser"]["maxSellFirstName"],
             # "maxSellLastName": user_stats["leagueUser"]["maxSellLastName"]
-            ### Stats for the Season Stats Table
-            "avgPoints": user_stats["seasons"][0]["averagePoints"],
-            "maxPoints": user_stats["seasons"][0]["maxPoints"],
-            "minPoints": user_stats["seasons"][0]["minPoints"],
-            "mdWins": user_stats["seasons"][0]["wins"],
-            "bought": user_stats["seasons"][0]["bought"],
-            "sold": user_stats["seasons"][0]["sold"],
-            # "pointsGoalKeeper": user_stats["seasons"][0]["pointsGoalKeeper"],
-            # "pointsDefenders": user_stats["seasons"][0]["pointsDefenders"],
-            # "pointsMidFielders": user_stats["seasons"][0]["pointsMidFielders"],
-            # "pointsForwards": user_stats["seasons"][0]["pointsForwards"],
+            ### Stats for "Liga -> Saison Statistiken" ONLY
+            "avgPoints": user_stats["seasons"][0]["averagePoints"], # for current season
+            "minPoints": user_stats["seasons"][0]["minPoints"], # for current season
+            "bought": user_stats["seasons"][0]["bought"], # for current season
+            "sold": user_stats["seasons"][0]["sold"], # for current season
+            ### Stats for "Liga -> Battles" ONLY
+            "pointsGoalKeeper": user_stats["seasons"][0]["pointsGoalKeeper"], # for current season
+            "pointsDefenders": user_stats["seasons"][0]["pointsDefenders"], # for current season
+            "pointsMidFielders": user_stats["seasons"][0]["pointsMidFielders"], # for current season
+            "pointsForwards": user_stats["seasons"][0]["pointsForwards"], # for current season
+            "combinedTransfers": user_stats["seasons"][0]["bought"] + user_stats["seasons"][0]["sold"], # for current season
             # "avgGoalKeeper": user_stats["seasons"][0]["averageGoalKeeper"],
             # "avgDefenders": user_stats["seasons"][0]["averageDefenders"],
             # "avgMidFielders": user_stats["seasons"][0]["averageMidFielders"],
@@ -668,13 +667,6 @@ if __name__ == "__main__":
     kb_mail = getenv("KB_MAIL")
     kb_password = getenv("KB_PASSWORD")
     discord_webhook = getenv("DISCORD_WEBHOOK")
-
-    ### Try to get the logins and Discord URL from the start arguments (local)
-    parser = argparse.ArgumentParser(description="A free alternative to Kickbase Member/Pro.")
-    parser.add_argument("-u", "--usermail", help="Your Kickbase E-Mail.")
-    parser.add_argument("-p", "--password", help="Your Kickbase password.")
-    parser.add_argument("-d", "--discord", help="Your Discord Webhook URL.")
-    args = parser.parse_args()
 
     ### -------------------------------------------------------------------
 
