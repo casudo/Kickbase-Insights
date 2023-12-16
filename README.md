@@ -18,9 +18,6 @@
 - [Docker](#docker)
   - [docker run](#docker-run)
   - [Docker Compose](#docker-compose)
-- [Local usage](#local-usage)
-    - [Prerequisites](#prerequisites)
-    - [Installation](#installation)
 - [Development](#development)
 - [Planned for the future](#planned-for-the-future)
 - [Thanks to](#thanks-to)
@@ -84,30 +81,6 @@ If you make this container publically available via a domain, you'll need to cre
 > Note: In order to this to work, both your reverse proxy and the container need to be in the same network.  
 
 > Additional note: It may take some time to first run the container, so check the logs!  
-
----
-
-## Local usage
-> :warning: **Outdated and not recommended as of v1.4.0!**  
-
-To run Kickbase Insights on your local machine, you can follow the steps described below.  
-
-### Prerequisites
-- Python 3.X
-- Pip
-- Node.js
-- NPM
-
-### Installation
-1. Download a release from the [releases page](https://github.com/casudo/Kickbase-Insights/releases) or clone the repository  
-2. (Optional): Create a virtual environment for the python dependencies  
-3. Install the python dependencies with `pip install -r requirements.txt`  
-4. Run `main.py` with the required arguments (see below)  
-    - To get a list of the required arguments, run `python main.py --help`  
-5. Run the following commands in the `frontend` folder:  
-    - `npm install`  
-    - `npm start`  
-6. Visit the GUI at `localhost:3000`  
 
 ---
 

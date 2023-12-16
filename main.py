@@ -1,4 +1,4 @@
-import json, time, argparse, logging
+import json, time, logging
 from logging.config import dictConfig
 from datetime import datetime, timedelta
 from os import getenv
@@ -100,12 +100,8 @@ def main():
 def login():
     logging.info("Logging in...")
 
-    ### If script is executed locally, use the arguments from the command line
-    if args.usermail and args.password:
-        user_info, league_info, user_token = user.login(args.usermail, args.password)
-    ### else when script is executed in Docker, use the environment variables
-    else:
-        user_info, league_info, user_token = user.login(kb_mail, kb_password)
+    ### Login to Kickbase using the credentials from the environment variables
+    user_info, league_info, user_token = user.login(kb_mail, kb_password)
 
     ### TODO: Format?
     logging.debug(f"{user_info.name}")
@@ -671,13 +667,6 @@ if __name__ == "__main__":
     kb_mail = getenv("KB_MAIL")
     kb_password = getenv("KB_PASSWORD")
     discord_webhook = getenv("DISCORD_WEBHOOK")
-
-    ### Try to get the logins and Discord URL from the start arguments (local)
-    parser = argparse.ArgumentParser(description="A free alternative to Kickbase Member/Pro.")
-    parser.add_argument("-u", "--usermail", help="Your Kickbase E-Mail.")
-    parser.add_argument("-p", "--password", help="Your Kickbase password.")
-    parser.add_argument("-d", "--discord", help="Your Discord Webhook URL.")
-    args = parser.parse_args()
 
     ### -------------------------------------------------------------------
 
