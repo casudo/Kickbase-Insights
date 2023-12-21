@@ -121,11 +121,11 @@ def gift(user_token, league_info):
     ### Check if dict in gift has {'isAvailable': True}:
     if gift["isAvailable"]:
         logging.info(f"Gift available in league {league_info[0].name}!\n")
-        miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600, args.discord if args.discord else discord_webhook) # TODO: Change color
+        miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600, discord_webhook) # TODO: Change color
         leagues.get_gift(user_token, league_info[0].id) # TODO: Try, except needed here?, TODO: Check response
     else:
         logging.info(f"Gift has already been collected in league {league_info[0].name}!\n")
-        # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, args.discord if args.discord else discord_webhook) # TODO: Change color   
+        # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, discord_webhook) # TODO: Change color   
 
 
 def league_feed(user_token, league_info):
