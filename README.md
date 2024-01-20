@@ -56,7 +56,6 @@ docker run -d \
     -e KB_MAIL=<kickbase_email> \
     -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
-    -e RUN_SCHEDULE=<your_schedule> \ 
     -e WATCHPACK_POLLING=true \
     ghcr.io/casudo/kickbase-insights:<tag>
 ```  
