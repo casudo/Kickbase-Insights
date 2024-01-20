@@ -71,13 +71,12 @@ services:
     container_name: kickbase_insights
     restart: unless-stopped
     ports:
-      - <frontend_port>:3000 # Frontend
-      - <backend_port>:5000 # Backend API
+      - <frontend_port>:3000 # Web GUI
+      - <backend_port>:5000 # Backend API (../api/livepoints)  
     environment:
         - KB_MAIL=<kickbase_email>
         - KB_PASSWORD=<kickbase_password>
         - DISCORD_WEBHOOK=<discord_webhook>
-        - RUN_SCHEDULE=<your_schedule>
         - WATCHPACK_POLLING=true
 ```  
 
