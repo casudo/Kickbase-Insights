@@ -12,7 +12,8 @@
 
 </div>
 
-> Note: This is a hobby project to test stuff with JSON and the cores of Python. Feel free to create issues and contribute.  
+> [!NOTE]
+This is a hobby project to test stuff with JSON and the cores of Python. Feel free to create issues and contribute.  
 
 ##### Table of Contents
 - [Screenshots](#screenshots)
@@ -29,7 +30,8 @@
 ## Screenshots
 You can find some screenshots of the frontend below, not all features are shown.  
 
-> :information_source: As of v1.4.0  
+> [!WARNING]
+As of v1.4.0  
 
 ![Transfers](repo_pictures/transfers.png)  
 ![MarketValue](repo_pictures/marketvalue.png)  
@@ -46,6 +48,7 @@ If you want to run this in a Docker container, you'll first need to set some man
 | `DISCORD_WEBHOOK` | **Yes** | The Discord webhook URL to send notifications to. |
 | `RUN_SCHEDULE` | No | The cron expression when the script should fetch new information from the API. If not set, defaults to `10 2,6,10,14,18,22 * * *`. |
 | `WATCHPACK_POLLING` | **Yes** | Used to [apply new changes](https://stackoverflow.com/a/72661752) in the filesystem on runtime. If not set, defaults to `true`. |
+| `TZ` | No | The timezone to use. |
 
 ### docker run
 ```bash
@@ -57,6 +60,7 @@ docker run -d \
     -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
     -e WATCHPACK_POLLING=true \
+    -e TZ=Europe/Berlin \
     ghcr.io/casudo/kickbase-insights:<tag>
 ```  
 
@@ -77,7 +81,10 @@ services:
         - KB_PASSWORD=<kickbase_password>
         - DISCORD_WEBHOOK=<discord_webhook>
         - WATCHPACK_POLLING=true
+        - TZ=Europe/Berlin
 ```  
+
+---
 
 If you run this container in your LAN (via IP), you'll need to change the following line in the `App.js` file in the `frontend/src` folder to this (obv. change `<backend_port>`):     
 ```js
@@ -87,9 +94,11 @@ const response = await fetch('http://localhost:<backend_port>/api/livepoints')
 If you make this container publically available via a domain, you'll need to create/update the following entry in your reverse proxy:  
 `your.domain.com -> <container_ip_or_hostname>:3000`  
 `your.domain.com/api/livepoints -> <container_ip_or_hostname>:5000`  
-> Note: In order to this to work, both your reverse proxy and the container need to be in the same network.  
+> [!IMPORTANT]
+In order to this to work, both your reverse proxy and the container need to be in the same network.  
 
-> Additional note: It may take some time to first run the container, so check the logs!  
+> [!NOTE]
+It may take some time to initially start the container, so check the logs!  
 
 ---
 

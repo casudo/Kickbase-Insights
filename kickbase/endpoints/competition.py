@@ -47,10 +47,10 @@ class P:
     teamSymbol: str = None
     firstName: str = None
     lastName: str = None
-    profile: str = None # Somehow not always present e.g. Jamal Musiala
-    profileBig: str = None
-    team: str = None # Somehow not always present
-    teamCover: str = None # Somehow not always present
+    profile: str = None ### Not always present
+    profileBig: str = None ### Not always present
+    team: str = None ### Not always present
+    teamCover: str = None ### Not always present
     status: int = None
     position: int = None
     number: int = None

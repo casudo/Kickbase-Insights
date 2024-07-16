@@ -112,8 +112,6 @@ class Meta:
                 self.p = meta_dict.get("p", None)  
                 self.pi = meta_dict.get("pi", None)         
             elif type == 2 and "bn" in meta_dict: # User sold to User
-                self.sid = meta_dict["sid"]
-                self.sn = meta_dict["sn"]
                 self.sid = meta_dict.get("sid", None)
                 self.sn = meta_dict.get("sn", None)
                 self.si = meta_dict.get("si", None)

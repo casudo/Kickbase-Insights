@@ -38,22 +38,23 @@ class League:
     Used for endpoint URL:
     `/user/login` -> get all leagues the user is in
     """
-    id: str = None
-    cpi: str = None
-    name: str = None
-    creator: str = None
-    creatorId: str = None
-    creation: str = None
+    id: str = None ### League ID
+    cpi: str = None 
+    name: str = None ### League name
+    creator: str = None ### League creator's username
+    creatorId: str = None ### League creator's ID
+    creation: str = None ### League creation date
     ai: str = None
     t: str = None
     au: str = None
     mu: str = None
-    ap: str = None
+    ap: str = None ### Not always present
     pub: str = None
     gm: str = None
     mpl: str = None
     ci: str = None
-    btlg: str = None
+    btlg: str = None ### Not always present
+    vr: str = None
     adm: str = None
 
     def __init__(self, league_dict: dict):
