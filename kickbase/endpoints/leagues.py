@@ -29,21 +29,21 @@ class League_User_Info:
     un: int = None
 
     def __init__(self, league_user_info_dict: dict):
-        self.budget = league_user_info_dict["budget"]
-        self.teamValue = league_user_info_dict["teamValue"]
-        self.placement = league_user_info_dict["placement"]
-        self.points = league_user_info_dict["points"]
-        self.ttm = league_user_info_dict["ttm"]
-        self.cmd = league_user_info_dict["cmd"]
-        self.flags = league_user_info_dict["flags"]
-        self.perms = league_user_info_dict["perms"]
-        self.se = league_user_info_dict["se"]
-        self.csid = league_user_info_dict["csid"]
-        self.nt = league_user_info_dict["nt"]
-        self.ntv = league_user_info_dict["ntv"]
-        self.nb = league_user_info_dict["nb"]
-        self.ga = league_user_info_dict["ga"]
-        self.un = league_user_info_dict["un"]
+        self.budget = league_user_info_dict.get("budget", None)
+        self.teamValue = league_user_info_dict.get("teamValue", None)
+        self.placement = league_user_info_dict.get("placement", None)
+        self.points = league_user_info_dict.get("points", None)
+        self.ttm = league_user_info_dict.get("ttm", None)
+        self.cmd = league_user_info_dict.get("cmd", None)
+        self.flags = league_user_info_dict.get("flags", None)
+        self.perms = league_user_info_dict.get("perms", None)
+        self.se = league_user_info_dict.get("se", None)
+        self.csid = league_user_info_dict.get("csid", None)
+        self.nt = league_user_info_dict.get("nt", None)
+        self.ntv = league_user_info_dict.get("ntv", None)
+        self.nb = league_user_info_dict.get("nb", None)
+        self.ga = league_user_info_dict.get("ga", None)
+        self.un = league_user_info_dict.get("un", None)
 
 ### ===============================================================================
 ### League Feed stuff
@@ -106,40 +106,35 @@ class Meta:
         if type != 8: # Not a final matchday points entry
             ### Type 2: User sold to Kickbase AND User sold to User
             if type == 2 and not "bn" in meta_dict: # User sold to Kickbase
-                self.sid = meta_dict["sid"]
-                self.sn = meta_dict["sn"]
-                if "si" in meta_dict:
-                    self.si = meta_dict["si"] # only set profile pic if it exists
-                self.p = meta_dict["p"] 
-                if "pi" in meta_dict: 
-                    self.pi = meta_dict["pi"] # not always set         
+                self.sid = meta_dict.get("sid", None)
+                self.sn = meta_dict.get("sn", None)
+                self.si = meta_dict.get("si", None)
+                self.p = meta_dict.get("p", None)  
+                self.pi = meta_dict.get("pi", None)         
             elif type == 2 and "bn" in meta_dict: # User sold to User
                 self.sid = meta_dict["sid"]
                 self.sn = meta_dict["sn"]
-                if "si" in meta_dict:
-                    self.si = meta_dict["si"] # only set profile pic if it exists
-                self.bid = meta_dict["bid"]
-                self.bn = meta_dict["bn"]
-                if "bi" in meta_dict:
-                    self.bi = meta_dict["bi"]
-                self.p = meta_dict["p"] 
-                if "pi" in meta_dict: 
-                    self.pi = meta_dict["pi"] # not always set                            
+                self.sid = meta_dict.get("sid", None)
+                self.sn = meta_dict.get("sn", None)
+                self.si = meta_dict.get("si", None)
+                self.bid = meta_dict.get("bid", None)
+                self.bn = meta_dict.get("bn", None)
+                self.bi = meta_dict.get("bi", None)
+                self.p = meta_dict.get("p", None) 
+                self.pi = meta_dict.get("pi", None)                        
 
             if type == 12: # User bought from Kickbase
-                self.bid = meta_dict["bid"]
-                self.bn = meta_dict["bn"]
-                if "bi" in meta_dict:
-                    self.bi = meta_dict["bi"] # only set profile pic if it exists
-                self.p = meta_dict["p"] 
-                if "pi" in meta_dict: 
-                    self.pi = meta_dict["pi"] # not always set
+                self.bid = meta_dict.get("bid", None)
+                self.bn = meta_dict.get("bn", None)
+                self.bi = meta_dict.get("bi", None)
+                self.p = meta_dict.get("p", None) 
+                self.pi = meta_dict.get("pi", None)
 
             ### Standard attributes for all types    
-            self.pid = meta_dict["pid"]
-            self.tid = meta_dict["tid"]
-            self.pfn = meta_dict["pfn"]
-            self.pln = meta_dict["pln"]
+            self.pid = meta_dict.get("pid", None)
+            self.tid = meta_dict.get("tid", None)
+            self.pfn = meta_dict.get("pfn", None)
+            self.pln = meta_dict.get("pln", None)
         else: ### TODO: Necessary?
             print("Skipping this feed entry because it is a final matchday points entry.")
 
@@ -172,15 +167,15 @@ class League_Feed:
     seasonId: int = None
 
     def __init__(self, league_feed_dict: dict):
-        self.id = league_feed_dict["id"]
-        self.comments = league_feed_dict["comments"]
-        self.date = league_feed_dict["date"]
-        self.age = league_feed_dict["age"]
-        self.type = league_feed_dict["type"]
-        self.source = league_feed_dict["source"]
+        self.id = league_feed_dict.get("id", None)
+        self.comments = league_feed_dict.get("comments", None)
+        self.date = league_feed_dict.get("date", None)
+        self.age = league_feed_dict.get("age", None)
+        self.type = league_feed_dict.get("type", None)
+        self.source = league_feed_dict.get("source", None)
         ### Create a new object with all its attributes for everything stored in the meta dict
         self.meta = Meta(league_feed_dict["meta"], self.type)
-        self.seasonId = league_feed_dict["seasonId"]
+        self.seasonId = league_feed_dict.get("seasonId", None)
 
 
 ### End of League Feed stuff
@@ -216,27 +211,23 @@ class Market_Players:
     marketValueTrend: int = None
 
     def __init__(self, market_players_dict: dict):
-        self.id = market_players_dict["id"]
-        self.teamId = market_players_dict["teamId"]
-        if "userId" in market_players_dict:
-            self.userId = market_players_dict["userId"]
-            self.username = market_players_dict["username"]
-        if "userProfile" in market_players_dict:
-            self.userProfile = market_players_dict["userProfile"]
-        self.firstName = market_players_dict["firstName"]
-        self.lastName = market_players_dict["lastName"]
-        if "profile" in market_players_dict: 
-            self.profile = market_players_dict["profile"]
-        self.status = market_players_dict["status"]
-        self.position = market_players_dict["position"]
-        self.number = market_players_dict["number"]
-        self.totalPoints = market_players_dict["totalPoints"]
-        self.averagePoints = market_players_dict["averagePoints"]
-        self.marketValue = market_players_dict["marketValue"]
-        self.price = market_players_dict["price"]
-        self.date = market_players_dict["date"]
-        self.expiry = market_players_dict["expiry"]
-        if "offers" in market_players_dict:
-            self.offers = market_players_dict["offers"]
-        self.lus = market_players_dict["lus"]
-        self.marketValueTrend = market_players_dict["marketValueTrend"]
+        self.id = market_players_dict.get("id", None)
+        self.teamId = market_players_dict.get("teamId", None)
+        self.userId = market_players_dict.get("userId", None)
+        self.username = market_players_dict.get("username", None)
+        self.userProfile = market_players_dict.get("userProfile", None)
+        self.firstName = market_players_dict.get("firstName", None)
+        self.lastName = market_players_dict.get("lastName", None)
+        self.profile = market_players_dict.get("profile", None)
+        self.status = market_players_dict.get("status", None)
+        self.position = market_players_dict.get("position", None)
+        self.number = market_players_dict.get("number", None)
+        self.totalPoints = market_players_dict.get("totalPoints", None)
+        self.averagePoints = market_players_dict.get("averagePoints", None)
+        self.marketValue = market_players_dict.get("marketValue", None)
+        self.price = market_players_dict.get("price", None)
+        self.date = market_players_dict.get("date", None)
+        self.expiry = market_players_dict.get("expiry", None)
+        self.offers = market_players_dict.get("offers", None)
+        self.lus = market_players_dict.get("lus", None)
+        self.marketValueTrend = market_players_dict.get("marketValueTrend", None)
