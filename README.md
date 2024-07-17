@@ -27,6 +27,16 @@ This is a hobby project to test stuff with JSON and the cores of Python. Feel fr
 
 ---
 
+> [!CRITICAL]
+> **As of July 2024, Kickbase lauched a new version of their app, breaking some stuff in the API!**
+>  
+> `https://api.kickbase.com/leagues/<league_id>/feed/?start=0`
+> "age" is broken and displaying random seconds, not the actual time since the feed item was created.
+>
+> `https://api.kickbase.com/leagues/3894688/users/2757595/feed?filter=12&start=0`
+> "tid" is broken. Sometimes its completely empty, sometimes it has the same value as "pid".
+> Thats why no team icons are loaing on "Transfererlöse".
+
 ## Screenshots
 You can find some screenshots of the frontend below, not all features are shown.  
 
@@ -137,6 +147,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Back to top button  
 - ToC on pages with lot of content  
 - Market value graph for players  
+- Show calculated balances of other players (minus daily login bonus)
 
 **Backend:**  
 - Fix all TODOs  
