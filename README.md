@@ -30,10 +30,10 @@ This is a hobby project to test stuff with JSON and the cores of Python. Feel fr
 > [!CAUTION]
 > **As of July 2024, Kickbase lauched a new version of their app, breaking some stuff in the API!**
 >  
-> `https://api.kickbase.com/leagues/<league_id>/feed/?start=0`
+> `https://api.kickbase.com/leagues/<league_id>/feed/?start=0`  
 > "age" is broken and displaying random seconds, not the actual time since the feed item was created.
 >
-> `https://api.kickbase.com/leagues/<league_id>/users/<user_id>/feed?filter=12&start=0`
+> `https://api.kickbase.com/leagues/<league_id>/users/<user_id>/feed?filter=12&start=0`  
 > "tid" is broken. Sometimes its completely empty, sometimes it has the same value as "pid".
 > Thats why no team icons are loaing on "Transfererlöse".
 
