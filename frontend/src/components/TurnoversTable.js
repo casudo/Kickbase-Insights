@@ -79,6 +79,7 @@ function TurnoversTable() {
         }
     ]
 
+    // Fill the rows with the players attributes from the JSON file
     const rows = data.map((row, i) => (
         {
             id: i,
