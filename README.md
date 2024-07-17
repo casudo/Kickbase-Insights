@@ -33,7 +33,7 @@ This is a hobby project to test stuff with JSON and the cores of Python. Feel fr
 > `https://api.kickbase.com/leagues/<league_id>/feed/?start=0`
 > "age" is broken and displaying random seconds, not the actual time since the feed item was created.
 >
-> `https://api.kickbase.com/leagues/3894688/users/2757595/feed?filter=12&start=0`
+> `https://api.kickbase.com/leagues/<league_id>/users/<user_id>/feed?filter=12&start=0`
 > "tid" is broken. Sometimes its completely empty, sometimes it has the same value as "pid".
 > Thats why no team icons are loaing on "Transfererlöse".
 
