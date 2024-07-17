@@ -27,7 +27,7 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 # 4: Aufbautraining (Orange Cone)
 # 8: Rote Karte (Red Card)
 # 32: 5. Gelbe Karte (Yellow Card)
-# 128: Raus aus der Liga (No Icon yet!)
+# 128: Raus aus der Liga
 ### Conversion from number to icon for the frontend in "SharedConstants.js"
 
 ### TYPE (from league feed)

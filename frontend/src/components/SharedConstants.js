@@ -10,6 +10,7 @@ import StatusAngeschlagenIcon from '@mui/icons-material/Healing'
 import StatusAufbautrainingIcon from '@mui/icons-material/Construction'
 import StatusRedCardIcon from '@mui/icons-material/Square'
 import Status5YellowCardIcon from '@mui/icons-material/Square'
+import StatusRausAusDerLigaIcon from '@mui/icons-material/ArrowForward'
 
 // Set color for icons
 export const trendIcons = {
@@ -25,7 +26,8 @@ export const statusIcons = {
     2: { icon: <StatusAngeschlagenIcon sx={{ color: 'chocolate' }} />, tooltip: "Angeschlagen" },
     4: { icon: <StatusAufbautrainingIcon sx={{ color: 'brown' }} />, tooltip: "Aufbautraining" },
     8: { icon: <StatusRedCardIcon sx={{ color: "red" }} />, tooltip: "Rote Karte" },
-    32: { icon: <Status5YellowCardIcon sx={{ color: "gold" }} />, tooltip: "5. Gelbe Karte" }
+    32: { icon: <Status5YellowCardIcon sx={{ color: "gold" }} />, tooltip: "5. Gelbe Karte" },
+    128: { icon: <StatusRausAusDerLigaIcon sx={{ color: "red" }} />, tooltip: "Raus aus der Liga" },
 }
 
 export const currencyFormatter = new Intl.NumberFormat('de-DE',
