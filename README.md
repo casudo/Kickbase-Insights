@@ -27,7 +27,7 @@ This is a hobby project to test stuff with JSON and the cores of Python. Feel fr
 
 ---
 
-> [!CRITICAL]
+> [!CAUTION]
 > **As of July 2024, Kickbase lauched a new version of their app, breaking some stuff in the API!**
 >  
 > `https://api.kickbase.com/leagues/<league_id>/feed/?start=0`
