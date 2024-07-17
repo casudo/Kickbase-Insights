@@ -77,7 +77,6 @@ def main():
         logging.debug(f"Points: {league_user_info.points}")
         logging.debug(f"Rank: {league_user_info.placement}")
 
-        league_feed(user_token, league_info)
         market(user_token, league_info)
         market_value_changes(user_token, league_info)
         league_users = taken_free_players(user_token, league_info)
@@ -126,53 +125,6 @@ def gift(user_token, league_info):
     else:
         logging.info(f"Gift has already been collected in league {league_info[0].name}!\n")
         # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, discord_webhook) # TODO: Change color   
-
-
-def league_feed(user_token, league_info):
-    ### Get the 30 latest feed entries
-    league_feed = leagues.league_feed(user_token, league_info[0].id)
-    ### Loop through the feed entries and print them
-    logging.info(f"{league_info[0].name}'s feed (latest 30):")
-    print("=====FEED START=====")
-    for feed_entry in league_feed:
-        print("------------------------")
-        print(f"| {feed_entry.meta.pfn} {feed_entry.meta.pln}") # | Manuel Neuer
-
-        ### Type 2: User sold to Kickbase AND User sold to User
-        if feed_entry.type == 2 and not feed_entry.meta.bn: # Type 2 = User sold to Kickbase
-            formatted_price = '{:,.0f}'.format(feed_entry.meta.p).replace(',', '.') # 5.000.561 instead of 5000561.0
-            print(f"| Sold from {feed_entry.meta.sn} to Kickbase for {formatted_price}€") # | Sold from USER to Kickbase for 5.000.561€
-        elif feed_entry.type == 2 and feed_entry.meta.bn: # Type 2 = User sold to User
-            formatted_price = '{:,.0f}'.format(feed_entry.meta.p).replace(',', '.') # 5.000.561 instead of 5000561.0
-            print(f"| Sold from {feed_entry.meta.sn} to {feed_entry.meta.bn} for {formatted_price}€") # | Sold from USER to USER for 5.000.561€
-        
-        ### Type 3: Listed by Kickbase
-        if feed_entry.type == 3: 
-            raw_age = feed_entry.age
-
-            ### Calculate days, hours, and minutes
-            days, remainder = divmod(raw_age, 86400)
-            hours, remainder = divmod(remainder, 3600)
-            minutes, _ = divmod(remainder, 60)
-
-            ### Create a formatted string based on the calculated values
-            formatted_age = ""
-            if days > 0:
-                formatted_age += f"{days}d "
-            if hours > 0:
-                formatted_age += f"{hours}h "
-            if minutes > 0 or (days == 0 and hours == 0):  # Show minutes if no days or hours
-                formatted_age += f"{minutes}m"
-
-            print(f"| Listed since: {formatted_age}")
-
-        ### TODO: Add type 8 (final matchday points)
-
-        ### Type 12: User bought from Kickbase
-        if feed_entry.type == 12: 
-            formatted_price = '{:,.0f}'.format(feed_entry.meta.p).replace(',', '.') # 5.000.561 instead of 5000561.0
-            print(f"| Sold from Kickbase to {feed_entry.meta.bn} for {formatted_price}€") # | Sold from Kickbase to USER for 5.000.561€
-    print("=====FEED END=====\n")    
 
 
 def market(user_token, league_info):
