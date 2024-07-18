@@ -365,7 +365,7 @@ def user_players(token: str, league_id: str, user_id: str):
     return user_transfers
 
 
-def user_stats(token: str, league_id: str, user_id: str):
+def user_stats(token: str, league_id: str, user_id: str) -> dict:
     """
     Get the statistics of a given user in the given league.
 

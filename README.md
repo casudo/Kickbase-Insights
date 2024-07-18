@@ -35,7 +35,11 @@ This is a hobby project to test stuff with JSON and the cores of Python. Feel fr
 >
 > `https://api.kickbase.com/leagues/<league_id>/users/<user_id>/feed?filter=12&start=0`  
 > "tid" is broken. Sometimes its completely empty, sometimes it has the same value as "pid".
-> Thats why no team icons are loaing on "Transfererlöse".
+> Thats why no team icons are loading on "Transfererlöse".
+> Also, when sold to Kickbase, it has the sellers ID as buyer ID, therefore Kickbase Insights thinks the user bought the player, resulting in an incorrect results for the taken/free players as well as the transfer revenue / turnovers.  
+>
+> `https://api.kickbase.com/leagues/<league_id>/users/<user_id>/stats`  
+> When user played a previous season in the league and a new season starts, the seasons stats aren't added for the new season, but rather overwrite the stats for the old season. This doesn't affect all stats...  
 
 ## Screenshots
 You can find some screenshots of the frontend below, not all features are shown.  
@@ -55,6 +59,7 @@ If you want to run this in a Docker container, you'll first need to set some man
 | --- | --- | --- |
 | `KB_MAIL` | **Yes** | Your Kickbase E-Mail. |
 | `KB_PASSWORD` | **Yes** | Your Kickbase password. |
+| `KB_LIGA` | No | The name of the league you want to see data for in the GUI. If not set, defaults to the first league you're in. |
 | `DISCORD_WEBHOOK` | **Yes** | The Discord webhook URL to send notifications to. |
 | `RUN_SCHEDULE` | No | The cron expression when the script should fetch new information from the API. If not set, defaults to `10 2,6,10,14,18,22 * * *`. |
 | `WATCHPACK_POLLING` | **Yes** | Used to [apply new changes](https://stackoverflow.com/a/72661752) in the filesystem on runtime. If not set, defaults to `true`. |
@@ -119,10 +124,11 @@ docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -
 ```  
 Run this long command to setup the container:  
 ```bash
-mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano python3 pip nodejs npm git -y && git clone https://github.com/casudo/Kickbase-Insights.git . && pip install -r requirements.txt && mkdir -p frontend/src/data/timestamps && mkdir logs && cd frontend && npm install
+mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano python3 python3-pip git -y && git clone https://github.com/casudo/Kickbase-Insights.git . && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && pip install --upgrade pip && pip install --upgrade -r requirements.txt && mkdir -p frontend/src/data/timestamps && mkdir logs && cd frontend && npm install
 ```  
 
 Now you're ready to go. Keep in mind that you'll first need to run `main.py` to get the required data for the frontend.  
+`python3 main.py`  
 
 You'll also need to manually run `npm start` in the `frontend` folder as well as `python3 -u -m flask run --host=0.0.0.0 --port=5000` in the `/code` folder.  
 

@@ -21,6 +21,7 @@ def convert_cron_to_timestamp(cron_expression):
 ### Get the environment variables
 KB_MAIL = getenv("KB_MAIL")
 KB_PASSWORD = getenv("KB_PASSWORD")
+KB_LIGA = getenv("KB_LIGA")
 DISCORD_WEBHOOK = getenv("DISCORD_WEBHOOK")
 RUN_SCHEDULE = getenv("RUN_SCHEDULE", "10 2,6,10,14,18,22 * * *")
 ### 10 */8 * * * -> At minute 10 past every 8th hour
@@ -39,6 +40,12 @@ if KB_MAIL is None or KB_PASSWORD is None:
 else:
     print("  ✅ Your Kickbase credentials are set.")
     
+### Optional preferred league name
+if KB_LIGA:
+    print(f"  ✅ Your preferred league name is set: {KB_LIGA}")
+else:
+    print("  ⚠️ Using default league.")
+
 ### Discord Webhook URL
 if DISCORD_WEBHOOK is None:
     print("  ❌ DISCORD_WEBHOOK is not set. Exiting...")
