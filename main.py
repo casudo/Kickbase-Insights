@@ -68,7 +68,9 @@ def main():
 
     try:
         user_info, league_info, user_token = login()
-        gift(user_token, league_info)
+
+        ### Get the daily login gift in every available league
+        get_gift(user_token, league_info)
 
         league_user_info = leagues.league_user_info(user_token, league_info[0].id)
         logging.debug(f"=== Statistics for {user_info.name} in league {league_info[0].name} ===")
@@ -114,17 +116,18 @@ def login():
     return user_info, league_info, user_token
 
 
-def gift(user_token, league_info):
-    gift = leagues.is_gift_available(user_token, league_info[0].id)
+def get_gift(user_token, league_info):
+    for league in league_info:
+        gift = leagues.is_gift_available(user_token, league.id)
 
-    ### Check if dict in gift has {'isAvailable': True}:
-    if gift["isAvailable"]:
-        logging.info(f"Gift available in league {league_info[0].name}!\n")
-        miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600, discord_webhook) # TODO: Change color
-        leagues.get_gift(user_token, league_info[0].id) # TODO: Try, except needed here?, TODO: Check response
-    else:
-        logging.info(f"Gift has already been collected in league {league_info[0].name}!\n")
-        # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, discord_webhook) # TODO: Change color   
+        ### Check if dict in gift has {'isAvailable': True}:
+        if gift["isAvailable"]:
+            logging.info(f"Gift available in league {league.name}!")
+            miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600, discord_webhook) # TODO: Change color
+            leagues.get_gift(user_token, league.id) # TODO: Try, except needed here?, TODO: Check response
+        else:
+            logging.info(f"Gift has already been collected in league {league.name}!")
+            # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, discord_webhook) # TODO: Change color
 
 
 def market(user_token, league_info):
