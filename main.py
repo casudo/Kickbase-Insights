@@ -1,9 +1,12 @@
-import json, time, logging
-from logging.config import dictConfig
-from datetime import datetime, timedelta
+import json
+import time
+import logging
+
 from os import getenv
 from art import tprint
 from sys import stdout
+from logging.config import dictConfig
+from datetime import datetime, timedelta
 
 from kickbase import exceptions, user, miscellaneous, leagues, competition
 
@@ -12,7 +15,11 @@ from kickbase import exceptions, user, miscellaneous, leagues, competition
 ### -------------------------------------------------------------------
 
 
-def main():
+def main() -> None:
+    """### This is the main function of the Kickbase Insights program.
+
+    It performs various tasks related to logging, user login, and data retrieval from the Kickbase API.
+    """
     ### Set logging settings for the Python logging module
     LOGGING = {
         "version": 1,
@@ -72,13 +79,6 @@ def main():
         ### Get the daily login gift in every available league
         get_gift(user_token, league_list)
 
-        league_user_info = leagues.league_user_info(user_token, selected_league.id)
-        logging.debug(f"=== Statistics for {user_info.name} in league {selected_league.name} ===")
-        logging.debug(f"Budget: {league_user_info.budget}€")
-        logging.debug(f"Team value: {league_user_info.teamValue}€")
-        logging.debug(f"Points: {league_user_info.points}")
-        logging.debug(f"Rank: {league_user_info.placement}")
-
         market(user_token, selected_league)
         market_value_changes(user_token, selected_league)
         league_users = taken_free_players(user_token, selected_league)
@@ -98,7 +98,16 @@ def main():
         return
     
 
-def login():
+def login() -> tuple:
+    """### Logs in to Kickbase and gathers various information.
+
+    Returns:
+        tuple: A tuple containing the following elements:
+            -- user_info (object): User information object.
+            -- league_list (list): List of leagues the user is in.
+            -- selected_league (object): The league the user wants to get data from for the frontend.
+            -- user_token (str): User token for authentication.
+    """
     logging.info("Logging in...")
 
     ### Login to Kickbase using the credentials from the environment variables
@@ -107,7 +116,7 @@ def login():
 
     if not league_list:
         logging.error("No leagues found. Exiting...")
-        exit
+        exit()
 
     logging.info(f"Available leagues: {', '.join([league.name for league in league_list])}") # Print all available leagues the user is in
 
@@ -132,16 +141,19 @@ def login():
         logging.info(f"No preferred league set. Using the first league in the list: {league_list[0].name}")
         selected_league = league_list[0]
 
-    ### TODO: Format?
-    logging.debug(f"{user_info.name}")
-    logging.debug(f"{league_list[0].name}")
-    logging.debug(f"{league_list[0].pub}")
-    logging.debug(f"{user_token}")
-
     return user_info, league_list, selected_league, user_token
 
 
-def get_gift(user_token, league_list):
+def get_gift(user_token: str, league_list: list) -> None:
+    """### Collect the daily login gift in every available league.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        league_list (list): List of leagues the user is in.
+
+    Returns:
+        None
+    """
     for league in league_list:
         gift = leagues.is_gift_available(user_token, league.id)
 
@@ -155,7 +167,16 @@ def get_gift(user_token, league_list):
             # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, discord_webhook) # TODO: Change color
 
 
-def market(user_token, selected_league):
+def market(user_token: str, selected_league: object) -> None:
+    """### Retrieves all players listed on the transfer market.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+
+    Returns:
+        None
+    """
     logging.info("Getting players listed on transfer market...")
 
     ### Get all players on the market
@@ -167,7 +188,7 @@ def market(user_token, selected_league):
     for player in players_on_market:
         ### Check if player is listed by user
         if not player.username:
-            ### Create a custom json dict for every player listed by real users
+            ### Create a custom json dict for every player listed by kickbase
             players_listed_by_kickbase.append({
                 "teamId": player.teamId,
                 "position": miscellaneous.POSITIONS[player.position],
@@ -180,7 +201,7 @@ def market(user_token, selected_league):
             })
             logging.debug(f"Player {player.firstName} {player.lastName} is listed by Kickbase!")
         else:
-            ### Create a custom json dict for every player listed by kickbase
+            ### Create a custom json dict for every player listed by real users
             players_listed_by_user.append({
                 "teamId": player.teamId,
                 "position": miscellaneous.POSITIONS[player.position],
@@ -194,7 +215,7 @@ def market(user_token, selected_league):
             }) ### TODO: Fix expiration TZ
             logging.debug(f"Player {player.firstName} {player.lastName} is listed by {player.username}!")
 
-    logging.info("Got all players listed on transfer market.\n")
+    logging.info("Got all players listed on transfer market.")
 
     ### Write the json dicts to a file. These will be read by the frontend.
     with open("/code/frontend/src/data/market_user.json", "w") as f:
@@ -213,7 +234,16 @@ def market(user_token, selected_league):
         logging.debug("Created file ts_market_kickbase.json")
 
 
-def market_value_changes(user_token, selected_league):
+def market_value_changes(user_token: str, selected_league: object) -> None:
+    """### Retrieves the market value changes for all players in the league.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+
+    Returns:
+        None
+    """
     logging.info("Getting market value changes for all players...")
 
     players_LIST = []
@@ -245,9 +275,9 @@ def market_value_changes(user_token, selected_league):
                 "ThirtyDaysAvg": (player_stats["marketValue"] - player_stats["marketValues"][-31]["m"]),
                 "manager": manager,
             })
-            ### TODO: DEBUG print the player
+            logging.debug(f"Player {player_stats['firstName']} {player_stats['lastName']} has a market value of {player_stats['marketValue']} and is owned by {manager}.")
 
-    logging.info("Got all market value changes for all players.\n")
+    logging.info("Got all market value changes for all players.")
 
     ### Write the json dicts to a file. These will be read by the frontend.
     with open("/code/frontend/src/data/market_value_changes.json", "w") as f:
@@ -260,7 +290,16 @@ def market_value_changes(user_token, selected_league):
         logging.debug("Created file ts_market_value_changes.json")
 
 
-def taken_free_players(user_token, selected_league):
+def taken_free_players(user_token: str, selected_league: object) -> dict:
+    """### Retrieves all taken and free players in the league.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+
+    Returns:
+        dict: A dictionary containing all users in the league.
+    """
     ### To get the taken players, we first cycle through the individual users BUY/SELL feed to determine which players are bought by the user.
     ### In case a player was assigned to the user on league join, the player is not in the BUY/SELL feed.
     ### To indicate these players, we cycle through ALL players of a team and check if the player is owned by a user.
@@ -364,7 +403,7 @@ def taken_free_players(user_token, selected_league):
     team_players_result += starter_players
     final_result = (user_transfers_result + team_players_result) 
 
-    logging.info("Got all taken players.\n")
+    logging.info("Got all taken players.")
     
     ### Write the json dicts to a file. These will be read by the frontend.
     with open("/code/frontend/src/data/taken_players.json", "w") as f:
@@ -382,7 +421,17 @@ def taken_free_players(user_token, selected_league):
     return league_users
 
 
-def turnovers(user_token, selected_league, league_users):
+def turnovers(user_token: str, selected_league: object, league_users: dict) -> None:
+    """### Retrieves all turnovers in the league.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+        league_users (dict): A dictionary containing all users in the league.
+
+    Returns:
+        None
+    """
     logging.info("Getting turnovers...")
 
     final_turnovers = []
@@ -439,26 +488,26 @@ def turnovers(user_token, selected_league, league_users):
             ### This nested loop iterates over the remaining transfers (starting from the current buy transfer).
             ### It compares each of these transfers with the current buy transfer
             for sell_transfer in transfers[i:]:
-                if sell_transfer['type'] == 'buy':
+                if sell_transfer["type"] == "buy":
                     continue   
 
                 ### This condition checks if the player ID of the current sell transfer matches the player ID of the current buy transfer. 
                 ### If there is a match, it means a corresponding buy-sell pair is found.
-                if sell_transfer['playerId'] == buy_transfer['playerId']:
+                if sell_transfer["playerId"] == buy_transfer["playerId"]:
                     turnovers.append((buy_transfer, sell_transfer))
                     break
 
         ### Revenue generated by randomly assigned players
         for transfer in transfers:
             ### Skip buy transfers
-            if transfer['type'] == 'buy':
+            if transfer["type"] == "buy":
                 continue
 
             ### This condition checks if the current sell transfer is not already part of a buy-sell pair in the turnovers list.
             if transfer not in [turnover[1] for turnover in turnovers]:
 
                 ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
-                date = datetime(2023, 8, 22).isoformat() ### TODO: Change Startday at the end of the season ???
+                date = datetime(2024, 8, 23).isoformat() ### TODO: Change Startday at the end of the season ??? Maybe as ENV variable?
                 buy_transfer = {"date": date,
                                 "type": "buy",
                                 "user": transfer["user"],
@@ -473,7 +522,7 @@ def turnovers(user_token, selected_league, league_users):
 
         final_turnovers += turnovers
 
-    logging.info("Got all turnovers.\n")
+    logging.info("Got all turnovers.")
 
     with open("/code/frontend/src/data/turnovers.json", "w") as f:
         f.write(json.dumps(final_turnovers, indent=2))
@@ -488,7 +537,17 @@ def turnovers(user_token, selected_league, league_users):
     miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
 
 
-def team_value_per_match_day(user_token, selected_league, league_users):
+def team_value_per_match_day(user_token: str, selected_league: object, league_users: dict) -> None:
+    """### Calculates the team value per match day for all users in the league.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+        league_users (dict): A dictionary containing all users in the league.
+    
+    Returns:
+        None
+    """
     logging.info("Calculating team value per match day...")
 
     final_team_value = {}
@@ -517,7 +576,7 @@ def team_value_per_match_day(user_token, selected_league, league_users):
 
         final_team_value[real_user["name"]] = team_value
 
-    logging.info("Calculated team value per match day.\n")
+    logging.info("Calculated team value per match day.")
 
     with open("/code/frontend/src/data/team_values.json", "w") as f:
         f.write(json.dumps(final_team_value, indent=2))
@@ -529,7 +588,17 @@ def team_value_per_match_day(user_token, selected_league, league_users):
         logging.debug("Created file ts_team_values.json")
 
 
-def league_user_stats_tables(user_token, selected_league, league_users):
+def league_user_stats_tables(user_token: str, selected_league: object, league_users: dict) -> None:
+    """### Retrieves the statistics for all users in the league.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+        league_users (dict): A dictionary containing all users in the league.
+
+    Returns:
+        None
+    """
     logging.info("Getting league user stats...")
 
     final_user_stats = []
@@ -583,7 +652,7 @@ def league_user_stats_tables(user_token, selected_league, league_users):
             # "avgForwards": user_stats["seasons"][0]["averageForwards"],
         })            
 
-    logging.info("Got league user stats.\n")
+    logging.info("Got league user stats.")
 
     with open("/code/frontend/src/data/league_user_stats.json", "w") as f:
         f.write(json.dumps(final_user_stats, indent=2))
@@ -595,7 +664,16 @@ def league_user_stats_tables(user_token, selected_league, league_users):
         logging.debug("Created file ts_league_user_stats.json")
 
 
-def live_points(user_token, selected_league):
+def live_points(user_token: str, selected_league: object) -> None:
+    """### Retrieves the live points for the players in a users team.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+
+    Returns:
+        None
+    """
     logging.info("Getting live points...")
 
     ### Get the current live points
@@ -604,15 +682,15 @@ def live_points(user_token, selected_league):
     ### Create a custom json dict for every user and his players
     final_live_points = []
 
-    for user in live_points["u"]:
+    for real_user in live_points["u"]:
         ### Create a custom json dict for every player of the user
         players = []
 
-        for player in user["pl"]:
+        for player in real_user["pl"]:
             players.append({
                 "playerId": player["id"],
                 "teamId": player["tid"],
-                "firstName": player.get("fn", ""),  # Use an empty string if "fn" is not present
+                "firstName": player.get("fn", ""),
                 "lastName": player["n"],
                 "number": player["nr"],
                 "points": player["t"],
@@ -626,15 +704,14 @@ def live_points(user_token, selected_league):
             })
 
         final_live_points.append({
-            "userId": user["id"],
-            "userName": user["n"],
-            # Profile Pic?
-            "livePoints": user["t"],
-            "totalPoints": user["st"],
+            "userId": real_user["id"],
+            "userName": real_user["n"],
+            "livePoints": real_user["t"],
+            "totalPoints": real_user["st"],
             "players": players,
         })
 
-    logging.info("Got live points.\n")
+    logging.info("Got live points.")
 
     with open("/code/frontend/src/data/live_points.json", "w") as f:
         f.write(json.dumps(final_live_points, indent=2))

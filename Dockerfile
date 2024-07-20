@@ -21,7 +21,8 @@ RUN pip install --upgrade pip && pip install --upgrade -r requirements.txt
 
 ### Set environment variables / build arguments
 ### Will later be read from frontend
-ARG REACT_APP_VERSION
+### Can be set with "docker build . -t ghcr.io/casudo/kickbase-insights:<version> --build-arg REACT_APP_VERSION=<version>"
+ARG REACT_APP_VERSION 
 ENV REACT_APP_VERSION=$REACT_APP_VERSION
 
 ### Set entrypoint
