@@ -28,8 +28,9 @@ This is a hobby project to test stuff with JSON and the cores of Python. Feel fr
 ---
 
 > [!CAUTION]
-> **As of July 2024, Kickbase lauched a new version of their app, breaking some stuff in the API!**
->  
+> **As of July 2024, Kickbase lauched a new version of their app, breaking some stuff in the API!**  
+>  **Some API endpoints might be bugged/deprecated! There are some new endpoints in development which will be used at a later point in time when tested enough.**  
+>
 > `https://api.kickbase.com/leagues/<league_id>/feed/?start=0`  
 > "age" is broken and displaying random seconds, not the actual time since the feed item was created.
 >
@@ -111,6 +112,38 @@ If you make this container publically available via a domain, you'll need to cre
 `your.domain.com/api/livepoints -> <container_ip_or_hostname>:5000`  
 > [!IMPORTANT]
 In order to this to work, both your reverse proxy and the container need to be in the same network.  
+
+In Traefik, the dynamic config would look like this:  
+```yaml
+http:
+  routers:
+    kickbase-web:
+      service: kickbase-web
+      rule: Host(`your.domain.de`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: cloudflare
+
+    kickbase-api:
+      service: kickbase-api
+      rule: Host(`your.domain.de`) && PathPrefix(`/api/livepoints`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: cloudflare
+
+  services:
+    kickbase-web:
+      loadBalancer:
+        servers:
+          - url: http://<container_ip>:3000
+
+    kickbase-api:
+      loadBalancer:
+        servers:
+          - url: http://<container_ip>:5000
+```
 
 > [!NOTE]
 It may take some time to initially start the container, so check the logs!  
