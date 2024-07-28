@@ -4,7 +4,11 @@
 TODO: Maybe list all functions here automatically?
 """
 
-import requests, json, pytz, logging
+import requests
+import json
+import pytz
+import logging
+
 import pandas as pd
 from datetime import datetime
 
@@ -12,7 +16,7 @@ from kickbase import exceptions, competition
 
 ### ===============================================================================
 
-POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
+POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
 
 ### TREND (can be found via player stats)
 # 0: Gleichbleibend (500k player) (Welcher Zeitraum?)
@@ -27,7 +31,8 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 # 4: Aufbautraining (Orange Cone)
 # 8: Rote Karte (Red Card)
 # 32: 5. Gelbe Karte (Yellow Card)
-# 128: Raus aus der Liga
+# 128: Raus aus der Liga (Red Arrow)
+# 256: Abwesend (Grey Clock)
 ### Conversion from number to icon for the frontend in "SharedConstants.js"
 
 ### TYPE (from league feed)
@@ -64,14 +69,14 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 # 23 -
 # 24 Bochum
 # 25-38 -
-# 39 St. Pauli (Missing Team picture)
+# 39 St. Pauli
 # 40 Union
 # 41 - 
 # 42 -
 # 43 Leipzig
 # 44-49 -
 # 50 Heidenheim
-# 51 Holstein Kiel (Missing Team picture)
+# 51 Holstein Kiel
 TEAM_IDS = [2, 3, 4, 5, 7, 9, 10, 11, 13, 14, 15, 18, 24, 39, 40, 43, 50, 51]
 
 TIMEZONE_DE = pytz.timezone("Europe/Berlin")
@@ -172,7 +177,7 @@ def get_free_players(token: str, league_id: str, taken_players):
                     "points": player.p.totalPoints,
                 })
 
-    logging.info("Got all free players.\n")
+    logging.info("Got all free players.")
 
     with open("/code/frontend/src/data/free_players.json", "w") as file:
         file.write(json.dumps(free_players, indent=2))
@@ -228,7 +233,7 @@ def calculate_revenue_data_daily(turnovers, manager):
         for entry in df.to_numpy().tolist():
             data[user].append((entry[0], entry[1]))
 
-    logging.info("Calculated daily revenue data.\n")
+    logging.info("Calculated daily revenue data.")
 
     ### Finally, the data dictionary is written to a JSON file named 'revenue_sum.json'.
     with open('/code/frontend/src/data/revenue_sum.json', 'w') as f:
