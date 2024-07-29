@@ -1,8 +1,8 @@
 """
-### This file contains all models for the leagues endpoint.
+### This file contains all models for the leagues endpoint, regardless of the API version.
 
-Endpoint:
-`/leagues/{league_id}/...`
+#### Endpoint:
+`/vX/leagues/...`
 """
 
 class League_User_Info:
