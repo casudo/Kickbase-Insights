@@ -1,8 +1,8 @@
 """
-### This file contains all models for the `/user/...` endpoint.
+### This file contains all models for the user endpoint, regardless of the API version.
 
-Endpoint:
-/user/...
+#### Endpoint:
+`/vX/user/...`
 """
 
 class User:

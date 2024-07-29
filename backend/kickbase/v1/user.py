@@ -6,8 +6,8 @@ TODO: Maybe list all functions here automatically?
 
 import requests
 
-from kickbase.endpoints.user import User, League
-from kickbase import exceptions
+from backend import exceptions
+from backend.kickbase.endpoints.user import User, League
 
 ### -------------------------------------------------------------------
 

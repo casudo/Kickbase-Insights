@@ -8,7 +8,8 @@ from sys import stdout
 from logging.config import dictConfig
 from datetime import datetime, timedelta
 
-from kickbase import exceptions, user, miscellaneous, leagues, competition
+from backend import exceptions, miscellaneous
+from backend.kickbase.v1 import user, leagues, competition
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------

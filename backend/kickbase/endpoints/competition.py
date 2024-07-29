@@ -1,8 +1,8 @@
 """
-### This file contains all models for the competition endpoint.
+### This file contains all models for the competition endpoint, regardless of the API version.
 
-Endpoint:
-`/competition/...`
+#### Endpoint:
+`/vX/competition/...`
 """
 
 

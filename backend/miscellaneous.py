@@ -12,7 +12,8 @@ import logging
 import pandas as pd
 from datetime import datetime
 
-from kickbase import exceptions, competition
+from backend import exceptions
+from backend.kickbase.v1 import competition
 
 ### ===============================================================================
 
