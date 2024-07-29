@@ -187,7 +187,6 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
   - Top players
 - Transfererlöse: Hold player for X days  
 - Sum. Transfererlöse: Add custom scale for chart  
-- Dev: Execution time  
 - Misc: Unsold starter players    
 - Fix TZ on frontend (market table)  
 - Reformat changelog  
@@ -199,7 +198,6 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 
 **Backend:**  
 - Fix all TODOs  
-- Measure time of API calls and display them under Misc?  
 - Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)  
 - Fix TZ in Ubuntu image ([Stackoverflow](https://serverfault.com/questions/683605/docker-container-time-timezone-will-not-reflect-changes))  
 - Discord notifications  
@@ -208,6 +206,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Categorize components to frontend menu  
 - Better performance for some API calls (e.g. taken/free players)  
 - Battles: Spieltagsdominator: Fix placements being wrong for people with the same amount of mdWins  
+- Change behavior if player has the position number of "0". Instead of defaulting that to "1", do smth else
 
 **Misc:**  
 - Add Postman workspace  

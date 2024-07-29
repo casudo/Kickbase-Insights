@@ -18,6 +18,7 @@ from backend.kickbase.v1 import competition
 ### ===============================================================================
 
 POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
+### 0 = Vereinslos oder sehr neue Spieler in der Liga
 
 ### TREND (can be found via player stats)
 # 0: Gleichbleibend (500k player) (Welcher Zeitraum?)
@@ -166,10 +167,16 @@ def get_free_players(token: str, league_id: str, taken_players):
             ### Check if the player is not taken
             if player.p.id not in taken_player_ids:
 
+                ### Check if position number is valid
+                position_nr = player.p.position
+                if position_nr not in POSITIONS:
+                    logging.warning(f"Invalid position number: {position_nr} for player {player.p.firstName} {player.p.lastName} (PID: {player.p.id})")
+                    position_nr = 1    
+
                 free_players.append({
                     "playerId": player.p.id,
                     "teamId": player.p.teamId,
-                    "position": POSITIONS[player.p.position],
+                    "position": POSITIONS[position_nr],
                     "firstName": player.p.firstName,
                     "lastName": player.p.lastName,
                     "marketValue": player.p.marketValue,

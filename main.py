@@ -187,33 +187,30 @@ def market(user_token: str, selected_league: object) -> None:
     players_listed_by_kickbase = []
 
     for player in players_on_market:
-        ### Check if player is listed by user
+        position_nr = player.position
+        
+        if position_nr not in miscellaneous.POSITIONS:
+            logging.warning(f"Invalid position number: {position_nr} for player {player.firstName} {player.lastName} (PID: {player.id})")
+            position_nr = 1 ### Default to "Torwart" (Goalkeeper)
+        
+        player_info = {
+            "teamId": player.teamId,
+            "position": miscellaneous.POSITIONS[position_nr],
+            "firstName": f"{player.firstName}", 
+            "lastName": f"{player.lastName}",
+            "price": player.price,
+            "status": player.status,
+            "trend": player.marketValueTrend,
+            "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
+        } ### TODO: Fix expiration TZ
+        
+        ### Check if player is listed by user or Kickbase
         if not player.username:
-            ### Create a custom json dict for every player listed by kickbase
-            players_listed_by_kickbase.append({
-                "teamId": player.teamId,
-                "position": miscellaneous.POSITIONS[player.position],
-                "firstName": f"{player.firstName}", 
-                "lastName": f"{player.lastName}",
-                "price": player.price,
-                "status": player.status,
-                "trend": player.marketValueTrend,
-                "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
-            })
+            players_listed_by_kickbase.append(player_info)
             logging.debug(f"Player {player.firstName} {player.lastName} is listed by Kickbase!")
         else:
-            ### Create a custom json dict for every player listed by real users
-            players_listed_by_user.append({
-                "teamId": player.teamId,
-                "position": miscellaneous.POSITIONS[player.position],
-                "firstName": f"{player.firstName}", 
-                "lastName": f"{player.lastName}",
-                "price": player.price,
-                "status": player.status,
-                "trend": player.marketValueTrend,
-                "seller": player.username,
-                "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
-            }) ### TODO: Fix expiration TZ
+            player_info["seller"] = player.username
+            players_listed_by_user.append(player_info)
             logging.debug(f"Player {player.firstName} {player.lastName} is listed by {player.username}!")
 
     logging.info("Got all players listed on transfer market.")
@@ -261,11 +258,17 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
                 manager = player_stats["leaguePlayer"]["userName"]
             else:
                 manager = "Kickbase"
+                
+            ### Check if position number is valid
+            position_nr = player_stats["position"]
+            if position_nr not in miscellaneous.POSITIONS:
+                logging.warning(f"Invalid position number: {position_nr} for player {player_stats['firstName']} {player_stats['lastName']} (PID: {player_stats['id']})")
+                position_nr = 1 ### Default to "Torwart" (Goalkeeper)
 
             ### Create a custom json dict for every player
             players_LIST.append({
                 "teamId": player_stats["teamId"],
-                "position": miscellaneous.POSITIONS[player_stats["position"]],
+                "position": miscellaneous.POSITIONS[position_nr],
                 "firstName": player_stats["firstName"], # "firstName": f"{player.p.firstName}", 
                 "lastName": player_stats["lastName"], # "lastName": f"{player.p.lastName}",
                 "marketValue": player_stats["marketValue"], # "marketValue": player.p.marketValue,
@@ -351,12 +354,18 @@ def taken_free_players(user_token: str, selected_league: object) -> dict:
                 ### Skip to next player
                 continue
             
+            ### Check if position number is valid
+            position_nr = player_stats["position"]
+            if position_nr not in miscellaneous.POSITIONS:
+                logging.warning(f"Invalid position number: {position_nr} for player {player_stats['firstName']} {player_stats['lastName']} (PID: {player_stats['id']})")
+                position_nr = 1 ### Default to "Torwart" (Goalkeeper)
+
             ### Create a custom json dict for every player. This will be passed to the frontend later.
             taken_players.append({
                 "playerId": transfer["meta"]["pid"],
                 "user": real_user["name"],
                 "teamId": player_stats["teamId"],
-                "position": miscellaneous.POSITIONS[player_stats["position"]],
+                "position": miscellaneous.POSITIONS[position_nr],
                 "firstName": transfer["meta"]["pfn"],
                 "lastName": transfer["meta"]["pln"],
                 "buyPrice": transfer["meta"]["p"],
@@ -386,12 +395,18 @@ def taken_free_players(user_token: str, selected_league: object) -> dict:
             if not any(player_id == player.get("playerId") for player in user_transfers_result) and player_stats.get("userName") is not None:
                 logging.debug(f"Player {player.p.firstName} {player.p.lastName} isn't on the list of taken players, but is owned by user {player_stats.get('userName')}!")
 
+                ### Check if position number is valid
+                position_nr = player.p.position
+                if position_nr not in miscellaneous.POSITIONS:
+                    logging.warning(f"Invalid position number: {position_nr} for player {player.p.firstName} {player.p.lastName} (PID: {player_id})")
+                    position_nr = 1 ### Default to "Torwart" (Goalkeeper)
+
                 ### Create a custom json dict for every starter player. This will be passed to the frontend later.
                 starter_players.append({
                     "playerId": player_id,
                     "user": player_stats["userName"],
                     "teamId": player.p.teamId,
-                    "position": miscellaneous.POSITIONS[player.p.position],
+                    "position": miscellaneous.POSITIONS[position_nr],
                     "firstName": player.p.firstName,
                     "lastName": player.p.lastName,
                     "buyPrice": 0,
