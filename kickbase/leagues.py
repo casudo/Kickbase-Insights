@@ -523,14 +523,14 @@ def live_points(token: str, league_id: str):
     
     return response
 
-### TODO: Unused?
-def league_stats(token: str, league_id: str):
+
+def league_stats(token: str, league_id: str) -> dict:
     """
     ### Get the league statistics.
 
     This includes the current match day, information about every previous match day and the users in the league.
 
-    Expected response:
+    #### Expected response (as of 29.07.24):
     ```json
     {
         "currentDay": 12,

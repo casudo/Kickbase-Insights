@@ -77,7 +77,7 @@ docker run -d \
     -e DISCORD_WEBHOOK=<discord_webhook> \
     -e WATCHPACK_POLLING=true \
     -e TZ=Europe/Berlin \
-    ghcr.io/casudo/kickbase-insights:<tag>
+    ghcr.io/casudo/kickbase-insights:latest
 ```  
 
 ### Docker Compose
@@ -86,7 +86,7 @@ version: "3.8"
 
 services:
   kickbase-insights:
-    image: ghcr.io/casudo/kickbase-insights:<tag>
+    image: ghcr.io/casudo/kickbase-insights:latest
     container_name: kickbase_insights
     restart: unless-stopped
     ports:
@@ -137,12 +137,12 @@ http:
     kickbase-web:
       loadBalancer:
         servers:
-          - url: http://<container_ip>:3000
+          - url: http://<container_hostname>:3000
 
     kickbase-api:
       loadBalancer:
         servers:
-          - url: http://<container_ip>:5000
+          - url: http://<container_hostname>:5000
 ```
 
 > [!NOTE]
@@ -151,13 +151,22 @@ It may take some time to initially start the container, so check the logs!
 ---
 
 ## Development
-If you want to contribute to this project, you can follow the steps below to start the development environment.  
+If you want to contribute to this project, you can follow the steps below to jump right into the development environment.  
 ```bash
 docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash
-mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano python3 python3-pip git -y && git clone https://github.com/casudo/Kickbase-Insights.git . && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && pip install --upgrade pip && pip install --upgrade -r requirements.txt && mkdir -p frontend/src/data/timestamps && mkdir logs && cd frontend && npm install
+mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano python3 python3-pip git curl -y && git clone https://github.com/casudo/Kickbase-Insights.git . && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && pip install --upgrade pip && pip install --upgrade -r requirements.txt && mkdir -p frontend/src/data/timestamps && mkdir logs && cd frontend && npm install
+```  
+
+If you have this project already cloned, you can run the following command to bind mount the files inside the container:  
+```bash
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -v <C>:\<your_folder>\Kickbase-Insights:/code ubuntu
+```  
+Run this long command to setup the container:  
+```bash
+cd /code && apt update && apt upgrade -y && apt install tree nano python3 python3-pip curl -y && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && pip install --upgrade pip && pip install --upgrade -r requirements.txt && mkdir -p frontend/src/data/timestamps && mkdir logs && cd frontend && npm install
 ```  
 
 Now you're ready to go. Keep in mind that you'll first need to run `main.py` to get the required data for the frontend.  
