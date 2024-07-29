@@ -15,6 +15,7 @@ from backend.kickbase.v1 import user, leagues, competition
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 
+__version__ = getenv("REACT_APP_VERSION", "Warning: Coulnd't load version")
 
 def main() -> None:
     """### This is the main function of the Kickbase Insights program.
@@ -753,8 +754,8 @@ if __name__ == "__main__":
     ### -------------------------------------------------------------------
 
     tprint("\n\nKB-Insights")
-    print("\x1B[3mby casudo\x1B[0m\n\n")
-    # print(f"\x1B[3m{VERSION}\x1B[0m\n\n")    
+    print("\x1B[3mby casudo\x1B[0m")
+    print(f"\x1B[3m{__version__}\x1B[0m\n\n")    
 
     start_time = time.time()
 
