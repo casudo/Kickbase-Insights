@@ -200,7 +200,7 @@ def calculate_revenue_data_daily(turnovers, manager):
 
     ### Add start and end points for the graph
     for _, data in user_transfer_revenue.items():
-        data.append((0, datetime(2024, 8, 23))) ### TODO: Change Startday at the end of the season ???
+        data.append((0, datetime(2024, 7, 1))) ### TODO: This should be the date when the Kickbase league started!!
         data.append((0, datetime.now()))
 
     ### This section converts the data in user_transfer_revenue into Pandas DataFrames.

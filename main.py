@@ -9,7 +9,8 @@ from logging.config import dictConfig
 from datetime import datetime, timedelta
 
 from backend import exceptions, miscellaneous
-from backend.kickbase.v1 import user, leagues, competition as competition_v1
+from backend.kickbase.v1 import user, leagues as leagues_v1, competition as competition_v1
+from backend.kickbase.v2 import leagues as leagues_v2
 from backend.kickbase.v3 import competition as competition_v3
 
 ### -------------------------------------------------------------------
@@ -85,7 +86,10 @@ def main() -> None:
         market(user_token, selected_league)
         market_value_changes(user_token, selected_league)
         league_users = taken_free_players(user_token, selected_league)
-        turnovers(user_token, selected_league, league_users)
+
+        # turnovers_v1(user_token, selected_league, league_users)
+        turnovers_v2(user_token, selected_league, league_users)
+
         team_value_per_match_day(user_token, selected_league, league_users)
         league_user_stats_tables(user_token, selected_league, league_users)
         live_points(user_token, selected_league) # needs to be run first to initialize the live_points.json file
@@ -154,13 +158,13 @@ def get_gift(user_token: str, league_list: list) -> None:
         league_list (list): List of leagues the user is in.
     """
     for league in league_list:
-        gift = leagues.is_gift_available(user_token, league.id)
+        gift = leagues_v1.is_gift_available(user_token, league.id)
 
         ### Check if dict in gift has {'isAvailable': True}:
         if gift["isAvailable"]:
             logging.info(f"Gift available in league {league.name}!")
             miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600, discord_webhook) # TODO: Change color
-            leagues.get_gift(user_token, league.id) # TODO: Try, except needed here?, TODO: Check response
+            leagues_v1.get_gift(user_token, league.id) # TODO: Try, except needed here?, TODO: Check response
         else:
             logging.info(f"Gift has already been collected in league '{league.name}'!")
             # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, discord_webhook) # TODO: Change color
@@ -176,7 +180,7 @@ def market(user_token: str, selected_league: object) -> None:
     logging.info("Getting players listed on transfer market...")
 
     ### Get all players on the market
-    players_on_market = leagues.get_market(user_token, selected_league.id)
+    players_on_market = leagues_v1.get_market(user_token, selected_league.id)
 
     players_listed_by_user = []
     players_listed_by_kickbase = []
@@ -243,7 +247,7 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
         ### Loop through all players in the team
         for player in competition_v1.team_players(user_token, team):
             ### Get the market value changes for the player
-            player_stats = leagues.player_statistics(user_token, selected_league.id, player.p.id)
+            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.p.id)
 
             ### Check if player is owned by user
             if "leaguePlayer" in player_stats:
@@ -312,7 +316,7 @@ def taken_free_players(user_token: str, selected_league: object) -> dict:
     final_result = []
 
     ### Get all users in the league
-    league_users = leagues.league_users(user_token, selected_league.id)
+    league_users = leagues_v1.league_users(user_token, selected_league.id)
     logging.debug(f"DEBUG of USERS: {league_users['users'][0]}")
 
     ### Loop through all users in the league
@@ -324,13 +328,13 @@ def taken_free_players(user_token: str, selected_league: object) -> dict:
         user_has_sold = set()
 
         ### Get all transfers of a user
-        user_transfers = leagues.user_players(user_token, selected_league.id, real_user["id"])
+        user_transfers = leagues_v1.user_players(user_token, selected_league.id, real_user["id"])
         logging.debug(f"Found {len(user_transfers)} transfers for user {real_user['name']}")
 
         ### Loop through all transfers of a user (done by getting the user specific BUY/SELL feed)
         for transfer in user_transfers:
             ### Search the stats of the given player ID to fill the missing attributes for the player which cannot be found in the BUY/SELL feed
-            player_stats = leagues.player_statistics(user_token, selected_league.id, transfer["meta"]["pid"])
+            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, transfer["meta"]["pid"])
             logging.debug(f"Player stats: {player_stats['position']}")
 
             ### If player wasn't bought OR player ID is in the list of players the user has sold
@@ -381,7 +385,7 @@ def taken_free_players(user_token: str, selected_league: object) -> dict:
             # print(player_id)
 
             ### Search the stats of the given player ID to fill the missing attributes for the player which cannot be found from the team_players endpoint
-            player_stats = leagues.player_statistics(user_token, selected_league.id, player.p.id)
+            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.p.id)
 
             ### If the player Id is NOT SOMEWHERE in the list of taken players (user_transfers_result) AND the player has a username attribute (is owned by a user)
             if not any(player_id == player.get("playerId") for player in user_transfers_result) and player_stats.get("userName") is not None:
@@ -429,7 +433,7 @@ def taken_free_players(user_token: str, selected_league: object) -> dict:
     return league_users
 
 
-def turnovers(user_token: str, selected_league: object, league_users: dict) -> None:
+def turnovers_v1(user_token: str, selected_league: object, league_users: dict) -> None:
     """### Retrieves all turnovers in the league.
 
     Args:
@@ -449,7 +453,7 @@ def turnovers(user_token: str, selected_league: object, league_users: dict) -> N
         transfers = []
         
         ### Get all transfers of a user
-        user_transfers = leagues.user_players(user_token, selected_league.id, real_user["id"])
+        user_transfers = leagues_v1.user_players(user_token, selected_league.id, real_user["id"])
         logging.debug(f"Found {len(user_transfers)} transfers for user {real_user['name']}")
 
         ### Cycle through all transfers of a user
@@ -512,7 +516,7 @@ def turnovers(user_token: str, selected_league: object, league_users: dict) -> N
             if transfer not in [turnover[1] for turnover in turnovers]:
 
                 ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
-                date = datetime(2024, 8, 23).isoformat() ### TODO: Change Startday at the end of the season ??? Maybe as ENV variable?
+                date = datetime(2024, 7, 1).isoformat() ### TODO: Change Startday at the end of the season ??? Maybe as ENV variable?
                 buy_transfer = {"date": date,
                                 "type": "buy",
                                 "user": transfer["user"],
@@ -526,6 +530,139 @@ def turnovers(user_token: str, selected_league: object, league_users: dict) -> N
                 turnovers.append((buy_transfer, transfer))
 
         final_turnovers += turnovers
+
+    logging.info("Got all turnovers.")
+
+    with open("/code/frontend/src/data/turnovers.json", "w") as f:
+        f.write(json.dumps(final_turnovers, indent=2))
+        logging.debug("Created file turnovers.json")
+    
+    ### Timestamp for frontend
+    with open("/code/frontend/src/data/timestamps/ts_turnovers.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        logging.debug("Created file ts_turnovers.json")
+
+    ### Calculate revenue data for the graph
+    miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
+
+
+def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -> None:
+    """### Retrieves all turnovers in the league.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+        league_users (dict): A dictionary containing all users in the league.
+    """
+    logging.info("Getting turnovers...")
+
+    final_turnovers = []
+
+    ### Get all transfers from the API
+    all_transfers = leagues_v2.transfers(user_token, selected_league.id)
+    logging.info(f"Found {len(all_transfers)} transfers in total")
+
+    transfers = []
+
+    ### Process each transfer item
+    for item in all_transfers:
+        ### Determine the transfer type based on the type and metadata
+        # if item["type"] == 15:
+        #     if "s" in item["meta"] and "b" in item["meta"]:
+        #         transfer_type = "user_to_user"
+        #         user = item["meta"]["s"]["n"]
+        #         trade_partner = item["meta"]["b"]["n"]
+        #     elif "s" in item["meta"]:
+        #         transfer_type = "sell"
+        #         user = item["meta"]["s"]["n"]
+        #         trade_partner = "Kickbase"
+        #     elif "b" in item["meta"]:
+        #         transfer_type = "buy"
+        #         user = item["meta"]["b"]["n"]
+        #         trade_partner = "Kickbase"
+        #     else:
+        #         transfer_type = "unknown"
+        # else:
+        #     transfer_type = "unknown"
+        if item["type"] == 15:
+            if "s" in item["meta"] and "b" in item["meta"]:
+                transfer_type = "sell"
+                user = item["meta"]["s"]["n"]
+                trade_partner = item["meta"]["b"]["n"]
+            elif "s" in item["meta"]:
+                transfer_type = "sell"
+                user = item["meta"]["s"]["n"]
+                trade_partner = "Kickbase"
+            elif "b" in item["meta"]:
+                transfer_type = "buy"
+                user = item["meta"]["b"]["n"]
+                trade_partner = "Kickbase"
+            else:
+                transfer_type = "unknown"
+        else:
+            transfer_type = "unknown"
+
+        ### Create a custom json dict for every transfer
+        transfers.append({
+            "date": item["date"],
+            "type": transfer_type,
+            "user": user,
+            "tradePartner": trade_partner,
+            "price": item["meta"]["v"],
+            "playerId": item["meta"]["p"]["i"],
+            "teamId": item["meta"]["p"]["t"],
+            # "firstName": item["meta"]["p"]["n"].split()[0], ### TODO: Get via Player ID
+            "lastName": item["meta"]["p"]["n"], ### TODO: Get via Player ID
+        })
+
+    ### Removes duplicates given by the API
+    transfers = list({frozenset(item.items()): item for item in transfers}.values())
+    transfers.reverse()  # Oldest is first.
+
+    turnovers = []
+
+    ### Iterate over every element in the "transfers" list (where "i" is the index) and save it to "buy_transfer"
+    for i, buy_transfer in enumerate(transfers):
+        ### Skip if the transfer is type "sell"
+        if buy_transfer["type"] == "sell":
+            continue
+
+        ### This nested loop iterates over the remaining transfers (starting from the current buy transfer).
+        ### It compares each of these transfers with the current buy transfer
+        for sell_transfer in transfers[i:]:
+            if sell_transfer["type"] == "buy":
+                continue
+
+            ### This condition checks if the player ID of the current sell transfer matches the player ID of the current buy transfer. 
+            ### If there is a match, it means a corresponding buy-sell pair is found.
+            if sell_transfer["playerId"] == buy_transfer["playerId"]:
+                turnovers.append((buy_transfer, sell_transfer))
+                break
+
+    ### Revenue generated by randomly assigned players
+    for transfer in transfers:
+        ### Skip buy transfers
+        if transfer["type"] == "buy":
+            continue
+
+        ### This condition checks if the current sell transfer is not already part of a buy-sell pair in the turnovers list.
+        if transfer not in [turnover[1] for turnover in turnovers]:
+
+            ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
+            date = datetime(2024, 7, 1).isoformat()  # TODO: Change Startday at the end of the season ??? Maybe as ENV variable?
+            buy_transfer = {"date": date,
+                            "type": "assigned_at_start",
+                            "user": transfer["user"],
+                            "tradePartner": "Kickbase",
+                            "price": transfer["price"],  # "price": 0.0, ### TODO: Add market value of "date" via player stats
+                            "playerId": transfer["playerId"],
+                            "teamId": transfer["teamId"],
+                            # "firstName": transfer["firstName"],
+                            "lastName": transfer["lastName"]}
+
+            turnovers.append((buy_transfer, transfer))
+
+    final_turnovers += turnovers
 
     logging.info("Got all turnovers.")
 
@@ -560,7 +697,7 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
     ### Loop through all users in the league
     for real_user in league_users.get("users"):
         ### Get the current match day
-        current_match_day = leagues.league_stats(user_token, selected_league.id)["currentDay"]
+        current_match_day = leagues_v1.league_stats(user_token, selected_league.id)["currentDay"]
 
         ### Get team value for each match day
         team_value = {match_day: 0 for match_day in range(1, current_match_day + 1)}
@@ -569,7 +706,7 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
         for match_day in match_days_list:
 
             ### TODO: Reverse userstats["teamValues"] since the below for loop iterates from newest to oldest
-            user_stats = leagues.user_stats(user_token, selected_league.id, real_user["id"])
+            user_stats = leagues_v1.user_stats(user_token, selected_league.id, real_user["id"])
 
             team_value_on_match_day = 0
             ### Loop through all team values (per day) of the user
@@ -610,7 +747,7 @@ def league_user_stats_tables(user_token: str, selected_league: object, league_us
     ### Loop through all users in the league
     for real_user in league_users.get("users"):
         ### Get stats for each user
-        user_stats = leagues.user_stats(user_token, selected_league.id, real_user["id"])
+        user_stats = leagues_v1.user_stats(user_token, selected_league.id, real_user["id"])
 
         def get_season_stat(user_stats: dict , stat: str, default: int=0) -> int:
             """Safely get a stat from the first season in user_stats.
@@ -678,7 +815,7 @@ def live_points(user_token: str, selected_league: object) -> None:
     logging.info("Getting live points...")
 
     ### Get the current live points
-    live_points = leagues.live_points(user_token, selected_league.id)
+    live_points = leagues_v1.live_points(user_token, selected_league.id)
 
     ### Create a custom json dict for every user and his players
     final_live_points = []
