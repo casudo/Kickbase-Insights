@@ -64,6 +64,7 @@ If you want to run this in a Docker container, you'll first need to set some man
 | `DISCORD_WEBHOOK` | **Yes** | The Discord webhook URL to send notifications to. |
 | `RUN_SCHEDULE` | No | The cron expression when the script should fetch new information from the API. If not set, defaults to `10 2,6,10,14,18,22 * * *`. |
 | `WATCHPACK_POLLING` | **Yes** | Used to [apply new changes](https://stackoverflow.com/a/72661752) in the filesystem on runtime. If not set, defaults to `true`. |
+| `START_DATE` | **Yes** | The date when the season started in format `dd.mm.yyyy`. |
 | `TZ` | No | The timezone to use. |
 
 ### docker run
@@ -76,6 +77,7 @@ docker run -d \
     -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
     -e WATCHPACK_POLLING=true \
+    -e START_DATE=<start_date> \
     -e TZ=Europe/Berlin \
     ghcr.io/casudo/kickbase-insights:latest
 ```  
@@ -97,6 +99,7 @@ services:
         - KB_PASSWORD=<kickbase_password>
         - DISCORD_WEBHOOK=<discord_webhook>
         - WATCHPACK_POLLING=true
+        - START_DATE=<start_date>
         - TZ=Europe/Berlin
 ```  
 
@@ -153,7 +156,7 @@ It may take some time to initially start the container, so check the logs!
 ## Development
 If you want to contribute to this project, you can follow the steps below to jump right into the development environment.  
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true ubuntu
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash
@@ -162,7 +165,7 @@ mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano
 
 If you have this project already cloned, you can run the following command to bind mount the files inside the container:  
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -v <C>:\<your_folder>\Kickbase-Insights:/code ubuntu
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> -v <your_folder>\Kickbase-Insights:/code ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash
@@ -207,11 +210,12 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Better performance for some API calls (e.g. taken/free players)  
 - Battles: Spieltagsdominator: Fix placements being wrong for people with the same amount of mdWins  
 - Change behavior if player has the position number of "0". Instead of defaulting that to "1", do smth else
+- Add own function for creating .json files (data and timestamps)
+- Support for multiple leagues via ports (League 1: 5000, League 2: 5001, etc.)
 
 **Misc:**  
 - Add Postman workspace  
 - Add Workflow chart  
-- Add ./data, ./data/timestamp and logs/ folders to git  
 - Automatically disable caching  
 
 ---

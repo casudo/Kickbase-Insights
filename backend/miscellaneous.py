@@ -11,6 +11,7 @@ import logging
 
 import pandas as pd
 from datetime import datetime
+from os import getenv
 
 from backend import exceptions
 from backend.kickbase.v1 import competition
@@ -180,11 +181,12 @@ def get_free_players(token: str, taken_players: list) -> None:
         logging.debug("Created file ts_free_players.json")
 
 
-def calculate_revenue_data_daily(turnovers, manager):
-    """
-    ### This function calculates the daily revenue for each user
+def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
+    """### Calculate daily revenue data.
 
-    The data is stored as dict in JSON file and is later used to create a graph in the frontend.
+    Args:
+        turnovers (dict): A dictionary containing all buy-sell pairs.
+        manager (list): A list of all users in the Kickbase league.
     """
     logging.info("Calculating daily revenue data...")
 
@@ -200,7 +202,7 @@ def calculate_revenue_data_daily(turnovers, manager):
 
     ### Add start and end points for the graph
     for _, data in user_transfer_revenue.items():
-        data.append((0, datetime(2024, 7, 1))) ### TODO: This should be the date when the Kickbase league started!!
+        data.append((0, datetime.strptime(getenv("START_DATE"), "%d.%m.%Y")))
         data.append((0, datetime.now()))
 
     ### This section converts the data in user_transfer_revenue into Pandas DataFrames.

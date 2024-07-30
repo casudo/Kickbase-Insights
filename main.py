@@ -516,7 +516,7 @@ def turnovers_v1(user_token: str, selected_league: object, league_users: dict) -
             if transfer not in [turnover[1] for turnover in turnovers]:
 
                 ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
-                date = datetime(2024, 7, 1).isoformat() ### TODO: Change Startday at the end of the season ??? Maybe as ENV variable?
+                date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").isoformat()
                 buy_transfer = {"date": date,
                                 "type": "buy",
                                 "user": transfer["user"],
@@ -567,23 +567,6 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
     ### Process each transfer item
     for item in all_transfers:
         ### Determine the transfer type based on the type and metadata
-        # if item["type"] == 15:
-        #     if "s" in item["meta"] and "b" in item["meta"]:
-        #         transfer_type = "user_to_user"
-        #         user = item["meta"]["s"]["n"]
-        #         trade_partner = item["meta"]["b"]["n"]
-        #     elif "s" in item["meta"]:
-        #         transfer_type = "sell"
-        #         user = item["meta"]["s"]["n"]
-        #         trade_partner = "Kickbase"
-        #     elif "b" in item["meta"]:
-        #         transfer_type = "buy"
-        #         user = item["meta"]["b"]["n"]
-        #         trade_partner = "Kickbase"
-        #     else:
-        #         transfer_type = "unknown"
-        # else:
-        #     transfer_type = "unknown"
         if item["type"] == 15:
             if "s" in item["meta"] and "b" in item["meta"]:
                 transfer_type = "sell"
@@ -649,7 +632,7 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
         if transfer not in [turnover[1] for turnover in turnovers]:
 
             ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
-            date = datetime(2024, 7, 1).isoformat()  # TODO: Change Startday at the end of the season ??? Maybe as ENV variable?
+            date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").isoformat()
             buy_transfer = {"date": date,
                             "type": "assigned_at_start",
                             "user": transfer["user"],
