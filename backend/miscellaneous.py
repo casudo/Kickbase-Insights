@@ -44,6 +44,14 @@ POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
 # Type 8: Final matchday points
 # Type 12: Gekauft von Kickbase
 
+### TYPE (from v2 League Feed)
+# Type 3: Free player listed by Kickbase
+# Type 5: User joined the Kickbase league
+# Type 15 + meta["s"]: User sold Player to Kickbase
+# Type 15 + meta["b"]: User bought Player from Kickbase
+# Type 15 + meta["s"] + meta["b"]: User sold Player to User
+# Type 16: News from Kickbase?
+
 ### TEAM_IDS
 ### As of 17.07.2024
 # 1 -
