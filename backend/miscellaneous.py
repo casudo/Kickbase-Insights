@@ -124,11 +124,19 @@ MATCH_DAYS = {
 
 ### ===============================================================================
 
-def discord_notification(title: str, message: str, color: int, dc_url: str = None):
+def discord_notification(title: str, message: str, color: int, webhook_url: str) -> None:
+    """### Send a Discord notification to a webhook.
+
+    Args:
+        title (str): Title of the notification.
+        message (str): Message of the notification.
+        color (int): Color of the notification.
+        webhook_url (str): Webhook URL to send the notification to.
+
+    Raises:
+        WIP! TODO!
     """
-    ### Send a notification to a Discord Webhook.
-    """
-    url = dc_url
+    url = webhook_url
     headers = {"Content-Type": "application/json"}
     payload = {
         "username": "Kickbase",
@@ -149,9 +157,15 @@ def discord_notification(title: str, message: str, color: int, dc_url: str = Non
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.")
     
 
-def get_free_players(token: str, league_id: str, taken_players):
-    """
-    TODO: Add docstring
+def get_free_players(token: str, taken_players: list) -> None:
+    """### Get all free players based on the taken players.
+
+    Args:
+        token (str): The user's kkstrauth token.
+        taken_players (list): A list of all taken players.
+
+    Returns:
+        None
     """
     logging.info("Getting free players...")
 

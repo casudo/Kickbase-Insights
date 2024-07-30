@@ -15,7 +15,7 @@ from backend.kickbase.v1 import user, leagues, competition
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 
-__version__ = getenv("REACT_APP_VERSION", "Warning: Coulnd't load version")
+__version__ = getenv("REACT_APP_VERSION", "Warning: Couldn't load version")
 
 def main() -> None:
     """### This is the main function of the Kickbase Insights program.
@@ -76,7 +76,7 @@ def main() -> None:
     dictConfig(LOGGING)
 
     try:
-        user_info, league_list, selected_league, user_token = login()
+        league_list, selected_league, user_token = login()
 
         ### Get the daily login gift in every available league
         get_gift(user_token, league_list)
@@ -105,7 +105,6 @@ def login() -> tuple:
 
     Returns:
         tuple: A tuple containing the following elements:
-            -- user_info (object): User information object.
             -- league_list (list): List of leagues the user is in.
             -- selected_league (object): The league the user wants to get data from for the frontend.
             -- user_token (str): User token for authentication.
@@ -143,7 +142,7 @@ def login() -> tuple:
         logging.info(f"No preferred league set. Using the first league in the list: {league_list[0].name}")
         selected_league = league_list[0]
 
-    return user_info, league_list, selected_league, user_token
+    return league_list, selected_league, user_token
 
 
 def get_gift(user_token: str, league_list: list) -> None:
@@ -152,9 +151,6 @@ def get_gift(user_token: str, league_list: list) -> None:
     Args:
         user_token (str): The user's kkstrauth token.
         league_list (list): List of leagues the user is in.
-
-    Returns:
-        None
     """
     for league in league_list:
         gift = leagues.is_gift_available(user_token, league.id)
@@ -175,9 +171,6 @@ def market(user_token: str, selected_league: object) -> None:
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
-
-    Returns:
-        None
     """
     logging.info("Getting players listed on transfer market...")
 
@@ -239,9 +232,6 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
-
-    Returns:
-        None
     """
     logging.info("Getting market value changes for all players...")
 
@@ -433,7 +423,7 @@ def taken_free_players(user_token: str, selected_league: object) -> dict:
         logging.debug("Created file ts_taken_players.json")
 
     ### Based on all taken players, we can now get all free players
-    miscellaneous.get_free_players(user_token, selected_league.id, final_result)
+    miscellaneous.get_free_players(user_token, final_result)
 
     return league_users
 
@@ -445,9 +435,6 @@ def turnovers(user_token: str, selected_league: object, league_users: dict) -> N
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
         league_users (dict): A dictionary containing all users in the league.
-
-    Returns:
-        None
     """
     logging.info("Getting turnovers...")
 
@@ -561,9 +548,6 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
         league_users (dict): A dictionary containing all users in the league.
-    
-    Returns:
-        None
     """
     logging.info("Calculating team value per match day...")
 
@@ -612,9 +596,6 @@ def league_user_stats_tables(user_token: str, selected_league: object, league_us
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
         league_users (dict): A dictionary containing all users in the league.
-
-    Returns:
-        None
     """
     logging.info("Getting league user stats...")
 
@@ -687,9 +668,6 @@ def live_points(user_token: str, selected_league: object) -> None:
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
-
-    Returns:
-        None
     """
     logging.info("Getting live points...")
 
