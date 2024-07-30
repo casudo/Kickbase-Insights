@@ -83,45 +83,6 @@ TEAM_IDS = [2, 3, 4, 5, 7, 9, 10, 11, 13, 14, 15, 18, 24, 39, 40, 43, 50, 51]
 
 TIMEZONE_DE = pytz.timezone("Europe/Berlin")
 
-### TODO: Update these manually??
-MATCH_DAYS = {
-    1: datetime(2024, 8, 23, 20, 30, tzinfo=TIMEZONE_DE),
-    2: datetime(2024, 8, 30, 20, 30, tzinfo=TIMEZONE_DE),
-    3: datetime(2024, 9, 13, 20, 30, tzinfo=TIMEZONE_DE),
-    4: datetime(2024, 9, 20, 20, 30, tzinfo=TIMEZONE_DE),
-    5: datetime(2024, 9, 27, 20, 30, tzinfo=TIMEZONE_DE),
-    6: datetime(2024, 10, 4, 20, 30, tzinfo=TIMEZONE_DE),
-    7: datetime(2024, 10, 18, 20, 30, tzinfo=TIMEZONE_DE),
-    8: datetime(2024, 10, 25, 20, 30, tzinfo=TIMEZONE_DE),
-    9: datetime(2024, 11, 1, 20, 30, tzinfo=TIMEZONE_DE),
-    10: datetime(2024, 11, 8, 20, 30, tzinfo=TIMEZONE_DE),
-    11: datetime(2024, 11, 22, 20, 30, tzinfo=TIMEZONE_DE),
-    12: datetime(2024, 11, 29, 20, 30, tzinfo=TIMEZONE_DE),
-    13: datetime(2024, 12, 6, 20, 30, tzinfo=TIMEZONE_DE),
-    14: datetime(2024, 12, 13, 20, 30, tzinfo=TIMEZONE_DE),
-    15: datetime(2024, 12, 20, 20, 30, tzinfo=TIMEZONE_DE),
-    16: datetime(2025, 1, 10, 18, 30, tzinfo=TIMEZONE_DE),
-    17: datetime(2025, 1, 14, 20, 30, tzinfo=TIMEZONE_DE),
-    18: datetime(2025, 1, 17, 20, 30, tzinfo=TIMEZONE_DE),
-    19: datetime(2025, 1, 24, 20, 30, tzinfo=TIMEZONE_DE),
-    20: datetime(2025, 1, 31, 20, 30, tzinfo=TIMEZONE_DE),
-    21: datetime(2025, 2, 7, 20, 30, tzinfo=TIMEZONE_DE),
-    22: datetime(2025, 2, 14, 20, 30, tzinfo=TIMEZONE_DE),
-    23: datetime(2025, 2, 21, 20, 30, tzinfo=TIMEZONE_DE),
-    24: datetime(2025, 2, 28, 20, 30, tzinfo=TIMEZONE_DE),
-    25: datetime(2025, 3, 7, 20, 30, tzinfo=TIMEZONE_DE),
-    26: datetime(2025, 3, 14, 20, 30, tzinfo=TIMEZONE_DE),
-    27: datetime(2025, 3, 28, 20, 30, tzinfo=TIMEZONE_DE),
-    28: datetime(2025, 4, 4, 20, 30, tzinfo=TIMEZONE_DE),
-    29: datetime(2025, 4, 11, 20, 30, tzinfo=TIMEZONE_DE),
-    30: datetime(2025, 4, 19, 20, 30, tzinfo=TIMEZONE_DE),
-    31: datetime(2025, 4, 25, 20, 30, tzinfo=TIMEZONE_DE),
-    32: datetime(2025, 5, 2, 20, 30, tzinfo=TIMEZONE_DE),
-    33: datetime(2025, 5, 9, 20, 30, tzinfo=TIMEZONE_DE),
-    34: datetime(2025, 5, 17, 15, 30, tzinfo=TIMEZONE_DE),
-}  
-
-
 ### ===============================================================================
 
 def discord_notification(title: str, message: str, color: int, webhook_url: str) -> None:
@@ -266,3 +227,4 @@ def calculate_revenue_data_daily(turnovers, manager):
     with open("/code/frontend/src/data/timestamps/ts_revenue_sum.json", "w") as f:
         f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()})) 
         logging.debug("Created file ts_revenue_sum.json")
+

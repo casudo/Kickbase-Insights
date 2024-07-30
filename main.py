@@ -9,7 +9,8 @@ from logging.config import dictConfig
 from datetime import datetime, timedelta
 
 from backend import exceptions, miscellaneous
-from backend.kickbase.v1 import user, leagues, competition
+from backend.kickbase.v1 import user, leagues, competition as competition_v1
+from backend.kickbase.v3 import competition as competition_v3
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
@@ -240,7 +241,7 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
     ### Loop through all teams
     for team in miscellaneous.TEAM_IDS:
         ### Loop through all players in the team
-        for player in competition.team_players(user_token, team):
+        for player in competition_v1.team_players(user_token, team):
             ### Get the market value changes for the player
             player_stats = leagues.player_statistics(user_token, selected_league.id, player.p.id)
 
@@ -375,7 +376,7 @@ def taken_free_players(user_token: str, selected_league: object) -> dict:
     ### Cycle through all teams
     for team_id in miscellaneous.TEAM_IDS:
         ### Cycle through all players of the team
-        for player in competition.team_players(user_token, team_id):
+        for player in competition_v1.team_players(user_token, team_id):
             player_id = player.p.id
             # print(player_id)
 
@@ -553,14 +554,19 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
 
     final_team_value = {}
 
+    ### Get all match days of the season
+    match_days_list = competition_v3.match_days(user_token)
+
     ### Loop through all users in the league
     for real_user in league_users.get("users"):
-        ### Get last (current) match day
-        last_match_day = leagues.league_stats(user_token, selected_league.id)["currentDay"]
+        ### Get the current match day
+        current_match_day = leagues.league_stats(user_token, selected_league.id)["currentDay"]
 
         ### Get team value for each match day
-        team_value = {match_day: 0 for match_day in range(1, last_match_day + 1)}
-        for match_day in miscellaneous.MATCH_DAYS:
+        team_value = {match_day: 0 for match_day in range(1, current_match_day + 1)}
+    
+        ### Loop through all match days
+        for match_day in match_days_list:
 
             ### TODO: Reverse userstats["teamValues"] since the below for loop iterates from newest to oldest
             user_stats = leagues.user_stats(user_token, selected_league.id, real_user["id"])
@@ -569,11 +575,11 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
             ### Loop through all team values (per day) of the user
             for teamValues in user_stats["teamValues"]:
                 ### Check if the date of the team value matches the date of the match day
-                if miscellaneous.MATCH_DAYS[match_day].date() == datetime.fromisoformat(teamValues["d"][:-1]).date():
+                if datetime.fromisoformat(match_days_list[0]["firstMatch"][:-1]).date() == datetime.fromisoformat(teamValues["d"][:-1]).date():
                     team_value_on_match_day = teamValues["v"]
             
-            if (len(team_value) >= match_day):
-                team_value[match_day] = team_value_on_match_day
+            if (len(team_value) >= match_day["day"]):
+                team_value[match_day["day"]] = team_value_on_match_day
 
         final_team_value[real_user["name"]] = team_value
 
