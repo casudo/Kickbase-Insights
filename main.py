@@ -692,7 +692,7 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
 
     ### Get all transfers from the API
     all_transfers = leagues_v2.transfers(user_token, selected_league.id)
-    logging.info(f"Found {len(all_transfers)} transfers in total")
+    logging.debug(f"Found {len(all_transfers)} transfers in total")
 
     transfers = []
 
@@ -717,6 +717,9 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
         else:
             transfer_type = "unknown"
 
+        ### Search the stats of the given player ID to fill the missing attributes for the player
+        player_stats = leagues_v1.player_statistics(user_token, selected_league.id, item["meta"]["p"]["i"])
+
         ### Create a custom json dict for every transfer
         transfers.append({
             "date": item["date"],
@@ -726,8 +729,8 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
             "price": item["meta"]["v"],
             "playerId": item["meta"]["p"]["i"],
             "teamId": item["meta"]["p"]["t"],
-            # "firstName": item["meta"]["p"]["n"].split()[0], ### TODO: Get via Player ID
-            "lastName": item["meta"]["p"]["n"], ### TODO: Get via Player ID
+            "firstName": player_stats["firstName"],
+            "lastName": player_stats["lastName"],
         })
 
     ### Removes duplicates given by the API
@@ -763,17 +766,33 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
         ### This condition checks if the current sell transfer is not already part of a buy-sell pair in the turnovers list.
         if transfer not in [turnover[1] for turnover in turnovers]:
 
+            ### Search the stats of the given player ID to fill the missing attributes for the player
+            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, transfer["playerId"])
+
+            ### Loop through all marketValues of the player until the "day" matches the START_DATE
+            start_date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").date()
+
+            for marketValue in player_stats["marketValues"]:
+                ### Normalize the marketValue date to date only
+                market_value_date = datetime.fromisoformat(marketValue["d"].replace("Z", "")).date()
+
+                if market_value_date == start_date:
+                    price = marketValue["m"]
+                    logging.debug(f"Starter player {transfer['firstName']} {transfer['lastName']} was sold! Market value on START_DATE {start_date}: {price}€.")
+                    break
+
             ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
             date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").isoformat()
             buy_transfer = {"date": date,
                             "type": "assigned_at_start",
                             "user": transfer["user"],
                             "tradePartner": "Kickbase",
-                            "price": transfer["price"],  # "price": 0.0, ### TODO: Add market value of "date" via player stats
+                            "price": price,
                             "playerId": transfer["playerId"],
                             "teamId": transfer["teamId"],
-                            # "firstName": transfer["firstName"],
-                            "lastName": transfer["lastName"]}
+                            "firstName": player_stats["firstName"],
+                            "lastName": player_stats["lastName"],
+                        }
 
             turnovers.append((buy_transfer, transfer))
 
