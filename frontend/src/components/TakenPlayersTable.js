@@ -102,7 +102,7 @@ function TakenPlayersTable() {
             buyPrice: row.buyPrice,
             marketValue: row.marketValue,
             turnover: row.buyPrice === 0 ? 0 : row.marketValue - row.buyPrice,
-            manager: row.user,
+            manager: row.owner,
             trend: row.trend
         }
     ))
