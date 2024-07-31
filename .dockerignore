@@ -7,7 +7,6 @@ Dockerfile
 .gitignore
 
 ### Random misc files
-auto_gift_collector.py
 README.md
 venv/
 __pycache__/
