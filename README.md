@@ -206,8 +206,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Discord notifications  
 - Logging module for entrypoint.py and app.py    
 - Add linter/formatter  
-- Categorize components to frontend menu  
-- Better performance for some API calls (e.g. taken/free players)  
+- Categorize components to frontend menu    
 - Battles: Spieltagsdominator: Fix placements being wrong for people with the same amount of mdWins  
 - Change behavior if player has the position number of "0". Instead of defaulting that to "1", do smth else
 - Add own function for creating .json files (data and timestamps)
