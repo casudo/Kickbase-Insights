@@ -537,6 +537,7 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
                     "firstName": player.p.firstName,
                     "lastName": player.p.lastName,
                     "marketValue": player_stats["marketValue"],
+                    "points": player_stats["points"],
                     "status": player_stats["status"],
                     "trend": player_stats["mvTrend"],
                 })
