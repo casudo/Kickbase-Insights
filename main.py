@@ -245,7 +245,7 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
     players_LIST = []
 
     ### Loop through all teams
-    for team in miscellaneous.TEAM_IDS:
+    for team in miscellaneous.get_team_ids(user_token):
         ### Loop through all players in the team
         for player in competition_v1.team_players(user_token, team):
             ### Get the market value changes for the player
@@ -380,7 +380,7 @@ def taken_free_players_v1(user_token: str, selected_league: object) -> dict:
     starter_players = []
 
     ### Cycle through all teams
-    for team_id in miscellaneous.TEAM_IDS:
+    for team_id in miscellaneous.get_team_ids(user_token):
         ### Cycle through all players of the team
         for player in competition_v1.team_players(user_token, team_id):
             player_id = player.p.id
@@ -474,7 +474,7 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
             buy_prices[user_id].append((player_id, buy_price))
 
     ### Cycle through all teams
-    for team_id in miscellaneous.TEAM_IDS:
+    for team_id in miscellaneous.get_team_ids(user_token):
         ### Cycle through all players of the team
         for player in competition_v1.team_players(user_token, team_id):
             player_id = player.p.id

@@ -13,6 +13,7 @@ venv/
 __pycache__/
 *.log
 repo_pictures/
+.env
 
 ### Ignore auto generated files
 frontend/node_modules/

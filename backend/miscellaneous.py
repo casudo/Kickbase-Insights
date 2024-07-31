@@ -53,43 +53,6 @@ POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
 # Type 15 + meta["s"] + meta["b"]: User sold Player to User
 # Type 16: News from Kickbase?
 
-### TEAM_IDS
-### As of 17.07.2024
-# 1 -
-# 2 Bayern
-# 3 BVB
-# 4 Frankfurt
-# 5 Freiburg
-# 6 - 
-# 7 Bayer
-# 8 -
-# 9 Stuttgart
-# 10 Bremen
-# 11 Wolfsburg
-# 12 -
-# 13 Augsburg
-# 14 Hoffenheim
-# 15 Gladbach
-# 16 -
-# 17 -
-# 18 Mainz
-# 19 -
-# 20 -
-# 21 -
-# 22 -
-# 23 -
-# 24 Bochum
-# 25-38 -
-# 39 St. Pauli
-# 40 Union
-# 41 - 
-# 42 -
-# 43 Leipzig
-# 44-49 -
-# 50 Heidenheim
-# 51 Holstein Kiel
-TEAM_IDS = [2, 3, 4, 5, 7, 9, 10, 11, 13, 14, 15, 18, 24, 39, 40, 43, 50, 51]
-
 TIMEZONE_DE = pytz.timezone("Europe/Berlin")
 
 ### ===============================================================================
@@ -145,7 +108,7 @@ def get_free_players(token: str, taken_players: list) -> None:
     taken_player_ids = [player["playerId"] for player in taken_players]
 
     ### Cycle through all teams and get the players who are not taken
-    for team_id in TEAM_IDS:
+    for team_id in get_team_ids(token):
         ### Cycle through all players of the team
         for player in competition.team_players(token, team_id):
             ### Check if the player is not taken
@@ -238,3 +201,45 @@ def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
         f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()})) 
         logging.debug("Created file ts_revenue_sum.json")
 
+
+def get_team_ids(token: str) -> dict:
+    """### Get all team ids.
+
+    Args:
+        token (str): The user's kkstrauth token.
+
+    Returns:
+        dict: A dictionary containing all team ids and names.
+    """
+    logging.info("Getting team ids...")
+
+    url = "https://api.kickbase.com/competition/teams/{team_id}/players"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Dictionary to store team IDs and names
+    team_id_dict = {}
+
+    ### Loop through team IDs from 1 to 100
+    for team_id in range(1, 101):
+        try:
+            response = requests.get(url.format(team_id=team_id), headers=headers).json()
+        except:
+            raise exceptions.NotificatonException("Failed to get team ids.")
+        
+        if response.get("p"): ### If list p[] is not empty
+            ### Get the first player to extract team information
+            team_id = response["p"][0]["teamId"]
+            team_name = response["p"][0]["teamName"]
+            team_id_dict[team_id] = team_name
+
+    logging.info("Got all team ids.")
+
+    with open("/code/frontend/src/data/team_ids.json", "w") as file:
+        file.write(json.dumps(team_id_dict, indent=2))
+        logging.debug("Created file team_ids.json")
+
+    return team_id_dict
