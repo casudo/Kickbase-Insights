@@ -12,7 +12,17 @@ function TurnoversTable() {
             width: 50,
             headerAlign: 'center',
             align: 'center',
-            renderCell: (params) => <img src={params.value} alt={params.value} width='40' />
+            renderCell: (params) => (
+                <img
+                    src={params.value}
+                    alt={params.value}
+                    width='40'
+                    onError={(e) => {
+                        e.target.onerror = null // Prevent infinite loop if default.png is also missing
+                        e.target.src = process.env.PUBLIC_URL + '/images/default.png'
+                    }}
+                />
+            )
         },
         {
             field: 'firstName',
