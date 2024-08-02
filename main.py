@@ -95,6 +95,7 @@ def main() -> None:
         team_value_per_match_day(user_token, selected_league, league_users)
         league_user_stats_tables(user_token, selected_league, league_users)
         live_points(user_token, selected_league) # needs to be run first to initialize the live_points.json file
+        balances(user_token, selected_league, league_users)
 
     except exceptions.LoginException as e:
         print(e)
@@ -995,6 +996,45 @@ def live_points(user_token: str, selected_league: object) -> None:
         f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
         logging.debug("Created file ts_live_points.json")
 
+
+def balances(user_token: str, selected_league: object, league_users: list) -> None:
+    """### Retrieves the balances for all users in the league.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+
+    Returns:
+        None
+    """
+    logging.info("Getting balances...")
+
+    final_balances = []
+
+    ### Loop through all users in the league
+    for real_user in league_users.get("users"):
+        ### Get the balance for each user
+        ### TODO: Add logic to calculate the balances
+        balance = leagues.user_balance(user_token, selected_league.id, real_user["id"])
+
+        ### Create a custom json dict for every user
+        final_balances.append({
+            "userId": real_user["id"],
+            "username": real_user["username"],
+            "balance": balance["balance"],
+            "maxbid": balance["maxbid"],
+        })
+
+    logging.info("Got balances.")
+
+    with open("/code/frontend/src/data/balances.json", "w") as f:
+        f.write(json.dumps(final_balances, indent=2))
+        logging.debug("Created file balances.json")
+
+    ### Timestamp for frontend
+    with open("/code/frontend/src/data/timestamps/ts_balances.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        logging.debug("Created file ts_balances.json")
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
