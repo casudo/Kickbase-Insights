@@ -33,7 +33,6 @@ import Changelog from './components/Changelog'
 import LeagueUserTable from './components/LeagueUserTable'
 import SeasonStatsTable from './components/SeasonStatsTable'
 import LivePoints from './components/LivePoints'
-import Balances from "./components/Balances"
 import Battles from "./components/Battles"
 
 // Import timestamps
@@ -64,14 +63,14 @@ function App() {
   // Handlers
   const handleCloseDisclaimer = () => setDisclaimerVisible(false);
 
-  const RefreshButtonLivepoints = () => (
-    <Button onClick={handleRefreshLivepoints} disabled={refreshing}>
+  const RefreshButton = () => (
+    <Button onClick={handleRefresh} disabled={refreshing}>
         {refreshing ? 'Refreshing...' : 'Refresh Live Points'}
     </Button>
   );
 
   // Function to handle refresh button click
-  const handleRefreshLivepoints = async () => {
+  const handleRefresh = async () => {
     // Set refreshing to true to indicate the refresh is in progress
     setRefreshing(true);
 
@@ -82,31 +81,6 @@ function App() {
       console.log(data);
     } catch (error) {
       console.error('Error refreshing live points data:', error);
-    } finally {
-      // Set refreshing to false once the refresh is complete
-      setRefreshing(false);
-    }
-  };
-
-
-  // WIP: Button to refresh balances via transfers of a user?
-  const RefreshButtonBalances = () => (
-    <Button onClick={handleRefreshBalances} disabled={refreshing}>
-        {refreshing ? 'Refreshing...' : 'Refresh Balances'}
-    </Button>
-  );
-
-  const handleRefreshBalances = async () => {
-    // Set refreshing to true to indicate the refresh is in progress
-    setRefreshing(true);
-
-    try {
-      const response = await fetch('/api/balances')
-      const data = await response.json();
-      // Handle the retrieved data (update state, etc.)
-      console.log(data);
-    } catch (error) {
-      console.error("Error refreshing balances:", error);
     } finally {
       // Set refreshing to false once the refresh is complete
       setRefreshing(false);
@@ -162,7 +136,7 @@ function App() {
                 <Tab label="Transfers" value="1" />
                 <Tab label="Transfererlöse" value="2" />
                 <Tab label="Spieler" value="3" />
-                <Tab label="Live" value="4" />
+                <Tab label="LIVE" value="4" />
                 <Tab label="Liga" value="5" />
                 <Tab label="Changelog" value="6" />
                 <Tab label="Dev" value="7" />
@@ -228,12 +202,8 @@ function App() {
           <TabPanel sx={{ padding: 0 }} value="4">
             {/* "Live" related components */}
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
-              <Typography variant="h4" sx={{ padding: '15px' }}>Live Punkte <HelpIcon text="Um die Live Punkte zu benutzen, aktualisiert die Punkte mit den dafür vorgesehenen Knopf. Anschließend muss die Website einmal neu geladen werden."/> <RefreshButtonLivepoints/> </Typography>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Live Punkte <HelpIcon text="Um die Live Punkte zu benutzen, aktualisiert die Punkte mit den dafür vorgesehenen Knopf. Anschließend muss die Website einmal neu geladen werden."/> <RefreshButton/></Typography>
               <LivePoints />
-            </Paper>
-            <Paper sx={{ marginTop: "25px"}} elevation={5}>
-              <Typography variant="h4" sx={{ padding: '15px' }}>Balances <HelpIcon text="Kontostände der Manager minus der täglichen Bonis."/> <RefreshButtonBalances/> </Typography>
-              <Balances />
             </Paper>
           </TabPanel>
 
