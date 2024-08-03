@@ -2,7 +2,7 @@ import json
 import time
 import logging
 
-from os import getenv
+from os import getenv, makedirs, path
 from art import tprint
 from sys import stdout
 from logging.config import dictConfig
@@ -24,6 +24,13 @@ def main() -> None:
 
     It performs various tasks related to logging, user login, and data retrieval from the Kickbase API.
     """
+    ### Create the necessary directories and files
+    log_dir = "/code/logs"
+    makedirs(log_dir, exist_ok=True)
+    ### Ensure the log files exist
+    open(path.join(log_dir, "kickbase-insights.log"), 'a').close()
+    open(path.join(log_dir, "kickbase-insights-verbose.log"), 'a').close()
+
     ### Set logging settings for the Python logging module
     LOGGING = {
         "version": 1,
