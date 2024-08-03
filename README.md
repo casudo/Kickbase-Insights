@@ -65,6 +65,7 @@ If you want to run this in a Docker container, you'll first need to set some man
 | `RUN_SCHEDULE` | No | The cron expression when the script should fetch new information from the API. If not set, defaults to `10 2,6,10,14,18,22 * * *`. |
 | `WATCHPACK_POLLING` | **Yes** | Used to [apply new changes](https://stackoverflow.com/a/72661752) in the filesystem on runtime. If not set, defaults to `true`. |
 | `START_DATE` | **Yes** | The date when the season started in format `dd.mm.yyyy`. |
+| `START_MONEY` | No | The amount of money you started with. If not set, defaults to 50.000.000€ |
 | `TZ` | No | The timezone to use. |
 
 ### docker run
@@ -156,7 +157,7 @@ It may take some time to initially start the container, so check the logs!
 ## Development
 If you want to contribute to this project, you can follow the steps below to jump right into the development environment.  
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> ubuntu
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_MONEY=<start_money> -e START_DATE=<start_date> ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash
@@ -165,7 +166,7 @@ mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano
 
 If you have this project already cloned, you can run the following command to bind mount the files inside the container:  
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> -v <your_folder>\Kickbase-Insights:/code ubuntu
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> -e START_MONEY=<start_money> -v <your_folder>\Kickbase-Insights:/code ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash
@@ -197,7 +198,6 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Back to top button  
 - ToC on pages with lot of content  
 - Market value graph for players  
-- Show calculated balances of other players (minus daily login bonus)
 
 **Backend:**  
 - Fix all TODOs  
@@ -211,6 +211,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Change behavior if player has the position number of "0". Instead of defaulting that to "1", do smth else
 - Add own function for creating .json files (data and timestamps)
 - Support for multiple leagues via ports (League 1: 5000, League 2: 5001, etc.)
+- Seperate "get_team_ids" because it's called twice now (in market value changes and taken/free players)
 
 **Misc:**  
 - Add Postman workspace  

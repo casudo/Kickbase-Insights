@@ -96,6 +96,8 @@ def main() -> None:
         # league_users = taken_free_players_v1(user_token, selected_league)
         league_users = taken_free_players_v2(user_token, selected_league)
 
+        balances(user_token, selected_league, league_users)
+
         # turnovers_v1(user_token, selected_league, league_users)
         turnovers_v2(user_token, selected_league, league_users)
 
@@ -1001,6 +1003,102 @@ def live_points(user_token: str, selected_league: object) -> None:
     with open("/code/frontend/src/data/timestamps/ts_live_points.json", "w") as f:
         f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
         logging.debug("Created file ts_live_points.json")
+
+
+def balances(user_token: str, selected_league: object, league_users: dict) -> None:
+    """### Retrieves the estiamted balances for all users in the league. Daily login bonus and money from achievements are not considered.
+
+    Args:
+        user_token (str): The user's kkstrauth token.
+        selected_league (object): The league the user wants to get data from for the frontend.
+        league_users (dict): A dictionary containing all users in the league.
+
+    Returns:
+        None
+    """
+    logging.info("Getting balances...")
+
+    initial_balance = float(getenv("START_MONEY", 50000000))
+    final_balances = []
+
+    ### Get all transfers from the API
+    all_transfers = leagues_v2.transfers(user_token, selected_league.id)
+    logging.debug(f"Found {len(all_transfers)} transfers in total")
+
+    ### Initialize user balances
+    user_balances = {user["id"]: initial_balance for user in league_users.get("users")}
+
+    ### Loop through all users in the league
+    for real_user in league_users.get("users"):
+        user_id = real_user["id"]
+        balance = user_balances.get(user_id, initial_balance)
+
+        logging.debug(f"User: {real_user['name']}")
+        logging.debug(f"Starter balance: {balance}")
+
+        user_stats = leagues_v1.user_stats(user_token, selected_league.id, real_user["id"])
+        team_value = user_stats["teamValue"]
+
+        logging.debug(f"Team value: {team_value}")
+
+        ### Check every item in the all_transfers list if it belongs to the current user
+        for item in all_transfers:
+            meta = item["meta"]
+            transfer_amount = meta.get("v")
+
+            if "b" in meta and meta["b"]["i"] == user_id:
+                ### User bought a player
+                balance -= transfer_amount
+
+                player_name = meta["p"]["n"]
+                logging.debug(f"{real_user['name']} bought {player_name} for {transfer_amount}€")
+                logging.debug(f"New balance: {balance}")
+            elif "s" in meta and meta["s"]["i"] == user_id:
+                ### User sold a player
+                balance += transfer_amount
+
+                player_name = meta["p"]["n"]
+                logging.debug(f"{real_user['name']} sold {player_name} for {transfer_amount}€")
+                logging.debug(f"New balance: {balance}")
+
+        ### Update the user balance
+        user_balances[user_id] = balance
+
+        ### Calculate the adjusted team value
+        adjusted_team_value = team_value + balance
+
+        ### Calculate the maximum allowable negative balance
+        max_negative_balance = adjusted_team_value * 0.33
+
+        ### Calculate the maxbid
+        if balance < 0:
+            maxbid = max_negative_balance + balance
+        else:
+            maxbid = max_negative_balance
+
+        ### Ensure maxbid is not negative
+        maxbid = max(0, maxbid)
+
+        ### Create a custom json dict for every user
+        final_balances.append({
+            "userId": user_id,
+            "username": real_user["name"],
+            "profilePic": user_stats.get("profileUrl", None),
+            "teamValue": team_value,
+            "balance": round(balance, 0),
+            "maxBid": round(maxbid, 0),
+        })
+
+    logging.info("Got balances.")
+
+    with open("/code/frontend/src/data/balances.json", "w") as f:
+        f.write(json.dumps(final_balances, indent=2))
+        logging.debug("Created file balances.json")
+
+    ### Timestamp for frontend
+    with open("/code/frontend/src/data/timestamps/ts_balances.json", "w") as f:
+        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        logging.debug("Created file ts_balances.json")
 
 
 ### -------------------------------------------------------------------

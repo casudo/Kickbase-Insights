@@ -29,6 +29,7 @@ RUN_SCHEDULE = getenv("RUN_SCHEDULE", "10 2,6,10,14,18,22 * * *")
 ### 10 2,6,10,14,18,22 * * * -> At minute 10 past every 4th hour starting from 2am
 WATCHPACK_POLLING = getenv("WATCHPACK_POLLING", "true")
 START_DATE = getenv("START_DATE")
+START_MONEY = getenv("START_MONEY", "50000000")
 
 ### Display a welcoming message in Docker logs
 print("👍 Container started. Welcome!")
@@ -79,6 +80,17 @@ else:
     except ValueError:
         print("  ❌ START_DATE format is incorrect. Please use 'DD.MM.YYYY'. Exiting...")
         exit()
+
+### Check if START_MONEY is set
+if START_MONEY == "50000000":
+    formatted_money = f"{int(START_MONEY):,}".replace(",", ".") + "€"
+    print(f"  ✅ Using game mode 'Auslosung' with {formatted_money} as starting money.")
+elif START_MONEY == "200000000":
+    formatted_money = f"{int(START_MONEY):,}".replace(",", ".") + "€"
+    print(f"  ✅ Using game mode 'Ohne Team' with {formatted_money} as starting money.")
+else:
+    print("  ❌ START_MONEY is not set to a valid value. Exiting...")
+    exit()
 
 ### ===============================================================================
 

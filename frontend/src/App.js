@@ -1,5 +1,5 @@
 // Import necessary dependencies from React
-import React, { useState } from 'react'
+import React, { useState } from "react"
 
 // Import Material-UI Components
 import Box from "@mui/material/Box"
@@ -33,6 +33,7 @@ import Changelog from "./components/Changelog"
 import LeagueUserTable from "./components/LeagueUserTable"
 import SeasonStatsTable from "./components/SeasonStatsTable"
 import LivePoints from "./components/LivePoints"
+import Balances from "./components/Balances"
 import Battles from "./components/Battles"
 
 // Import timestamps
@@ -47,6 +48,7 @@ import timestamp_team_values from "./data/timestamps/ts_team_values.json"
 import timestamp_revenue_sum from "./data/timestamps/ts_revenue_sum.json"
 import timestamp_league_user_stats from "./data/timestamps/ts_league_user_stats.json"
 import timestamp_live_points from "./data/timestamps/ts_live_points.json"
+import timestamp_balances from "./data/timestamps/ts_balances.json"
 
 // Create dark and light themes using Material-UI
 const darkTheme = createTheme({ palette: { mode: "dark" } })
@@ -218,6 +220,9 @@ function App() {
               <SeasonStatsTable />
             </Paper>                   
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
+              <Typography variant="h4" sx={{ padding: "15px" }}>Balances <HelpIcon text="Ungefähre Kontostände der Manager minus der täglichen login Bonis und Geld durch Errungenschaften."/> </Typography>
+              <Balances />
+            </Paper>
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
               <Typography variant="h4" sx={{ padding: "15px" }}>Battles <HelpIcon text="Herausragende Leistungen von Spielern in der Liga."/></Typography>
               <Battles />
@@ -251,6 +256,7 @@ function App() {
                 Team Values: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_team_values.time).toLocaleString("de-DE")}</Typography><br/>
                 League User Stats: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_league_user_stats.time).toLocaleString("de-DE")}</Typography><br/>
                 Live Points: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_live_points.time).toLocaleString("de-DE")}</Typography><br/>
+                Balances: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_balances.time).toLocaleString("de-DE")}</Typography><br/>
               </Typography>
             </Paper>
           </TabPanel>          
