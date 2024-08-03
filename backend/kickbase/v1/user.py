@@ -13,7 +13,7 @@ from backend.kickbase.endpoints.user import User, League
 
 
 def login(email: str, password: str) -> tuple:
-    """Logs in the user with the provided email and password.
+    """### Logs in the user with the provided email and password.
 
     Args:
         email (str): The email of the user.

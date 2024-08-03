@@ -1,4 +1,5 @@
 import subprocess
+
 from os import getenv, chdir
 from time import sleep
 from croniter import croniter
@@ -45,7 +46,7 @@ else:
 if KB_LIGA:
     print(f"  ✅ Your preferred league name is set: {KB_LIGA}")
 else:
-    print("  ⚠️ Using default league.")
+    print("  ⚠️ No preferred league set, using default one.")
 
 ### Discord Webhook URL
 if DISCORD_WEBHOOK is None:
