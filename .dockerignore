@@ -17,4 +17,5 @@ repo_pictures/
 ### Ignore auto generated files
 frontend/node_modules/
 frontend/src/data/*.json
-frontend/src/data/timestamps/*.json
+frontend/src/data/timestamps/*.
+logs/

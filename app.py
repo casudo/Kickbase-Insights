@@ -1,5 +1,8 @@
-import logging, json, os
+import logging
+import json
+
 from datetime import datetime
+from os import getenv
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -9,20 +12,20 @@ from backend.kickbase.v1 import leagues, user
 ### ===============================================================================
 
 ### Get the needed environment variables
-mail = os.getenv('KB_MAIL')
-password = os.getenv('KB_PASSWORD')
+kb_mail = getenv("KB_MAIL")
+kb_password = getenv("KB_PASSWORD")
 
 ### ===============================================================================
 
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
 
-@app.route('/api/livepoints', methods=['GET'])
+@app.route("/api/livepoints", methods=["GET"])
 def get_live_points():
     print("Flask API: Getting live points...")
 
     ### Login to Kickbase
-    user_info, league_info, user_token = user.login(mail, password)
+    user_info, league_info, user_token = user.login(kb_mail, kb_password)
 
     ### Get the current live points
     live_points = leagues.live_points(user_token, league_info[0].id)
@@ -48,7 +51,7 @@ def get_live_points():
                 "yellowCards": player["y"],
                 "yellowRedCards": player["yr"],
                 ### Custom attributes for the frontend
-                "fullName": f"{player.get('fn', '')} {player['n']} ({player['nr']})",
+                "fullName": f"{player.get('n', '')} {player['n']} ({player['nr']})",
             })
 
         final_live_points.append({
@@ -68,11 +71,11 @@ def get_live_points():
 
     ### Timestamp for frontend
     with open("/code/frontend/src/data/timestamps/ts_live_points.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        f.writelines(json.dumps({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
         logging.debug("Created file ts_live_points.json")
 
     ### Return the live points
     return jsonify(final_live_points)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run()
