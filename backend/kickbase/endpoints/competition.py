@@ -1,8 +1,8 @@
 """
-### This file contains all models for the competition endpoint.
+### This file contains all models for the competition endpoint, regardless of the API version.
 
-Endpoint:
-`/competition/...`
+#### Endpoint:
+`/vX/competition/...`
 """
 
 
@@ -47,10 +47,10 @@ class P:
     teamSymbol: str = None
     firstName: str = None
     lastName: str = None
-    profile: str = None # Somehow not always present e.g. Jamal Musiala
-    profileBig: str = None
-    team: str = None # Somehow not always present
-    teamCover: str = None # Somehow not always present
+    profile: str = None ### Not always present
+    profileBig: str = None ### Not always present
+    team: str = None ### Not always present
+    teamCover: str = None ### Not always present
     status: int = None
     position: int = None
     number: int = None
@@ -60,25 +60,23 @@ class P:
     marketValueTrend: int = None
 
     def __init__(self, p_dict: dict):
-        self.id = p_dict["id"]
-        self.teamId = p_dict["teamId"]
-        self.teamName = p_dict["teamName"]
-        self.teamSymbol = p_dict["teamSymbol"]
-        self.firstName = p_dict["firstName"]
-        self.lastName = p_dict["lastName"]
-        if "profile" in p_dict:
-            self.profile = p_dict["profile"]
-        self.profileBig = p_dict["profileBig"]
-        if "team" in p_dict:
-            self.team = p_dict["team"]
-            self.teamCover = p_dict["teamCover"]
-        self.status = p_dict["status"]
-        self.position = p_dict["position"]
-        self.number = p_dict["number"]
-        self.averagePoints = p_dict["averagePoints"]
-        self.totalPoints = p_dict["totalPoints"]
-        self.marketValue = p_dict["marketValue"]
-        self.marketValueTrend = p_dict["marketValueTrend"]
+        self.id = p_dict.get("id", None)
+        self.teamId = p_dict.get("teamId", None)
+        self.teamName = p_dict.get("teamName", None)
+        self.teamSymbol = p_dict.get("teamSymbol", None)
+        self.firstName = p_dict.get("firstName", None)
+        self.lastName = p_dict.get("lastName", None)
+        self.profile = p_dict.get("profile", None)
+        self.profileBig = p_dict.get("profileBig", None)
+        self.team = p_dict.get("team", None)
+        self.teamCover = p_dict.get("teamCover", None)
+        self.status = p_dict.get("status", None)
+        self.position = p_dict.get("position", None)
+        self.number = p_dict.get("number", None)
+        self.averagePoints = p_dict.get("averagePoints", None)
+        self.totalPoints = p_dict.get("totalPoints", None)
+        self.marketValue = p_dict.get("marketValue", None)
+        self.marketValueTrend = p_dict.get("marketValueTrend", None)
 
 
 class Team_Players:

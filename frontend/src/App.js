@@ -33,7 +33,7 @@ import Changelog from './components/Changelog'
 import LeagueUserTable from './components/LeagueUserTable'
 import SeasonStatsTable from './components/SeasonStatsTable'
 import LivePoints from './components/LivePoints'
-import MarketValueChart from './components/MarketValueChart'
+import Battles from "./components/Battles"
 
 // Import timestamps
 import timestamp_main from './data/timestamps/ts_main.json'
@@ -147,7 +147,7 @@ function App() {
             </Grid>
 
             <Grid item sx={{ textAlign: 'right' }}>
-              <Typography variant="button" style={{ color: 'green' }}>V1.4.0</Typography><br/>
+              <Typography variant="button" style={{ color: 'green' }}>{process.env.REACT_APP_VERSION || 'development'}</Typography><br/>
               <Typography variant="button" style={{ color: 'green', opacity: '0.7' }}>{new Date(timestamp_main.time).toLocaleString('de-DE')}</Typography>
             </Grid>
           </Grid>
@@ -202,11 +202,11 @@ function App() {
           <TabPanel sx={{ padding: 0 }} value="2">
             {/* "Transfererlöse" related components */}
             <Paper sx={{ marginTop: '25px' }} elevation={5}>
-              <Typography variant="h4" sx={{ padding: '15px' }}>Transfererlöse <HelpIcon text="Liste alle verkauften Spieler und deren Erlöse. Gut zum recherchieren, welcher Spieler den meisten Gewinn oder Verlust erbracht hat. Starterspieler exkludiert."/></Typography>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Transfererlöse <HelpIcon text="Liste alle verkauften Spieler und deren Erlöse. Gut zum recherchieren, welcher Spieler den meisten Gewinn oder Verlust erbracht hat."/></Typography>
               <TurnoversTable />
             </Paper>
             <Paper sx={{ marginTop: '25px' }} elevation={5}>
-              <Typography variant="h4" sx={{ padding: '15px' }}>Summe der Transfererlöse <HelpIcon text="Zeigt den Gesamtgewinn oder Verlust des jeweiligen Spielers in der Saison an. Starterspieler exkludiert."/></Typography>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Summe der Transfererlöse <HelpIcon text="Zeigt den Gesamtgewinn oder Verlust des jeweiligen Spielers in der Saison an."/></Typography>
               <TransferRevenueLineChart darkModeEnabled={darkModeEnabled} />
             </Paper>
             <Paper sx={{ marginTop: '25px' }} elevation={5}>
@@ -246,10 +246,8 @@ function App() {
               <SeasonStatsTable />
             </Paper>                   
             <Paper sx={{ marginTop: "25px"}} elevation={5}>
-              <Typography variant="h4" sx={{ padding: '15px' }}>Battles</Typography>
-              <Typography variant="body1" sx={{ padding: '0px 15px 15px 15px' }}>
-                In Arbeit...
-              </Typography>
+              <Typography variant="h4" sx={{ padding: '15px' }}>Battles <HelpIcon text="Herausragende Leistungen von Spielern in der Liga."/></Typography>
+              <Battles />
             </Paper>        
           </TabPanel>
 

@@ -15,7 +15,7 @@ import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
 import data from '../data/taken_players.json'
 
 function LineupPlanner() {
-    const managers = [...new Set(data.map(item => item.user))]
+    const managers = [...new Set(data.map(item => item.owner))]
 
     const [manager, setManager] = useState(managers[0])
     const [balance, setBalance] = useState(0)
@@ -23,7 +23,7 @@ function LineupPlanner() {
     const [selection, setSelection] = useState([])
     const [playersOnPositions, setPlayersOnPositions] = useState({ 0: 0, 1: 0, 2: 0 })
 
-    const filteredData = data.filter(e => e.user === manager)
+    const filteredData = data.filter(e => e.owner === manager)
 
     const possibleFormations = [[3, 4, 3], [4, 4, 2], [3, 5, 2], [4, 5, 1], [3, 6, 1], [5, 2, 3], [4, 2, 4], [5, 3, 2], [4, 3, 3], [5, 4, 1]].sort()
 
@@ -64,7 +64,17 @@ function LineupPlanner() {
             width: 50,
             headerAlign: 'center',
             align: 'center',
-            renderCell: (params) => <img src={params.value} alt={params.value} width='40' />
+            renderCell: (params) => (
+                <img
+                    src={params.value}
+                    alt={params.value}
+                    width='40'
+                    onError={(e) => {
+                        e.target.onerror = null // Prevent infinite loop if default.png is also missing
+                        e.target.src = process.env.PUBLIC_URL + '/images/default.png'
+                    }}
+                />
+            )
         },
         {
             field: 'position',
@@ -133,7 +143,7 @@ function LineupPlanner() {
     const rows = filteredData.map((row, i) => (
         {
             id: row.playerId,
-            manager: row.user,
+            manager: row.owner,
             teamLogo: process.env.PUBLIC_URL + "/images/" + row.teamId + ".png",
             position: row.position,
             firstName: row.firstName,

@@ -3,7 +3,8 @@ from datetime import datetime
 from flask import Flask, jsonify
 from flask_cors import CORS
 
-from kickbase import leagues, miscellaneous, user
+from backend import miscellaneous
+from backend.kickbase.v1 import leagues, user
 
 ### ===============================================================================
 

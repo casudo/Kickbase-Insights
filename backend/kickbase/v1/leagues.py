@@ -5,9 +5,9 @@ TODO: Maybe list all functions here automatically?
 """
 
 import requests
-from kickbase import exceptions
 
-from kickbase.endpoints.leagues import League_User_Info, League_Feed, Market_Players
+from backend import exceptions
+from backend.kickbase.endpoints.leagues import League_User_Info, League_Feed, Market_Players
 
 
 def league_user_info(token: str, league_id: str):
@@ -15,6 +15,7 @@ def league_user_info(token: str, league_id: str):
     Get various information of the user in the given league.
 
     Expected response:
+    ```json
     {
         "budget":-47379036.0,
         "teamValue":251533368.0,
@@ -32,6 +33,7 @@ def league_user_info(token: str, league_id: str):
         "ga":false,
         "un":0
     }
+    ```
     """
     url = f"https://api.kickbase.com/leagues/{league_id}/me"
     headers = {
@@ -181,7 +183,7 @@ def get_market(token: str, league_id: str):
 
 def player_statistics(token: str, league_id: str, player_id: str):
     """
-    Get the statistics of a given player.
+    ### Get the statistics of a given player.
 
     Expected response:
     ```json
@@ -246,7 +248,7 @@ def player_statistics(token: str, league_id: str, player_id: str):
 
 def league_users(token: str, league_id: str):
     """
-    Get all users in the given league.
+    ### Get all users in the given league.
 
     Expected response:
     ```json
@@ -291,7 +293,7 @@ def league_users(token: str, league_id: str):
 
 def user_players(token: str, league_id: str, user_id: str):
     """
-    Get all players of a given user in the given league.
+    ### Get all players of a given user in the given league.
 
     Expected response:
     ```json
@@ -363,7 +365,7 @@ def user_players(token: str, league_id: str, user_id: str):
     return user_transfers
 
 
-def user_stats(token: str, league_id: str, user_id: str):
+def user_stats(token: str, league_id: str, user_id: str) -> dict:
     """
     Get the statistics of a given user in the given league.
 
@@ -443,7 +445,7 @@ def user_stats(token: str, league_id: str, user_id: str):
 
 def live_points(token: str, league_id: str):
     """
-    Get the live points of all users in the given league.
+    ### Get the live points of all users in the given league.
 
     Expected response:
     ```json
@@ -522,13 +524,13 @@ def live_points(token: str, league_id: str):
     return response
 
 
-def league_stats(token: str, league_id: str):
+def league_stats(token: str, league_id: str) -> dict:
     """
-    Get the league statistics.
+    ### Get the league statistics.
 
     This includes the current match day, information about every previous match day and the users in the league.
 
-    Expected response:
+    #### Expected response (as of 29.07.24):
     ```json
     {
         "currentDay": 12,

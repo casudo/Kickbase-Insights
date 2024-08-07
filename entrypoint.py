@@ -21,11 +21,13 @@ def convert_cron_to_timestamp(cron_expression):
 ### Get the environment variables
 KB_MAIL = getenv("KB_MAIL")
 KB_PASSWORD = getenv("KB_PASSWORD")
+KB_LIGA = getenv("KB_LIGA")
 DISCORD_WEBHOOK = getenv("DISCORD_WEBHOOK")
 RUN_SCHEDULE = getenv("RUN_SCHEDULE", "10 2,6,10,14,18,22 * * *")
 ### 10 */8 * * * -> At minute 10 past every 8th hour
 ### 10 2,6,10,14,18,22 * * * -> At minute 10 past every 4th hour starting from 2am
 WATCHPACK_POLLING = getenv("WATCHPACK_POLLING", "true")
+START_DATE = getenv("START_DATE")
 
 ### Display a welcoming message in Docker logs
 print("👍 Container started. Welcome!")
@@ -39,6 +41,12 @@ if KB_MAIL is None or KB_PASSWORD is None:
 else:
     print("  ✅ Your Kickbase credentials are set.")
     
+### Optional preferred league name
+if KB_LIGA:
+    print(f"  ✅ Your preferred league name is set: {KB_LIGA}")
+else:
+    print("  ⚠️ Using default league.")
+
 ### Discord Webhook URL
 if DISCORD_WEBHOOK is None:
     print("  ❌ DISCORD_WEBHOOK is not set. Exiting...")
@@ -57,6 +65,19 @@ if WATCHPACK_POLLING == "true":
     print("  ✅ WATCHPACK_POLLING is set to true.")
 else:
     print("  ✅ Using default value for WATCHPACK_POLLING.")
+
+### Check if START_DATE is set by user
+if START_DATE is None:
+    print("  ❌ START_DATE is not set. Exiting...")
+    exit()
+else:
+    try:
+        ### Attempt to parse the date string to ensure it is in the correct format
+        parsed_date = datetime.strptime(START_DATE, "%d.%m.%Y")
+        print(f"  ✅ START_DATE is set to '{START_DATE}'.")
+    except ValueError:
+        print("  ❌ START_DATE format is incorrect. Please use 'DD.MM.YYYY'. Exiting...")
+        exit()
 
 ### ===============================================================================
 

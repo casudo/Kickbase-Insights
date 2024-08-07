@@ -7,12 +7,12 @@ Dockerfile
 .gitignore
 
 ### Random misc files
-auto_gift_collector.py
 README.md
 venv/
 __pycache__/
 *.log
 repo_pictures/
+.env
 
 ### Ignore auto generated files
 frontend/node_modules/

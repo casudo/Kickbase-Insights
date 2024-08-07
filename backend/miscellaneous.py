@@ -4,15 +4,22 @@
 TODO: Maybe list all functions here automatically?
 """
 
-import requests, json, pytz, logging
+import requests
+import json
+import pytz
+import logging
+
 import pandas as pd
 from datetime import datetime
+from os import getenv
 
-from kickbase import exceptions, competition
+from backend import exceptions
+from backend.kickbase.v1 import competition
 
 ### ===============================================================================
 
-POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
+POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
+### 0 = Vereinslos oder sehr neue Spieler in der Liga
 
 ### TREND (can be found via player stats)
 # 0: Gleichbleibend (500k player) (Welcher Zeitraum?)
@@ -27,7 +34,8 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 # 4: Aufbautraining (Orange Cone)
 # 8: Rote Karte (Red Card)
 # 32: 5. Gelbe Karte (Yellow Card)
-# TODO: Add "Raus aus der Liga"
+# 128: Raus aus der Liga (Red Arrow)
+# 256: Abwesend (Grey Clock)
 ### Conversion from number to icon for the frontend in "SharedConstants.js"
 
 ### TYPE (from league feed)
@@ -37,61 +45,31 @@ POSITIONS = {1: 'TW', 2: 'ABW', 3: 'MF', 4: 'ANG'}
 # Type 8: Final matchday points
 # Type 12: Gekauft von Kickbase
 
-### TEAM_IDS
-### TODO: Update with missing teams
-# 2 Bayern
-# 3 BVB
-# 4 Frankfurt
-# 5 Freiburg
-# 7 Bayer
-# 8 Schalke
-# 9 Stuttgart
-# 10 Bremen
-# 11 Wolfsburg
-# 13 Augsburg
-# 14 Hoffenheim
-# 15 Gladbach
-# 18 Mainz
-# 20 Hertha
-# 24 Bochum
-# 28 Köln
-# 40 Union
-# 42 Darmstadt
-# 43 Leipzig
-# 50 Heidenheim
-TEAM_IDS = [2, 3, 4, 5, 7, 9, 10, 11, 13, 14, 15, 18, 24, 28, 40, 42, 43, 50]
+### TYPE (from v2 League Feed)
+# Type 3: Free player listed by Kickbase
+# Type 5: User joined the Kickbase league
+# Type 15 + meta["s"]: User sold Player to Kickbase
+# Type 15 + meta["b"]: User bought Player from Kickbase
+# Type 15 + meta["s"] + meta["b"]: User sold Player to User
+# Type 16: News from Kickbase?
 
 TIMEZONE_DE = pytz.timezone("Europe/Berlin")
 
-### TODO: Update these manually??
-MATCH_DAYS = {
-    1: datetime(2023, 8, 18, 20, 30, tzinfo=TIMEZONE_DE),
-    2: datetime(2023, 8, 25, 20, 30, tzinfo=TIMEZONE_DE),
-    3: datetime(2023, 9, 1, 20, 30, tzinfo=TIMEZONE_DE),
-    4: datetime(2023, 9, 15, 20, 30, tzinfo=TIMEZONE_DE),
-    5: datetime(2023, 9, 22, 20, 30, tzinfo=TIMEZONE_DE),
-    6: datetime(2023, 9, 29, 20, 30, tzinfo=TIMEZONE_DE),
-    7: datetime(2023, 10, 6, 20, 30, tzinfo=TIMEZONE_DE),
-    8: datetime(2023, 10, 20, 20, 30, tzinfo=TIMEZONE_DE),
-    9: datetime(2023, 10, 27, 20, 30, tzinfo=TIMEZONE_DE),
-    10: datetime(2023, 11, 3, 20, 30, tzinfo=TIMEZONE_DE),
-    11: datetime(2023, 11, 10, 20, 30, tzinfo=TIMEZONE_DE),
-    12: datetime(2023, 11, 24, 20, 30, tzinfo=TIMEZONE_DE),
-    13: datetime(2023, 12, 1, 20, 30, tzinfo=TIMEZONE_DE),
-    14: datetime(2023, 12, 8, 20, 30, tzinfo=TIMEZONE_DE),
-    15: datetime(2023, 12, 15, 20, 30, tzinfo=TIMEZONE_DE),
-    16: datetime(2023, 12, 19, 18, 30, tzinfo=TIMEZONE_DE),
-    17: datetime(2024, 1, 12, 20, 30, tzinfo=TIMEZONE_DE),
-}  
-
-
 ### ===============================================================================
 
-def discord_notification(title: str, message: str, color: int, dc_url: str = None):
+def discord_notification(title: str, message: str, color: int, webhook_url: str) -> None:
+    """### Send a Discord notification to a webhook.
+
+    Args:
+        title (str): Title of the notification.
+        message (str): Message of the notification.
+        color (int): Color of the notification.
+        webhook_url (str): Webhook URL to send the notification to.
+
+    Raises:
+        WIP! TODO!
     """
-    ### Send a notification to a Discord Webhook.
-    """
-    url = dc_url
+    url = webhook_url
     headers = {"Content-Type": "application/json"}
     payload = {
         "username": "Kickbase",
@@ -112,9 +90,15 @@ def discord_notification(title: str, message: str, color: int, dc_url: str = Non
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.")
     
 
-def get_free_players(token: str, league_id: str, taken_players):
-    """
-    TODO: Add docstring
+def get_free_players(token: str, taken_players: list) -> None:
+    """### Get all free players based on the taken players.
+
+    Args:
+        token (str): The user's kkstrauth token.
+        taken_players (list): A list of all taken players.
+
+    Returns:
+        None
     """
     logging.info("Getting free players...")
 
@@ -124,16 +108,22 @@ def get_free_players(token: str, league_id: str, taken_players):
     taken_player_ids = [player["playerId"] for player in taken_players]
 
     ### Cycle through all teams and get the players who are not taken
-    for team_id in TEAM_IDS:
+    for team_id in get_team_ids(token):
         ### Cycle through all players of the team
         for player in competition.team_players(token, team_id):
             ### Check if the player is not taken
             if player.p.id not in taken_player_ids:
 
+                ### Check if position number is valid
+                position_nr = player.p.position
+                if position_nr not in POSITIONS:
+                    logging.warning(f"Invalid position number: {position_nr} for player {player.p.firstName} {player.p.lastName} (PID: {player.p.id})")
+                    position_nr = 1    
+
                 free_players.append({
                     "playerId": player.p.id,
                     "teamId": player.p.teamId,
-                    "position": POSITIONS[player.p.position],
+                    "position": POSITIONS[position_nr],
                     "firstName": player.p.firstName,
                     "lastName": player.p.lastName,
                     "marketValue": player.p.marketValue,
@@ -142,7 +132,7 @@ def get_free_players(token: str, league_id: str, taken_players):
                     "points": player.p.totalPoints,
                 })
 
-    logging.info("Got all free players.\n")
+    logging.info("Got all free players.")
 
     with open("/code/frontend/src/data/free_players.json", "w") as file:
         file.write(json.dumps(free_players, indent=2))
@@ -154,11 +144,12 @@ def get_free_players(token: str, league_id: str, taken_players):
         logging.debug("Created file ts_free_players.json")
 
 
-def calculate_revenue_data_daily(turnovers, manager):
-    """
-    ### This function calculates the daily revenue for each user
+def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
+    """### Calculate daily revenue data.
 
-    The data is stored as dict in JSON file and is later used to create a graph in the frontend.
+    Args:
+        turnovers (dict): A dictionary containing all buy-sell pairs.
+        manager (list): A list of all users in the Kickbase league.
     """
     logging.info("Calculating daily revenue data...")
 
@@ -174,7 +165,7 @@ def calculate_revenue_data_daily(turnovers, manager):
 
     ### Add start and end points for the graph
     for _, data in user_transfer_revenue.items():
-        data.append((0, datetime(2023, 8, 22))) ### TODO: Change Startday at the end of the season ???
+        data.append((0, datetime.strptime(getenv("START_DATE"), "%d.%m.%Y")))
         data.append((0, datetime.now()))
 
     ### This section converts the data in user_transfer_revenue into Pandas DataFrames.
@@ -198,7 +189,7 @@ def calculate_revenue_data_daily(turnovers, manager):
         for entry in df.to_numpy().tolist():
             data[user].append((entry[0], entry[1]))
 
-    logging.info("Calculated daily revenue data.\n")
+    logging.info("Calculated daily revenue data.")
 
     ### Finally, the data dictionary is written to a JSON file named 'revenue_sum.json'.
     with open('/code/frontend/src/data/revenue_sum.json', 'w') as f:
@@ -209,3 +200,46 @@ def calculate_revenue_data_daily(turnovers, manager):
     with open("/code/frontend/src/data/timestamps/ts_revenue_sum.json", "w") as f:
         f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()})) 
         logging.debug("Created file ts_revenue_sum.json")
+
+
+def get_team_ids(token: str) -> dict:
+    """### Get all team ids.
+
+    Args:
+        token (str): The user's kkstrauth token.
+
+    Returns:
+        dict: A dictionary containing all team ids and names.
+    """
+    logging.info("Getting team ids...")
+
+    url = "https://api.kickbase.com/competition/teams/{team_id}/players"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Dictionary to store team IDs and names
+    team_id_dict = {}
+
+    ### Loop through team IDs from 1 to 100
+    for team_id in range(1, 101):
+        try:
+            response = requests.get(url.format(team_id=team_id), headers=headers).json()
+        except:
+            raise exceptions.NotificatonException("Failed to get team ids.")
+        
+        if response.get("p"): ### If list p[] is not empty
+            ### Get the first player to extract team information
+            team_id = response["p"][0]["teamId"]
+            team_name = response["p"][0]["teamName"]
+            team_id_dict[team_id] = team_name
+
+    logging.info("Got all team ids.")
+
+    with open("/code/frontend/src/data/team_ids.json", "w") as file:
+        file.write(json.dumps(team_id_dict, indent=2))
+        logging.debug("Created file team_ids.json")
+
+    return team_id_dict

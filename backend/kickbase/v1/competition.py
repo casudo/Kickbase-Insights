@@ -5,9 +5,9 @@ TODO: Maybe list all functions here automatically?
 """
 
 import requests
-from kickbase import exceptions
 
-from kickbase.endpoints.competition import Team_Players
+from backend import exceptions
+from backend.kickbase.endpoints.competition import Team_Players
 
 
 def team_players(token: str, team_id: str):

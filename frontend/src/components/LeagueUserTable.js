@@ -36,7 +36,7 @@ function LeagueUserTable() {
             // Display profile picture and username
             renderCell: (params) => (
                 <div style={{ display: "flex", alignItems: "center" }}>
-                    <Avatar src={params.row.profilePic} alt={params.row.user} sx={{ marginRight: 1 }} />
+                    <Avatar src={params.row.profilePic} alt={params.row.userName} sx={{ marginRight: 1 }} />
                     {params.value}
                 </div>
             ),            
@@ -49,9 +49,7 @@ function LeagueUserTable() {
             headerAlign: "center",
             align: "center",
             // Format the number with thousand separators (.)
-            valueFormatter: (params) => {
-                return params.value.toLocaleString('de-DE');
-            },
+            valueFormatter: (params) => params.value.toLocaleString('de-DE'),
         },
         {
             field: "pointsDiff",
@@ -96,7 +94,7 @@ function LeagueUserTable() {
     const rows = data.map((row, i) => (
         {
             id: i,
-            user: row.user,
+            user: row.userName,
             profilePic: row.profilePic,
             placement: row.placement,
             points: row.points,
