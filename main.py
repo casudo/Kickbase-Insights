@@ -339,7 +339,7 @@ def taken_free_players_v1(user_token: str, selected_league: object) -> dict:
         user_has_sold = set()
 
         ### Get all transfers of a user
-        user_transfers = leagues_v1.user_players(user_token, selected_league.id, real_user["id"])
+        user_transfers = leagues_v1.user_transfers(user_token, selected_league.id, real_user["id"])
         logging.debug(f"Found {len(user_transfers)} transfers for user {real_user['name']}")
 
         ### Loop through all transfers of a user (done by getting the user specific BUY/SELL feed)
@@ -595,7 +595,7 @@ def turnovers_v1(user_token: str, selected_league: object, league_users: dict) -
         transfers = []
         
         ### Get all transfers of a user
-        user_transfers = leagues_v1.user_players(user_token, selected_league.id, real_user["id"])
+        user_transfers = leagues_v1.user_transfers(user_token, selected_league.id, real_user["id"])
         logging.debug(f"Found {len(user_transfers)} transfers for user {real_user['name']}")
 
         ### Cycle through all transfers of a user

@@ -291,11 +291,11 @@ def league_users(token: str, league_id: str):
     return response
 
 
-def user_players(token: str, league_id: str, user_id: str):
+def user_transfers(token: str, league_id: str, user_id: str):
     """
-    ### Get all players of a given user in the given league.
+    ### Get all transfers of a given user in the given league.
 
-    Expected response:
+    #### Expected response (as of 25.08.24):
     ```json
     {
         "items": [

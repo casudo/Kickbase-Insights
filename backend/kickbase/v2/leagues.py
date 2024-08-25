@@ -9,7 +9,7 @@ from backend import exceptions
 
 def transfers(token: str, league_id: str) -> dict:
     """### Get all transfers of all user in a league.
-
+    
     Args:
         token (str): The user's kkstrauth token.
         league_id (str): The league ID.
@@ -17,7 +17,7 @@ def transfers(token: str, league_id: str) -> dict:
     Returns:
         dict: A dictionary containing the user's players.
 
-    #### Expedted response:
+    #### Expected response:
     ```json
     {
         "items": [
