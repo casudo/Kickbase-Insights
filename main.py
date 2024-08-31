@@ -838,30 +838,34 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
     ### Get all match days of the season
     match_days_list = competition_v3.match_days(user_token)
 
+    ### Get the current match day and team values per match day
+    match_day_stats = leagues_v1.league_stats(user_token, selected_league.id)
+    
     ### Loop through all users in the league
     for real_user in league_users.get("users"):
-        ### Get the current match day
-        current_match_day = leagues_v1.league_stats(user_token, selected_league.id)["currentDay"]
+        ### Get the current match day from league_stats
+        current_match_day = match_day_stats["currentDay"]
 
-        ### Get team value for each match day
+        ### Get the team value for each match day
         team_value = {match_day: 0 for match_day in range(1, current_match_day + 1)}
     
         ### Loop through all match days
         for match_day in match_days_list:
-
-            ### TODO: Reverse userstats["teamValues"] since the below for loop iterates from newest to oldest
-            user_stats = leagues_v1.user_stats(user_token, selected_league.id, real_user["id"])
-
+            ### Skip processing if the match day is in the future
+            if match_day["day"] > current_match_day:
+                continue
+        
             team_value_on_match_day = 0
-            ### Loop through all team values (per day) of the user
-            for teamValues in user_stats["teamValues"]:
-                ### Check if the date of the team value matches the date of the match day
-                if datetime.fromisoformat(match_days_list[0]["firstMatch"][:-1]).date() == datetime.fromisoformat(teamValues["d"][:-1]).date():
-                    team_value_on_match_day = teamValues["v"]
-            
-            if (len(team_value) >= match_day["day"]):
-                team_value[match_day["day"]] = team_value_on_match_day
 
+            ### Loop through all users of the match day
+            for match_day_user in match_day_stats["matchDays"][match_day["day"] - 1]["users"]:
+                if match_day_user["userId"] == real_user["id"]:
+                    team_value_on_match_day = match_day_user["teamValue"]
+                    break
+        
+            if len(team_value) >= match_day["day"]:
+                team_value[match_day["day"]] = team_value_on_match_day
+        
         final_team_value[real_user["name"]] = team_value
 
     logging.info("Calculated team value per match day.")
