@@ -700,10 +700,36 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
 
     final_turnovers = []
 
-    ### Get all transfers from the API
-    all_transfers = leagues_v2.transfers(user_token, selected_league.id)
-    logging.debug(f"Found {len(all_transfers)} transfers in total")
+    ### Load existing transfers from all_transfers.json
+    if path.exists("/code/frontend/src/data/all_transfers.json"):
+        with open("/code/frontend/src/data/all_transfers.json", "r") as f:
+            all_transfers = json.load(f)
+        logging.debug(f"Loaded {len(all_transfers)} existing transfers from all_transfers.json")
+    else:
+        all_transfers = []
 
+    ### Get new transfers from the API
+    new_transfers = leagues_v2.transfers(user_token, selected_league.id)
+    logging.debug(f"Found {len(new_transfers)} new transfers from the API")
+
+    ### Append only new transfers (ignoring duplicates)
+    new_transfer_ids = {item["id"] for item in all_transfers}  # Set of existing transfer IDs
+    for transfer in new_transfers:
+        if transfer["id"] not in new_transfer_ids:  # Check if the transfer is new
+            all_transfers.append(transfer)
+            new_transfer_ids.add(transfer["id"])  # Update the set to include the new transfer
+
+    ### Sort transfers by date after appending new ones
+    all_transfers.sort(key=lambda x: datetime.fromisoformat(x["date"].replace("Z", "")))
+
+    logging.debug(f"Total transfers after appending new ones: {len(all_transfers)}")
+
+    ### Save updated transfers back to all_transfers.json
+    with open("/code/frontend/src/data/all_transfers.json", "w") as f:
+        json.dump(all_transfers, f, indent=2)
+    logging.debug("Updated all_transfers.json with new transfers")
+
+    ### Process the transfers as usual
     transfers = []
 
     ### Process each transfer item
@@ -745,7 +771,6 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
 
     ### Removes duplicates given by the API
     transfers = list({frozenset(item.items()): item for item in transfers}.values())
-    transfers.reverse()  # Oldest is first.
 
     turnovers = []
 

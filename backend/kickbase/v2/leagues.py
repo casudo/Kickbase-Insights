@@ -10,6 +10,8 @@ from backend import exceptions
 def transfers(token: str, league_id: str) -> dict:
     """### Get all transfers of all user in a league.
     
+    NOTE: The response only contains the last 330 transfers!! Until `&start=300`.
+
     Args:
         token (str): The user's kkstrauth token.
         league_id (str): The league ID.
