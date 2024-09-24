@@ -4,7 +4,8 @@
 
 import requests
 import logging
-import json
+
+from backend import miscellaneous
 
 
 def match_days(token: str, competition_id: int = 1) -> list:
@@ -84,10 +85,8 @@ def match_days(token: str, competition_id: int = 1) -> list:
 
     logging.info("Match days fetched.")
 
-    ### Save the match days data to a JSON file
-    with open("/code/frontend/src/data/match_days.json", "w") as f:
-        f.write(json.dumps(match_days, indent=2))
-        logging.debug("Created file match_days.json")
+    ### Save to file
+    miscellaneous.write_json_to_file(match_days, "match_days.json")
 
     ### TODO: Timestamp needed here?
 

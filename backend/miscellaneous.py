@@ -11,7 +11,8 @@ import logging
 
 import pandas as pd
 from datetime import datetime
-from os import getenv
+from os import getenv, path
+from main import DATA_DIR, TIMESTAMP_DIR
 
 from backend import exceptions
 from backend.kickbase.v1 import competition
@@ -134,15 +135,9 @@ def get_free_players(token: str, taken_players: list) -> None:
 
     logging.info("Got all free players.")
 
-    with open("/code/frontend/src/data/free_players.json", "w") as file:
-        file.write(json.dumps(free_players, indent=2))
-        logging.debug("Created file free_players.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_free_players.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_free_players.json")
-
+    ### Save to file + timestamp
+    write_json_to_file(free_players, "free_players.json")
+    write_json_to_file({"time": datetime.now(tz=TIMEZONE_DE).isoformat()}, "ts_free_players.json")
 
 def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
     """### Calculate daily revenue data.
@@ -191,15 +186,9 @@ def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
 
     logging.info("Calculated daily revenue data.")
 
-    ### Finally, the data dictionary is written to a JSON file named 'revenue_sum.json'.
-    with open('/code/frontend/src/data/revenue_sum.json', 'w') as f:
-        f.writelines(json.dumps(data, indent=2))
-        logging.debug("Created file revenue_sum.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_revenue_sum.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=TIMEZONE_DE).isoformat()})) 
-        logging.debug("Created file ts_revenue_sum.json")
+    ### Save to file + timestamp
+    write_json_to_file(data, "revenue_sum.json")
+    write_json_to_file({"time": datetime.now(tz=TIMEZONE_DE).isoformat()}, "ts_revenue_sum.json")
 
 
 def get_team_ids(token: str) -> dict:
@@ -238,8 +227,30 @@ def get_team_ids(token: str) -> dict:
 
     logging.info("Got all team ids.")
 
-    with open("/code/frontend/src/data/team_ids.json", "w") as file:
-        file.write(json.dumps(team_id_dict, indent=2))
-        logging.debug("Created file team_ids.json")
+    ### Save to file
+    write_json_to_file(team_id_dict, "team_ids.json")
 
     return team_id_dict
+
+
+def write_json_to_file(data, file_name: str) -> None:
+    """Writes a JSON object to a file.
+
+    Args:
+        data (any): data to be written to the file
+        file_name (str): file name
+    """
+    ### Check if it is a data or timestamp file
+    try:
+        if file_name.startswith("ts_"):
+            file_path = path.join(TIMESTAMP_DIR, file_name)
+            with open(file_path, "w") as f:
+                json.dump(data, f)
+            logging.debug(f"Created timestamp file {file_name}")
+        else:
+            file_path = path.join(DATA_DIR, file_name)
+            with open(file_path, "w") as f:
+                json.dump(data, f, indent=2)
+            logging.debug(f"Created file {file_name}")
+    except Exception as e:
+        logging.error(f"Failed to write JSON to {file_path}: {e}")

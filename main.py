@@ -2,7 +2,7 @@ import json
 import time
 import logging
 
-from os import getenv, makedirs, path
+from os import getenv, makedirs, path, getcwd
 from art import tprint
 from sys import stdout
 from logging.config import dictConfig
@@ -19,17 +19,26 @@ from backend.kickbase.v3 import competition as competition_v3
 
 __version__ = getenv("REACT_APP_VERSION", "Warning: Couldn't load version")
 
+### Get the current working directory dynamically
+BASE_PATH = getcwd()
+### Paths for logs and data files
+LOG_DIR = path.join(BASE_PATH, "logs")
+DATA_DIR = path.join(BASE_PATH, "frontend", "src", "data")
+TIMESTAMP_DIR = path.join(DATA_DIR, "timestamps")
+
+
 def main() -> None:
     """### This is the main function of the Kickbase Insights program.
 
     It performs various tasks related to logging, user login, and data retrieval from the Kickbase API.
     """
-    ### Create the necessary directories and files
-    log_dir = "/code/logs"
-    makedirs(log_dir, exist_ok=True)
-    ### Ensure the log files exist
-    open(path.join(log_dir, "kickbase-insights.log"), 'a').close()
-    open(path.join(log_dir, "kickbase-insights-verbose.log"), 'a').close()
+    ### Ensure directories exist
+    makedirs(LOG_DIR, exist_ok=True)
+    makedirs(TIMESTAMP_DIR, exist_ok=True)
+
+    ### Define the log file paths
+    log_file_path = path.join(LOG_DIR, "kickbase-insights.log")
+    verbose_log_file_path = path.join(LOG_DIR, "kickbase-insights-verbose.log")
 
     ### Set logging settings for the Python logging module
     LOGGING = {
@@ -51,7 +60,7 @@ def main() -> None:
             "file": { # Log only INFO and higher to file (simple format)
                 "level": "INFO",
                 "class": "logging.handlers.TimedRotatingFileHandler",
-                "filename": "/code/logs/kickbase-insights.log",
+                "filename": log_file_path,
                 "when": "D",
                 "interval": 30, # overwrite interval in days
                 "backupCount": 0, # don't keep any backups
@@ -60,7 +69,7 @@ def main() -> None:
             "verbose_file": { # Log EVERYTHING to file (verbose format)
                 "level": "DEBUG",
                 "class": "logging.handlers.TimedRotatingFileHandler",
-                "filename": "/code/logs/kickbase-insights-verbose.log",
+                "filename": verbose_log_file_path,
                 "when": "D",
                 "interval": 14, # overwrite interval in days
                 "backupCount": 0, # don't keep any backups
@@ -225,21 +234,13 @@ def market(user_token: str, selected_league: object) -> None:
 
     logging.info("Got all players listed on transfer market.")
 
-    ### Write the json dicts to a file. These will be read by the frontend.
-    with open("/code/frontend/src/data/market_user.json", "w") as f:
-        f.write(json.dumps(players_listed_by_user, indent=2))
-        logging.debug("Created file market_user.json")
-    with open("/code/frontend/src/data/market_kickbase.json", "w") as f:
-        f.write(json.dumps(players_listed_by_kickbase, indent=2))
-        logging.debug("Created file market_kickbase.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(players_listed_by_user, "market_user.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_market_user.json")
 
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_market_user.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_market_user.json")
-    with open("/code/frontend/src/data/timestamps/ts_market_kickbase.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_market_kickbase.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(players_listed_by_kickbase, "market_kickbase.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_market_kickbase.json")
 
 
 def market_value_changes(user_token: str, selected_league: object) -> None:
@@ -290,15 +291,9 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
 
     logging.info("Got all market value changes for all players.")
 
-    ### Write the json dicts to a file. These will be read by the frontend.
-    with open("/code/frontend/src/data/market_value_changes.json", "w") as f:
-        f.write(json.dumps(players_LIST, indent=2))
-        logging.debug("Created file market_value_changes.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_market_value_changes.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_market_value_changes.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(players_LIST, "market_value_changes.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_market_value_changes.json")
 
 
 def taken_free_players_v1(user_token: str, selected_league: object) -> dict:
@@ -428,15 +423,9 @@ def taken_free_players_v1(user_token: str, selected_league: object) -> dict:
 
     logging.info("Got all taken players.")
     
-    ### Write the json dicts to a file. These will be read by the frontend.
-    with open("/code/frontend/src/data/taken_players.json", "w") as f:
-        f.write(json.dumps(final_result, indent=2))
-        logging.debug("Created file taken_players.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_taken_players.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_taken_players.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(final_result, "taken_players.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_taken_players.json")
 
     ### Based on all taken players, we can now get all free players
     miscellaneous.get_free_players(user_token, final_result)
@@ -553,24 +542,13 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
 
     logging.info("Got all taken and free players.")
     
-    ### Write the json dicts to a file. These will be read by the frontend.
-    with open("/code/frontend/src/data/taken_players.json", "w") as f:
-        f.write(json.dumps(taken_players, indent=2))
-        logging.debug("Created file taken_players.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(taken_players, "taken_players.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_taken_players.json")
 
-    with open("/code/frontend/src/data/free_players.json", "w") as f:
-        f.write(json.dumps(free_players, indent=2))
-        logging.debug("Created file free_players.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_taken_players.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_taken_players.json")
-
-    ### Timestamp for free players
-    with open("/code/frontend/src/data/timestamps/ts_free_players.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_free_players.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(free_players, "free_players.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_free_players.json")
 
     return league_users
 
@@ -675,14 +653,9 @@ def turnovers_v1(user_token: str, selected_league: object, league_users: dict) -
 
     logging.info("Got all turnovers.")
 
-    with open("/code/frontend/src/data/turnovers.json", "w") as f:
-        f.write(json.dumps(final_turnovers, indent=2))
-        logging.debug("Created file turnovers.json")
-    
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_turnovers.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_turnovers.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(final_turnovers, "turnovers.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_turnovers.json")
 
     ### Calculate revenue data for the graph
     miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
@@ -701,8 +674,9 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
     final_turnovers = []
 
     ### Load existing transfers from all_transfers.json
-    if path.exists("/code/frontend/src/data/all_transfers.json"):
-        with open("/code/frontend/src/data/all_transfers.json", "r") as f:
+    all_transfers_path = path.join(DATA_DIR, "all_transfers.json")
+    if path.exists(all_transfers_path):
+        with open(all_transfers_path, "r") as f:
             all_transfers = json.load(f)
         logging.debug(f"Loaded {len(all_transfers)} existing transfers from all_transfers.json")
     else:
@@ -725,8 +699,7 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
     logging.debug(f"Total transfers after appending new ones: {len(all_transfers)}")
 
     ### Save updated transfers back to all_transfers.json
-    with open("/code/frontend/src/data/all_transfers.json", "w") as f:
-        json.dump(all_transfers, f, indent=2)
+    miscellaneous.write_json_to_file(all_transfers, "all_transfers.json")
     logging.debug("Updated all_transfers.json with new transfers")
 
     ### Process the transfers as usual
@@ -835,14 +808,9 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
 
     logging.info("Got all turnovers.")
 
-    with open("/code/frontend/src/data/turnovers.json", "w") as f:
-        f.write(json.dumps(final_turnovers, indent=2))
-        logging.debug("Created file turnovers.json")
-    
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_turnovers.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_turnovers.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(final_turnovers, "turnovers.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_turnovers.json")
 
     ### Calculate revenue data for the graph
     miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
@@ -895,14 +863,9 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
 
     logging.info("Calculated team value per match day.")
 
-    with open("/code/frontend/src/data/team_values.json", "w") as f:
-        f.write(json.dumps(final_team_value, indent=2))
-        logging.debug("Created file team_values.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_team_values.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_team_values.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(final_team_value, "team_values.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_team_values.json")
 
 
 def league_user_stats_tables(user_token: str, selected_league: object, league_users: dict) -> None:
@@ -968,14 +931,9 @@ def league_user_stats_tables(user_token: str, selected_league: object, league_us
 
     logging.info("Got league user stats.")
 
-    with open("/code/frontend/src/data/league_user_stats.json", "w") as f:
-        f.write(json.dumps(final_user_stats, indent=2))
-        logging.debug("Created file league_user_stats.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_league_user_stats.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_league_user_stats.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(final_user_stats, "league_user_stats.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_league_user_stats.json")
 
 
 def live_points(user_token: str, selected_league: object) -> None:
@@ -1024,14 +982,9 @@ def live_points(user_token: str, selected_league: object) -> None:
 
     logging.info("Got live points.")
 
-    with open("/code/frontend/src/data/live_points.json", "w") as f:
-        f.write(json.dumps(final_live_points, indent=2))
-        logging.debug("Created file live_points.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_live_points.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_live_points.json")
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(final_live_points, "live_points.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_live_points.json")
 
 
 def balances(user_token: str, selected_league: object, league_users: dict) -> None:
@@ -1120,20 +1073,13 @@ def balances(user_token: str, selected_league: object, league_users: dict) -> No
 
     logging.info("Got balances.")
 
-    with open("/code/frontend/src/data/balances.json", "w") as f:
-        f.write(json.dumps(final_balances, indent=2))
-        logging.debug("Created file balances.json")
-
-    ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_balances.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_balances.json")
-
+    ### Save to file + timestamp
+    miscellaneous.write_json_to_file(final_balances, "balances.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_balances.json")
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
-
 
 if __name__ == "__main__":
     ### Try to get the logins and Discord URL from the environment variables (Docker)
@@ -1152,9 +1098,7 @@ if __name__ == "__main__":
     main()
 
     ### Timestamp for frontend
-    with open("/code/frontend/src/data/timestamps/ts_main.json", "w") as f:
-        f.writelines(json.dumps({'time': datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
-        logging.debug("Created file ts_main.json")
+    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_main.json")
 
     elapsed_time_seconds = time.time() - start_time
     minutes = int(elapsed_time_seconds // 60)
