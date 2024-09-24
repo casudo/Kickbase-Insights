@@ -157,7 +157,7 @@ It may take some time to initially start the container, so check the logs!
 ## Development
 If you want to contribute to this project, you can follow the steps below to jump right into the development environment.  
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_MONEY=<start_money> -e START_DATE=<start_date> ubuntu
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash
@@ -166,7 +166,7 @@ mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano
 
 If you have this project already cloned, you can run the following command to bind mount the files inside the container:  
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> -e START_MONEY=<start_money> -v <your_folder>\Kickbase-Insights:/code ubuntu
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> -v <your_folder>\Kickbase-Insights:/code ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash
