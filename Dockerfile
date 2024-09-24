@@ -1,7 +1,6 @@
 FROM ubuntu 
 
 ### Set working directory and copy files
-RUN mkdir /code
 WORKDIR /code
 COPY . /code/
 
