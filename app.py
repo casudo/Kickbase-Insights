@@ -71,7 +71,7 @@ def get_live_points():
 
     ### Timestamp for frontend
     with open("/code/frontend/src/data/timestamps/ts_live_points.json", "w") as f:
-        f.writelines(json.dumps({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}))
+        f.writelines(json.dumps({"time": datetime.now().isoformat()}))
         logging.debug("Created file ts_live_points.json")
 
     ### Return the live points

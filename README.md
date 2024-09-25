@@ -66,7 +66,7 @@ If you want to run this in a Docker container, you'll first need to set some man
 | `WATCHPACK_POLLING` | **Yes** | Used to [apply new changes](https://stackoverflow.com/a/72661752) in the filesystem on runtime. If not set, defaults to `true`. |
 | `START_DATE` | **Yes** | The date when the season started in format `dd.mm.yyyy`. |
 | `START_MONEY` | No | The amount of money you started with. If not set, defaults to 50.000.000€ |
-| `TZ` | No | The timezone to use. |
+| `TZ` | No | The timezone to use. Defaults to `Europe/Berlin` |
 
 ### docker run
 ```bash
@@ -79,7 +79,6 @@ docker run -d \
     -e DISCORD_WEBHOOK=<discord_webhook> \
     -e WATCHPACK_POLLING=true \
     -e START_DATE=<start_date> \
-    -e TZ=Europe/Berlin \
     ghcr.io/casudo/kickbase-insights:latest
 ```  
 
@@ -96,12 +95,11 @@ services:
       - <frontend_port>:3000 # Web GUI
       - <backend_port>:5000 # Backend API (../api/livepoints)  
     environment:
-        - KB_MAIL=<kickbase_email>
-        - KB_PASSWORD=<kickbase_password>
-        - DISCORD_WEBHOOK=<discord_webhook>
-        - WATCHPACK_POLLING=true
-        - START_DATE=<start_date>
-        - TZ=Europe/Berlin
+      - KB_MAIL=<kickbase_email>
+      - KB_PASSWORD=<kickbase_password>
+      - DISCORD_WEBHOOK=<discord_webhook>
+      - WATCHPACK_POLLING=true
+      - START_DATE=<start_date>
 ```  
 
 ---
@@ -192,7 +190,6 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Transfererlöse: Hold player for X days  
 - Sum. Transfererlöse: Add custom scale for chart  
 - Misc: Unsold starter players    
-- Fix TZ on frontend (market table)  
 - Reformat changelog  
 - Other menu layout (+ mobile responsive)  
 - Back to top button  
@@ -201,8 +198,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 
 **Backend:**  
 - Fix all TODOs  
-- Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)  
-- Fix TZ in Ubuntu image ([Stackoverflow](https://serverfault.com/questions/683605/docker-container-time-timezone-will-not-reflect-changes))  
+- Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)   
 - Discord notifications  
 - Logging module for entrypoint.py and app.py    
 - Add linter/formatter  

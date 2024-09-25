@@ -236,11 +236,11 @@ def market(user_token: str, selected_league: object) -> None:
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(players_listed_by_user, "market_user.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_market_user.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_market_user.json")
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(players_listed_by_kickbase, "market_kickbase.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_market_kickbase.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_market_kickbase.json")
 
 
 def market_value_changes(user_token: str, selected_league: object) -> None:
@@ -293,7 +293,7 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(players_LIST, "market_value_changes.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_market_value_changes.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_market_value_changes.json")
 
 
 def taken_free_players_v1(user_token: str, selected_league: object) -> dict:
@@ -425,7 +425,7 @@ def taken_free_players_v1(user_token: str, selected_league: object) -> dict:
     
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(final_result, "taken_players.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_taken_players.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_taken_players.json")
 
     ### Based on all taken players, we can now get all free players
     miscellaneous.get_free_players(user_token, final_result)
@@ -544,11 +544,11 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
     
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(taken_players, "taken_players.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_taken_players.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_taken_players.json")
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(free_players, "free_players.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_free_players.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_free_players.json")
 
     return league_users
 
@@ -655,7 +655,7 @@ def turnovers_v1(user_token: str, selected_league: object, league_users: dict) -
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(final_turnovers, "turnovers.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_turnovers.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_turnovers.json")
 
     ### Calculate revenue data for the graph
     miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
@@ -810,7 +810,7 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(final_turnovers, "turnovers.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_turnovers.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_turnovers.json")
 
     ### Calculate revenue data for the graph
     miscellaneous.calculate_revenue_data_daily(final_turnovers, league_users.get("users"))
@@ -865,7 +865,7 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(final_team_value, "team_values.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_team_values.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_team_values.json")
 
 
 def league_user_stats_tables(user_token: str, selected_league: object, league_users: dict) -> None:
@@ -933,7 +933,7 @@ def league_user_stats_tables(user_token: str, selected_league: object, league_us
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(final_user_stats, "league_user_stats.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_league_user_stats.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_league_user_stats.json")
 
 
 def live_points(user_token: str, selected_league: object) -> None:
@@ -984,7 +984,7 @@ def live_points(user_token: str, selected_league: object) -> None:
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(final_live_points, "live_points.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_live_points.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_live_points.json")
 
 
 def balances(user_token: str, selected_league: object, league_users: dict) -> None:
@@ -1075,7 +1075,7 @@ def balances(user_token: str, selected_league: object, league_users: dict) -> No
 
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(final_balances, "balances.json")
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_balances.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_balances.json")
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
@@ -1098,7 +1098,7 @@ if __name__ == "__main__":
     main()
 
     ### Timestamp for frontend
-    miscellaneous.write_json_to_file({"time": datetime.now(tz=miscellaneous.TIMEZONE_DE).isoformat()}, "ts_main.json")
+    miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_main.json")
 
     elapsed_time_seconds = time.time() - start_time
     minutes = int(elapsed_time_seconds // 60)

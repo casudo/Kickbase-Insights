@@ -6,7 +6,6 @@ TODO: Maybe list all functions here automatically?
 
 import requests
 import json
-import pytz
 import logging
 
 import pandas as pd
@@ -53,8 +52,6 @@ POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
 # Type 15 + meta["b"]: User bought Player from Kickbase
 # Type 15 + meta["s"] + meta["b"]: User sold Player to User
 # Type 16: News from Kickbase?
-
-TIMEZONE_DE = pytz.timezone("Europe/Berlin")
 
 ### ===============================================================================
 
@@ -137,7 +134,7 @@ def get_free_players(token: str, taken_players: list) -> None:
 
     ### Save to file + timestamp
     write_json_to_file(free_players, "free_players.json")
-    write_json_to_file({"time": datetime.now(tz=TIMEZONE_DE).isoformat()}, "ts_free_players.json")
+    write_json_to_file({"time": datetime.now().isoformat()}, "ts_free_players.json")
 
 def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
     """### Calculate daily revenue data.
@@ -188,7 +185,7 @@ def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
 
     ### Save to file + timestamp
     write_json_to_file(data, "revenue_sum.json")
-    write_json_to_file({"time": datetime.now(tz=TIMEZONE_DE).isoformat()}, "ts_revenue_sum.json")
+    write_json_to_file({"time": datetime.now().isoformat()}, "ts_revenue_sum.json")
 
 
 def get_team_ids(token: str) -> dict:
