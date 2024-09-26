@@ -63,7 +63,6 @@ If you want to run this in a Docker container, you'll first need to set some man
 | `KB_LIGA` | No | The name of the league you want to see data for in the GUI. If not set, defaults to the first league you're in. |
 | `DISCORD_WEBHOOK` | **Yes** | The Discord webhook URL to send notifications to. |
 | `RUN_SCHEDULE` | No | The cron expression when the script should fetch new information from the API. If not set, defaults to `10 2,6,10,14,18,22 * * *`. |
-| `WATCHPACK_POLLING` | **Yes** | Used to [apply new changes](https://stackoverflow.com/a/72661752) in the filesystem on runtime. If not set, defaults to `true`. |
 | `START_DATE` | **Yes** | The date when the season started in format `dd.mm.yyyy`. |
 | `START_MONEY` | No | The amount of money you started with. If not set, defaults to 50.000.000€ |
 | `TZ` | No | The timezone to use. Defaults to `Europe/Berlin` |
@@ -78,7 +77,6 @@ docker run -d \
     -e KB_MAIL=<kickbase_email> \
     -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
-    -e WATCHPACK_POLLING=true \
     -e START_DATE=<start_date> \
     ghcr.io/casudo/kickbase-insights:latest
 ```  
@@ -101,7 +99,6 @@ services:
       - KB_MAIL=<kickbase_email>
       - KB_PASSWORD=<kickbase_password>
       - DISCORD_WEBHOOK=<discord_webhook>
-      - WATCHPACK_POLLING=true
       - START_DATE=<start_date>
 ```  
 

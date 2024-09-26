@@ -27,7 +27,6 @@ DISCORD_WEBHOOK = getenv("DISCORD_WEBHOOK")
 RUN_SCHEDULE = getenv("RUN_SCHEDULE", "10 2,6,10,14,18,22 * * *")
 ### 10 */8 * * * -> At minute 10 past every 8th hour
 ### 10 2,6,10,14,18,22 * * * -> At minute 10 past every 4th hour starting from 2am
-WATCHPACK_POLLING = getenv("WATCHPACK_POLLING", "true")
 START_DATE = getenv("START_DATE")
 START_MONEY = getenv("START_MONEY", "50000000")
 
@@ -61,12 +60,6 @@ if RUN_SCHEDULE == "10 2,6,10,14,18,22 * * *":
     print("  ✅ Using default value for RUN_SCHEDULE:", RUN_SCHEDULE)
 else:
     print("  ⚠️ RUN_SCHEDULE has been set to a custom value:", RUN_SCHEDULE)
-
-### Check if WATCHPACK_POLLING is set by user
-if WATCHPACK_POLLING == "true":
-    print("  ✅ WATCHPACK_POLLING is set to true.")
-else:
-    print("  ✅ Using default value for WATCHPACK_POLLING.")
 
 ### Check if START_DATE is set by user
 if START_DATE is None:

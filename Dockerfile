@@ -25,6 +25,8 @@ RUN pip install --upgrade pip && pip install --upgrade -r requirements.txt
 ARG REACT_APP_VERSION 
 ENV REACT_APP_VERSION=$REACT_APP_VERSION
 
+ENV WATCHPACK_POLLING=true
+
 ### Set timezone
 ENV TZ=Europe/Berlin
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
