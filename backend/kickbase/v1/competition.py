@@ -12,7 +12,7 @@ from backend.kickbase.endpoints.competition import Player
 
 def team_players(token: str, team_id: str):
     """
-    Get all players of a given team
+    ### Get all players of a given team
     
     Expected response:
     ```json

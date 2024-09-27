@@ -219,7 +219,7 @@ def market(user_token: str, selected_league: object) -> None:
             "status": player.status,
             "trend": player.marketValueTrend,
             "expiration": (datetime.now() + timedelta(seconds=player.expiry)).strftime('%d.%m.%Y %H:%M:%S'),
-        } ### TODO: Fix expiration TZ
+        }
         
         ### Check if player is listed by user or Kickbase
         if not player.username:
