@@ -110,24 +110,24 @@ def get_free_players(token: str, taken_players: list) -> None:
         ### Cycle through all players of the team
         for player in competition.team_players(token, team_id):
             ### Check if the player is not taken
-            if player.p.id not in taken_player_ids:
+            if player.id not in taken_player_ids:
 
                 ### Check if position number is valid
-                position_nr = player.p.position
+                position_nr = player.position
                 if position_nr not in POSITIONS:
-                    logging.warning(f"Invalid position number: {position_nr} for player {player.p.firstName} {player.p.lastName} (PID: {player.p.id})")
+                    logging.warning(f"Invalid position number: {position_nr} for player {player.firstName} {player.lastName} (PID: {player.id})")
                     position_nr = 1    
 
                 free_players.append({
-                    "playerId": player.p.id,
-                    "teamId": player.p.teamId,
+                    "playerId": player.id,
+                    "teamId": player.teamId,
                     "position": POSITIONS[position_nr],
-                    "firstName": player.p.firstName,
-                    "lastName": player.p.lastName,
-                    "marketValue": player.p.marketValue,
-                    "trend": player.p.marketValueTrend,
-                    "status": player.p.status,
-                    "points": player.p.totalPoints,
+                    "firstName": player.firstName,
+                    "lastName": player.lastName,
+                    "marketValue": player.marketValue,
+                    "trend": player.marketValueTrend,
+                    "status": player.status,
+                    "points": player.totalPoints,
                 })
 
     logging.info("Got all free players.")

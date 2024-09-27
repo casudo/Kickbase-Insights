@@ -206,15 +206,13 @@ def market(user_token: str, selected_league: object) -> None:
     players_listed_by_kickbase = []
 
     for player in players_on_market:
-        position_nr = player.position
-        
-        if position_nr not in miscellaneous.POSITIONS:
-            logging.warning(f"Invalid position number: {position_nr} for player {player.firstName} {player.lastName} (PID: {player.id})")
-            position_nr = 1 ### Default to "Torwart" (Goalkeeper)
+        if player.position not in miscellaneous.POSITIONS:
+            logging.warning(f"Invalid position number: {player.position} for player {player.firstName} {player.lastName} (PID: {player.id})")
+            player.position = 1 ### Default to "Torwart" (Goalkeeper)
         
         player_info = {
             "teamId": player.teamId,
-            "position": miscellaneous.POSITIONS[position_nr],
+            "position": miscellaneous.POSITIONS[player.position],
             "firstName": f"{player.firstName}", 
             "lastName": f"{player.lastName}",
             "price": player.price,
@@ -259,7 +257,7 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
         ### Loop through all players in the team
         for player in competition_v1.team_players(user_token, team):
             ### Get the market value changes for the player
-            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.p.id)
+            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.id)
 
             ### Check if player is owned by user
             if "leaguePlayer" in player_stats:
@@ -268,26 +266,25 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
                 manager = "Kickbase"
                 
             ### Check if position number is valid
-            position_nr = player_stats["position"]
-            if position_nr not in miscellaneous.POSITIONS:
-                logging.warning(f"Invalid position number: {position_nr} for player {player_stats['firstName']} {player_stats['lastName']} (PID: {player_stats['id']})")
-                position_nr = 1 ### Default to "Torwart" (Goalkeeper)
+            if player.position not in miscellaneous.POSITIONS:
+                logging.warning(f"Invalid position number: {player.position} for player {player.firstName} {player.lastName} (PID: {player.id})")
+                player.position = 1 ### Default to "Torwart" (Goalkeeper)
 
             ### Create a custom json dict for every player
             players_LIST.append({
-                "teamId": player_stats["teamId"],
-                "position": miscellaneous.POSITIONS[position_nr],
-                "firstName": player_stats["firstName"], # "firstName": f"{player.p.firstName}", 
-                "lastName": player_stats["lastName"], # "lastName": f"{player.p.lastName}",
-                "marketValue": player_stats["marketValue"], # "marketValue": player.p.marketValue,
-                "today": (player_stats["marketValue"] - player_stats["marketValues"][-2]["m"]), # "today": (player.p.marketValue - player_stats[-2].m),
+                "teamId": player.teamId,
+                "position": miscellaneous.POSITIONS[player.position],
+                "firstName": player.firstName, 
+                "lastName": player.lastName, 
+                "marketValue": player.marketValue,
+                "today": (player_stats["marketValue"] - player_stats["marketValues"][-2]["m"]), # "today": (player.marketValue - player_stats[-2].m),
                 "yesterday": (player_stats["marketValues"][-2]["m"] - player_stats["marketValues"][-3]["m"]),
                 "twoDays": (player_stats["marketValues"][-3]["m"] - player_stats["marketValues"][-4]["m"]),
                 "SevenDaysAvg": (player_stats["marketValue"] - player_stats["marketValues"][-8]["m"]),
                 "ThirtyDaysAvg": (player_stats["marketValue"] - player_stats["marketValues"][-31]["m"]),
                 "manager": manager,
             })
-            logging.debug(f"Player {player_stats['firstName']} {player_stats['lastName']} has a market value of {player_stats['marketValue']} and is owned by {manager}.")
+            logging.debug(f"Player {player.firstName} {player.lastName} has a market value of {player.marketValue} and is owned by {manager}.")
 
     logging.info("Got all market value changes for all players.")
 
@@ -387,34 +384,30 @@ def taken_free_players_v1(user_token: str, selected_league: object) -> dict:
     for team_id in miscellaneous.get_team_ids(user_token):
         ### Cycle through all players of the team
         for player in competition_v1.team_players(user_token, team_id):
-            player_id = player.p.id
-            # print(player_id)
-
             ### Search the stats of the given player ID to fill the missing attributes for the player which cannot be found from the team_players endpoint
-            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.p.id)
+            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.id)
 
             ### If the player Id is NOT SOMEWHERE in the list of taken players (user_transfers_result) AND the player has a username attribute (is owned by a user)
-            if not any(player_id == player.get("playerId") for player in user_transfers_result) and player_stats.get("userName") is not None:
-                logging.debug(f"Player {player.p.firstName} {player.p.lastName} isn't on the list of taken players, but is owned by user {player_stats.get('userName')}!")
+            if not any(player.id == p.get("playerId") for p in user_transfers_result) and player_stats.get("userName") is not None:
+                logging.debug(f"Player {player.firstName} {player.lastName} isn't on the list of taken players, but is owned by user {player_stats.get('userName')}!")
 
                 ### Check if position number is valid
-                position_nr = player.p.position
-                if position_nr not in miscellaneous.POSITIONS:
-                    logging.warning(f"Invalid position number: {position_nr} for player {player.p.firstName} {player.p.lastName} (PID: {player_id})")
-                    position_nr = 1 ### Default to "Torwart" (Goalkeeper)
+                if player.position not in miscellaneous.POSITIONS:
+                    logging.warning(f"Invalid position number: {player.position} for player {player.firstName} {player.lastName} (PID: {player.id})")
+                    player.position = 1 ### Default to "Torwart" (Goalkeeper)
 
                 ### Create a custom json dict for every starter player. This will be passed to the frontend later.
                 starter_players.append({
-                    "playerId": player_id,
+                    "playerId": player.id,
                     "user": player_stats["userName"],
-                    "teamId": player.p.teamId,
-                    "position": miscellaneous.POSITIONS[position_nr],
-                    "firstName": player.p.firstName,
-                    "lastName": player.p.lastName,
+                    "teamId": player.teamId,
+                    "position": miscellaneous.POSITIONS[player.position],
+                    "firstName": player.firstName,
+                    "lastName": player.lastName,
                     "buyPrice": 0,
-                    "marketValue": player_stats["marketValue"],
-                    "status": player_stats["status"],
-                    "trend": player_stats["mvTrend"],
+                    "marketValue": player.marketValue,
+                    "status": player.status,
+                    "trend": player.marketValueTrend,
                 })
 
     ### Now we add the list of both checks to the final_result list.
@@ -475,27 +468,24 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
     for team_id in miscellaneous.get_team_ids(user_token):
         ### Cycle through all players of the team
         for player in competition_v1.team_players(user_token, team_id):
-            player_id = player.p.id
-
             ### Search the stats of the given player ID to fill the missing attributes for the player
-            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player_id)
+            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.id)
 
             ### Check if the player is owned by a user
             if player_stats.get("userName") in user_ids.values():
-                logging.debug(f"Player {player.p.firstName} {player.p.lastName} is owned by user {player_stats.get('userName')}!")
+                logging.debug(f"Player {player.firstName} {player.lastName} is owned by user {player_stats.get('userName')}!")
 
                 ### Check if position number is valid
-                position_nr = player.p.position
-                if position_nr not in miscellaneous.POSITIONS:
-                    logging.warning(f"Invalid position number: {position_nr} for player {player.p.firstName} {player.p.lastName} (PID: {player_id})")
-                    position_nr = 1 ### Default to "Torwart" (Goalkeeper)
+                if player.position not in miscellaneous.POSITIONS:
+                    logging.warning(f"Invalid position number: {player.position} for player {player.firstName} {player.lastName} (PID: {player.id})")
+                    player.position = 1 ### Default to "Torwart" (Goalkeeper)
 
                 ### Determine the buy price
                 current_user_id = player_stats["userId"]
                 buy_price = 0
                 if current_user_id in buy_prices:
                     for pid, price in buy_prices[current_user_id]:
-                        if pid == player_id:
+                        if pid == player.id:
                             buy_price = price
                             break
 
@@ -510,34 +500,34 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
 
                         if market_value_date == start_date:
                             buy_price = marketValue["m"]
-                            logging.debug(f"Player {player.p.firstName} {player.p.lastName} was assigned at the start of the season. Market value on START_DATE {start_date}: {buy_price}€.")
+                            logging.debug(f"Player {player.firstName} {player.lastName} was assigned at the start of the season. Market value on START_DATE {start_date}: {buy_price}€.")
                             break
 
                 ### Create a custom json dict for every taken player. This will be passed to the frontend later.
                 taken_players.append({
                     "owner": player_stats["userName"],
-                    "playerId": player_id,
-                    "teamId": player.p.teamId,
-                    "position": miscellaneous.POSITIONS[position_nr],
-                    "firstName": player.p.firstName,
-                    "lastName": player.p.lastName,
+                    "playerId": player.id,
+                    "teamId": player.teamId,
+                    "position": miscellaneous.POSITIONS[player.position],
+                    "firstName": player.firstName,
+                    "lastName": player.lastName,
                     "buyPrice": buy_price,
-                    "marketValue": player_stats["marketValue"],
-                    "status": player_stats["status"],
-                    "trend": player_stats["mvTrend"],
+                    "marketValue": player.marketValue,
+                    "status": player.status,
+                    "trend": player.marketValueTrend,
                 })
             else:
                 ### Create a custom json dict for every free player. This will be passed to the frontend later.
                 free_players.append({
-                    "playerId": player_id,
-                    "teamId": player.p.teamId,
-                    "position": miscellaneous.POSITIONS[player.p.position],
-                    "firstName": player.p.firstName,
-                    "lastName": player.p.lastName,
-                    "marketValue": player_stats["marketValue"],
-                    "points": player_stats["points"],
-                    "status": player_stats["status"],
-                    "trend": player_stats["mvTrend"],
+                    "playerId": player.id,
+                    "teamId": player.teamId,
+                    "position": miscellaneous.POSITIONS[player.position],
+                    "firstName": player.firstName,
+                    "lastName": player.lastName,
+                    "marketValue": player.marketValue,
+                    "points": player.totalPoints,
+                    "status": player.status,
+                    "trend": player.marketValueTrend,
                 })
 
     logging.info("Got all taken and free players.")

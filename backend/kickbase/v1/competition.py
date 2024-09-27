@@ -7,7 +7,7 @@ TODO: Maybe list all functions here automatically?
 import requests
 
 from backend import exceptions
-from backend.kickbase.endpoints.competition import Team_Players
+from backend.kickbase.endpoints.competition import Player
 
 
 def team_players(token: str, team_id: str):
@@ -57,6 +57,6 @@ def team_players(token: str, team_id: str):
 
     ### Create a new object for every entry in the response["p"] list.
     ### response["p"] holds all players of the given team.
-    players_in_team = [Team_Players(player) for player in response["p"]]
+    players_in_team = [Player(player) for player in response["p"]]
 
     return players_in_team
