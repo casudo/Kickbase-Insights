@@ -665,12 +665,19 @@ def turnovers_v2(user_token: str, selected_league: object, league_users: dict) -
 
     ### Load existing transfers from all_transfers.json
     all_transfers_path = path.join(DATA_DIR, "all_transfers.json")
+
+    all_transfers = [] # Initialize as empty list first
+
+    ### Check if all_transfers.json exists and load it
     if path.exists(all_transfers_path):
-        with open(all_transfers_path, "r") as f:
-            all_transfers = json.load(f)
-        logging.debug(f"Loaded {len(all_transfers)} existing transfers from all_transfers.json")
+        try:
+            with open(all_transfers_path, "r") as f:
+                all_transfers = json.load(f)
+            logging.debug(f"Loaded {len(all_transfers)} existing transfers from all_transfers.json")
+        except json.JSONDecodeError:
+            logging.warning(f"The file {all_transfers_path} is empty or contains invalid JSON. Initializing all_transfers as an empty list.")
     else:
-        all_transfers = []
+        logging.debug(f"The file {all_transfers_path} does not exist. Initializing all_transfers as an empty list.")
 
     ### Get new transfers from the API
     new_transfers = leagues_v2.transfers(user_token, selected_league.id)
