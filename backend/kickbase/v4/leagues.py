@@ -32,7 +32,7 @@ def get_league_list(token: str) -> list:
     except:
         raise exceptions.KickbaseException("An exception was raised.") # TODO: Change
     
-    ### Iterating over the json_response["leagues"] list, where each entry is expected to be a dictionary. For each entry, it creates a new Leagues object.
+    ### Iterating over the json response, where each entry is expected to be a dictionary. For each entry, it creates a new Leagues_Info object.
     league_list = [League_Info(entry) for entry in json_response["it"]]
 
     return league_list
