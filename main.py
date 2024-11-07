@@ -146,7 +146,7 @@ def login() -> tuple:
     if not league_list:
         logging.error("No leagues found. Exiting...")
         exit()
-    logging.info(f"Available leagues: {', '.join([league['n'] for league in league_list])}") # Print all available leagues the user is in
+    logging.info(f"Available leagues: {', '.join([league.name for league in league_list])}") # Print all available leagues the user is in
 
     ### Fetch the preferred league name from the environment variable
     preferred_league_name = getenv("KB_LIGA")
@@ -158,15 +158,15 @@ def login() -> tuple:
     ### Filter league_list to find the preferred league, default to the first league if not found
     if preferred_league_name:
         for league in league_list:
-            if league["n"] == preferred_league_name:
+            if league.name == preferred_league_name:
                 selected_league = league
-                logging.info(f"Preferred league '{preferred_league_name}' found: {selected_league['n']}")
+                logging.info(f"Preferred league '{preferred_league_name}' found: {selected_league.name}")
                 break
         if not selected_league:
-            logging.warning(f"Preferred league '{preferred_league_name}' not found. Defaulting to the first league: {league_list[0]['n']}")
+            logging.warning(f"Preferred league '{preferred_league_name}' not found. Defaulting to the first league: {league_list[0].name}")
             selected_league = league_list[0]
     else:
-        logging.info(f"No preferred league set. Using the first league in the list: {league_list[0]['n']}")
+        logging.info(f"No preferred league set. Using the first league in the list: {league_list[0].name}")
         selected_league = league_list[0]
 
     return league_list, selected_league, user_token
