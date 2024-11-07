@@ -6,8 +6,7 @@ TODO: Maybe list all functions here automatically?
 
 import requests
 
-from backend import exceptions
-from backend.miscellaneous import discord_notification
+from backend import exceptions, miscellaneous
 from backend.kickbase.endpoints.user import User, League
 
 ### -------------------------------------------------------------------
@@ -44,7 +43,7 @@ def login(email: str, password: str, discord_webhook: str) -> tuple:
     try:
         json_response = requests.post(url, json=payload, headers=headers).json() # Save response as json
     except:
-        discord_notification("Login failed!", "Please check your credentials.", 16711680, discord_webhook)
+        miscellaneous.discord_notification("Login failed!", "Please check your credentials.", 16711680, discord_webhook)
         raise exceptions.LoginException("[CRITICAL] Login failed! Please check your credentials.")
     
     ### Create an object "user" with the User class with json_response["u"] as parameter (dict)
