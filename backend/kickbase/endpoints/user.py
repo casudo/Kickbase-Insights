@@ -15,7 +15,7 @@ class User:
     def __init__(self, user_dict: dict):
         self.email: str = user_dict.get("email", None)
         self.cover: str = user_dict.get("cover", None)
-        self.flags: str = user_dict.get("flags", None)
+        self.flags: int = user_dict.get("flags", None)
         self.vemail: str = user_dict.get("vemail", None)
         self.id: str = user_dict.get("id", None)
         self.name: str = user_dict.get("name", None)
