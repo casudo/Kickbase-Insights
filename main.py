@@ -12,7 +12,7 @@ from backend import exceptions, miscellaneous
 # from backend.kickbase.v1 import user, leagues as leagues_v1, competition as competition_v1
 # from backend.kickbase.v2 import leagues as leagues_v2
 # from backend.kickbase.v3 import competition as competition_v3
-from backend.kickbase.v4 import user
+from backend.kickbase.v4 import user, leagues
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
@@ -141,11 +141,12 @@ def login() -> tuple:
     user_info, user_token = user.login(kb_mail, kb_password, discord_webhook)
     logging.info(f"Successfully logged in as {user_info.name}")
 
+    ### Get all leagues the user is in
+    league_list = leagues.get_league_list(user_token)
     if not league_list:
         logging.error("No leagues found. Exiting...")
         exit()
-
-    logging.info(f"Available leagues: {', '.join([league.name for league in league_list])}") # Print all available leagues the user is in
+    logging.info(f"Available leagues: {', '.join([league['n'] for league in league_list])}") # Print all available leagues the user is in
 
     ### Fetch the preferred league name from the environment variable
     preferred_league_name = getenv("KB_LIGA")
@@ -157,15 +158,15 @@ def login() -> tuple:
     ### Filter league_list to find the preferred league, default to the first league if not found
     if preferred_league_name:
         for league in league_list:
-            if league.name == preferred_league_name:
+            if league["n"] == preferred_league_name:
                 selected_league = league
-                logging.info(f"Preferred league '{preferred_league_name}' found: {selected_league.name}")
+                logging.info(f"Preferred league '{preferred_league_name}' found: {selected_league['n']}")
                 break
         if not selected_league:
-            logging.warning(f"Preferred league '{preferred_league_name}' not found. Defaulting to the first league: {league_list[0].name}")
+            logging.warning(f"Preferred league '{preferred_league_name}' not found. Defaulting to the first league: {league_list[0]['n']}")
             selected_league = league_list[0]
     else:
-        logging.info(f"No preferred league set. Using the first league in the list: {league_list[0].name}")
+        logging.info(f"No preferred league set. Using the first league in the list: {league_list[0]['n']}")
         selected_league = league_list[0]
 
     return league_list, selected_league, user_token
