@@ -7,7 +7,7 @@ TODO: Maybe list all functions here automatically?
 import requests
 
 from backend import exceptions, miscellaneous
-from backend.kickbase.endpoints.user import User, League
+from backend.kickbase.endpoints.user import User
 
 ### -------------------------------------------------------------------
 
@@ -48,10 +48,8 @@ def login(email: str, password: str, discord_webhook: str) -> tuple:
     
     ### Create an object "user" with the User class with json_response["u"] as parameter (dict)
     user = User(json_response["u"])
-    ### Iterating over the json_response["leagues"] list, where each entry is expected to be a dictionary. For each entry, it creates a new Leagues object.
-    # leagues = [League(entry) for entry in json_response["leagues"]]
     ### Save the token
     token = json_response["tkn"]
 
     ### TODO: Set return type
-    return user, token #, leagues
+    return user, token

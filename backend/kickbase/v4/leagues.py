@@ -7,7 +7,7 @@ TODO: Maybe list all functions here automatically?
 import requests
 
 from backend import exceptions
-from backend.kickbase.endpoints.leagues import League_User_Info, League_Feed, Market_Players
+from backend.kickbase.endpoints.leagues import League_Info
 
 
 def get_league_list(token: str) -> list:
@@ -32,4 +32,7 @@ def get_league_list(token: str) -> list:
     except:
         raise exceptions.KickbaseException("An exception was raised.") # TODO: Change
     
-    return json_response["it"]
+    ### Iterating over the json_response["leagues"] list, where each entry is expected to be a dictionary. For each entry, it creates a new Leagues object.
+    league_list = [League_Info(entry) for entry in json_response["it"]]
+
+    return league_list
