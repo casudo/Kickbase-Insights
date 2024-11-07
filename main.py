@@ -9,9 +9,10 @@ from logging.config import dictConfig
 from datetime import datetime, timedelta
 
 from backend import exceptions, miscellaneous
-from backend.kickbase.v1 import user, leagues as leagues_v1, competition as competition_v1
-from backend.kickbase.v2 import leagues as leagues_v2
-from backend.kickbase.v3 import competition as competition_v3
+# from backend.kickbase.v1 import user, leagues as leagues_v1, competition as competition_v1
+# from backend.kickbase.v2 import leagues as leagues_v2
+# from backend.kickbase.v3 import competition as competition_v3
+from backend.kickbase.v4 import user
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
@@ -137,7 +138,7 @@ def login() -> tuple:
     logging.info("Logging in...")
 
     ### Login to Kickbase using the credentials from the environment variables
-    user_info, league_list, user_token = user.login(kb_mail, kb_password)
+    user_info, user_token = user.login(kb_mail, kb_password, discord_webhook)
     logging.info(f"Successfully logged in as {user_info.name}")
 
     if not league_list:
