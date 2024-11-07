@@ -5,6 +5,42 @@
 `/vX/leagues/...`
 """
 
+class League_Info:
+    """
+    ### Create an object for a league with all its attributes.
+
+    Used for endpoint URL:
+    `/leagues/selection` -> get all leagues the user is in
+    """
+    def __init__(self, league_dict: dict):
+        self.id: str = league_dict.get("i", None)  ### League ID
+        self.name: str = league_dict.get("n", None)  ### League name
+        self.cpi: str = league_dict.get("cpi", None)
+        self.b: int = league_dict.get("b", None)  ### Budget of player
+        self.un: int = league_dict.get("un", None)
+        self.f: str = league_dict.get("f", None) ### League Image
+        self.lpc: int = league_dict.get("lpc", None)
+        self.bs: int = league_dict.get("bs", None)
+        self.vr: int = league_dict.get("vr", None)
+        self.adm: bool = league_dict.get("adm", None) ### Admin
+        self.pl: int = league_dict.get("pl", None)
+        self.tv: int = league_dict.get("tv", None) ### Team value of player
+        # self.creator: str = league_dict.get("creator", None)  ### League creator's username
+        # self.creatorId: str = league_dict.get("creatorId", None)  ### League creator's ID
+        # self.creation: str = league_dict.get("creation", None)  ### League creation date
+        # self.ai: str = league_dict.get("ai", None)
+        # self.t: str = league_dict.get("t", None)
+        # self.au: str = league_dict.get("au", None)
+        # self.mu: str = league_dict.get("mu", None)
+        # self.ap: str = league_dict.get("ap", None)  ### Not always present
+        # self.pub: str = league_dict.get("pub", None)
+        # self.gm: str = league_dict.get("gm", None)
+        # self.mpl: str = league_dict.get("mpl", None)
+        # self.ci: str = league_dict.get("ci", None)
+        # self.btlg: str = league_dict.get("btlg", None)  ### Not always present
+        # self.vr: str = league_dict.get("vr", None)
+
+
 class League_User_Info:
     """
     ### Create an object for the league user info with all its attributes.
