@@ -72,3 +72,63 @@ def get_market(token: str, league_id: str):
     players_on_market = [Market_Players(player) for player in json_response["it"]]
 
     return players_on_market
+
+
+def player_statistics(token: str, league_id: str, player_id: str):
+    """
+    ### Get the statistics of a given player.
+    """
+    url = f"https://api.kickbase.com/v4/competitions/1/players/{player_id}?leagueId={league_id}"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the market value changes of ALL players in the league
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+    return json_response
+
+
+def player_marketvalue(token: str, league_id: str, player_id: str):
+    """
+    ### Get the statistics of a given player.
+    """
+    url = f"https://api.kickbase.com/v4/competitions/1/players/{player_id}/marketValue/92?leagueId={league_id}"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the market value changes of ALL players in the league
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+    return json_response["it"] ### Only return the "it" list
+
+
+def get_users(token: str, league_id: str):
+    """
+    ### Get all users and their IDs in the lague.
+    """
+    url = f"https://api.kickbase.com/v4/leagues/{league_id}/overview?includeManagersAndBattles=true"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the market value changes of ALL players in the league
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+    return json_response["us"] ### Only return the "us" list which contains alls usernames and IDs
