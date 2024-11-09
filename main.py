@@ -256,39 +256,46 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
 
     players_LIST = []
 
+    user_list = leagues.get_users(user_token, selected_league.id)
+    ### Create a dictionary to map user IDs to user names
+    user_id_to_name = {user["i"]: user["n"] for user in user_list}
+
+    all_teams_in_competition = competitions.get_team_overview(user_token)
+
     ### Loop through all teams
-    for team in miscellaneous.get_team_ids(user_token):
+    for team in all_teams_in_competition:
         ### Loop through all players in the team
-        for player in competition_v1.team_players(user_token, team):
+        for player in team["players"]:
             ### Get the market value changes for the player
-            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.id)
+            player_stats = leagues.player_statistics(user_token, selected_league.id, player["i"])
+            player_marketvalue = leagues.player_marketvalue(user_token, selected_league.id, player["i"])
 
             ### Check if player is owned by user
-            if "leaguePlayer" in player_stats:
-                manager = player_stats["leaguePlayer"]["userName"]
+            if player_stats["oui"] != "0":  # "oui" = "ownedUserId"
+                manager = user_id_to_name.get(player_stats["oui"], "Unknown")
             else:
                 manager = "Kickbase"
                 
             ### Check if position number is valid
-            if player.position not in miscellaneous.POSITIONS:
-                logging.warning(f"Invalid position number: {player.position} for player {player.firstName} {player.lastName} (PID: {player.id})")
-                player.position = 1 ### Default to "Torwart" (Goalkeeper)
+            if player["pos"] not in miscellaneous.POSITIONS:
+                logging.warning(f"Invalid position number: {player_stats['pos']} for player {player_stats['fn']} {player_stats['ln']} (PID: {player_stats['i']})")
+                player["pos"] = 1 # Default to "Torwart" (Goalkeeper)
 
             ### Create a custom json dict for every player
             players_LIST.append({
-                "teamId": player.teamId,
-                "position": miscellaneous.POSITIONS[player.position],
-                "firstName": player.firstName, 
-                "lastName": player.lastName, 
-                "marketValue": player.marketValue,
-                "today": (player_stats["marketValue"] - player_stats["marketValues"][-2]["m"]), # "today": (player.marketValue - player_stats[-2].m),
-                "yesterday": (player_stats["marketValues"][-2]["m"] - player_stats["marketValues"][-3]["m"]),
-                "twoDays": (player_stats["marketValues"][-3]["m"] - player_stats["marketValues"][-4]["m"]),
-                "SevenDaysAvg": (player_stats["marketValue"] - player_stats["marketValues"][-8]["m"]),
-                "ThirtyDaysAvg": (player_stats["marketValue"] - player_stats["marketValues"][-31]["m"]),
+                "teamId": player_stats["tid"],
+                "position": miscellaneous.POSITIONS[player_stats["pos"]],
+                "firstName": player_stats.get("fn", None), 
+                "lastName": player_stats["ln"], 
+                "marketValue": player_stats["mv"],
+                "today": player_marketvalue[-1]["mv"] - player_marketvalue[-2]["mv"],
+                "yesterday": player_marketvalue[-2]["mv"] - player_marketvalue[-3]["mv"],
+                "twoDaysAgo": player_marketvalue[-3]["mv"] - player_marketvalue[-4]["mv"],
+                "sevenDaysAvg": player_marketvalue[-1]["mv"] - player_marketvalue[-8]["mv"] if len(player_marketvalue) >= 8 else None,
+                "thirtyDaysAvg": player_marketvalue[-1]["mv"] - player_marketvalue[-31]["mv"] if len(player_marketvalue) >= 31 else None,
                 "manager": manager,
             })
-            logging.debug(f"Player {player.firstName} {player.lastName} has a market value of {player.marketValue} and is owned by {manager}.")
+            logging.debug(f"Player {player_stats.get('fn', None)} {player_stats['ln']} has a market value of {player_stats['mv']} and is owned by {manager}.")
 
     logging.info("Got all market value changes for all players.")
 
