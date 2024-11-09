@@ -11,16 +11,16 @@ import json
 from backend import miscellaneous
 
 
-def get_teams(token: str) -> dict:
-    """### Get all team ids.
+def get_team_overview(token: str) -> dict:
+    """### Get all team names + ID and their players.
 
     Args:
         token (str): The user's kkstrauth token.
 
     Returns:
-        dict: A dictionary containing all team ids and names.
+        dict: A dictionary containing all team ids + names and players.
     """
-    logging.info("Getting team ids...")
+    logging.info("Getting team overview...")
 
     url = "https://api.kickbase.com/v4/competitions/1/teams/{team_id}/teamprofile"
     headers = {
@@ -29,7 +29,7 @@ def get_teams(token: str) -> dict:
         "Cookie": f"kkstrauth={token};",
     }
 
-    active_team_dict = []
+    all_teams = []
 
     ### Loop through team IDs from 2 to 100
     for team_id in range(2, 101):
@@ -59,11 +59,11 @@ def get_teams(token: str) -> dict:
                 "teamName": json_response["tn"],
                 "players": json_response["it"]
             }
-            active_team_dict.append(team_info)
+            all_teams.append(team_info)
 
-    logging.info("Got all team ids.")
+    logging.info("Got all teams.")
 
     ### Save to file
-    miscellaneous.write_json_to_file(active_team_dict, "team_ids.json")
+    miscellaneous.write_json_to_file(all_teams, "team_ids.json") # TODO: Change to "team_overview.json"
 
-    return active_team_dict
+    return all_teams

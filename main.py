@@ -12,7 +12,7 @@ from backend import exceptions, miscellaneous
 # from backend.kickbase.v1 import user, leagues as leagues_v1, competition as competition_v1
 # from backend.kickbase.v2 import leagues as leagues_v2
 # from backend.kickbase.v3 import competition as competition_v3
-from backend.kickbase.v4 import user, leagues
+from backend.kickbase.v4 import competitions, user, leagues
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
@@ -204,7 +204,7 @@ def market(user_token: str, selected_league: object) -> None:
     logging.info("Getting players listed on transfer market...")
 
     ### Get all players on the market
-    players_on_market = leagues_v1.get_market(user_token, selected_league.id)
+    players_on_market = leagues.get_market(user_token, selected_league.id)
 
     players_listed_by_user = []
     players_listed_by_kickbase = []
