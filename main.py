@@ -66,6 +66,7 @@ def main() -> None:
                 "interval": 30, # overwrite interval in days
                 "backupCount": 0, # don't keep any backups
                 "formatter": "simple",
+                "encoding": "utf-8",
             },
             "verbose_file": { # Log EVERYTHING to file (verbose format)
                 "level": "DEBUG",
@@ -75,6 +76,7 @@ def main() -> None:
                 "interval": 14, # overwrite interval in days
                 "backupCount": 0, # don't keep any backups
                 "formatter": "verbose",
+                "encoding": "utf-8",
             },
             "console": { # Log only INFO and higher to console (simple format)
                 "level": "INFO",
