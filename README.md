@@ -27,21 +27,6 @@ This is a hobby project to test stuff with JSON and the cores of Python. Feel fr
 
 ---
 
-> [!CAUTION]
-> **As of July 2024, Kickbase lauched a new version of their app, breaking some stuff in the API!**  
->  **Some API endpoints might be bugged/deprecated! There are some new endpoints in development which will be used at a later point in time when tested enough.**  
->
-> `https://api.kickbase.com/leagues/<league_id>/feed/?start=0`  
-> "age" is broken and displaying random seconds, not the actual time since the feed item was created.
->
-> `https://api.kickbase.com/leagues/<league_id>/users/<user_id>/feed?filter=12&start=0`  
-> "tid" is broken. Sometimes its completely empty, sometimes it has the same value as "pid".
-> Thats why no team icons are loading on "Transfererlöse".
-> Also, when sold to Kickbase, it has the sellers ID as buyer ID, therefore Kickbase Insights thinks the user bought the player, resulting in an incorrect results for the taken/free players as well as the transfer revenue / turnovers.  
->
-> `https://api.kickbase.com/leagues/<league_id>/users/<user_id>/stats`  
-> When user played a previous season in the league and a new season starts, the seasons stats aren't added for the new season, but rather overwrite the stats for the old season. This doesn't affect all stats...  
-
 ## Screenshots
 You can find some screenshots of the frontend below, not all features are shown.  
 
@@ -205,9 +190,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Categorize components to frontend menu    
 - Battles: Spieltagsdominator: Fix placements being wrong for people with the same amount of mdWins  
 - Change behavior if player has the position number of "0". Instead of defaulting that to "1", do smth else
-- Add own function for creating .json files (data and timestamps)
 - Support for multiple leagues via ports (League 1: 5000, League 2: 5001, etc.)
-- Seperate "get_team_ids" because it's called twice now (in market value changes and taken/free players)
 
 **Misc:**  
 - Add Postman workspace  
@@ -217,8 +200,6 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 ---
 
 ### Thanks to
-- [@fabfischer](https://github.com/fabfischer) for the inspiration and the currently great and working [Kickbase+ web client](https://github.com/fabfischer/kickbase-plus)  
-- [@kevinskyba](https://github.com/kevinskyba) for providing the excellent [Kickbase API documentation](https://kevinskyba.github.io/kickbase-api-doc)  
 - [@roman-la](https://github.com/roman-la) for the base of the frontend  
 
 ---
