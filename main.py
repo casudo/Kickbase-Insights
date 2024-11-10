@@ -113,7 +113,7 @@ def main() -> None:
         turnovers(user_token, selected_league)
 
         team_value_per_match_day(user_token, selected_league)
-        league_user_stats_tables(user_token, selected_league, league_users)
+        league_user_stats_tables(user_token, selected_league)
         live_points(user_token, selected_league) # needs to be run first to initialize the live_points.json file
 
     except exceptions.LoginException as e:
@@ -632,44 +632,36 @@ def team_value_per_match_day(user_token: str, selected_league: object) -> None:
     miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_team_values.json")
 
 
-def league_user_stats_tables(user_token: str, selected_league: object, league_users: dict) -> None:
+def league_user_stats_tables(user_token: str, selected_league: object) -> None:
     """### Retrieves the statistics for all users in the league.
 
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
-        league_users (dict): A dictionary containing all users in the league.
     """
     logging.info("Getting league user stats...")
 
     final_user_stats = []
 
     ### Loop through all users in the league
-    for real_user in league_users.get("users"):
+    with open(path.join(DATA_DIR, "STATIC_users.json"), "r") as f:
+        league_users = json.load(f)
+    for user_id, user_name in league_users.items():
         ### Get stats for each user
-        user_stats = leagues_v1.user_stats(user_token, selected_league.id, real_user["id"])
-
-        def get_season_stat(user_stats: dict , stat: str, default: int=0) -> int:
-            """Safely get a stat from the first season in user_stats.
-            That's because if the user hasn't interacted in the new season yet, the seasons list is empty.
-            """
-            seasons = user_stats.get("seasons", [])
-            if seasons:
-                return seasons[0].get(stat, default) # seasons[0] is the current season
-            return default
+        user_stats = leagues.user_stats(user_token, selected_league.id, user_id)
 
         ### Create a custom json dict for every user
         final_user_stats.append({
             ### Shared stats 
-            "userId": real_user["id"],
-            "userName": real_user["name"],
-            "profilePic": user_stats.get("profileUrl", None),
-            "mdWins": get_season_stat(user_stats, "wins"),
-            "maxPoints": get_season_stat(user_stats, "maxPoints"),
+            "userId": user_id,
+            "userName": user_name,
+            "profilePic": miscellaneous.get_profilepic(user_id),
+            "mdWins": user_stats["mdw"],
+            "maxPoints": leagues.battles(user_token, selected_league.id, 8)["us"][0]["v"],
             ### Stats for "Liga -> Tabelle" ONLY
-            "placement": user_stats["placement"],
-            "points": user_stats["points"],
-            "teamValue": user_stats["teamValue"],
+            "placement": user_stats["pl"],
+            "points": user_stats["tp"],
+            "teamValue": user_stats["tv"],
             # "maxBuyPrice": user_stats["leagueUser"]["maxBuyPrice"],
             # "maxBuyFirstName": user_stats["leagueUser"]["maxBuyFirstName"],
             # "maxBuyLastName": user_stats["leagueUser"]["maxBuyLastName"],
@@ -677,16 +669,16 @@ def league_user_stats_tables(user_token: str, selected_league: object, league_us
             # "maxSellFirstName": user_stats["leagueUser"]["maxSellFirstName"],
             # "maxSellLastName": user_stats["leagueUser"]["maxSellLastName"]
             ### Stats for "Liga -> Saison Statistiken" ONLY
-            "avgPoints": get_season_stat(user_stats, "averagePoints"),
-            "minPoints": get_season_stat(user_stats, "minPoints"),
-            "bought": get_season_stat(user_stats, "bought"),
-            "sold": get_season_stat(user_stats, "sold"),
+            "avgPoints": user_stats["ap"],
+            # "minPoints": get_season_stat(user_stats, "minPoints"),
+            # "bought": get_season_stat(user_stats, "bought"),
+            # "sold": get_season_stat(user_stats, "sold"),
+            "trades": user_stats["t"],
             ### Stats for "Liga -> Battles" ONLY
-            "pointsGoalKeeper": get_season_stat(user_stats, "pointsGoalKeeper"),
-            "pointsDefenders": get_season_stat(user_stats, "pointsDefenders"),
-            "pointsMidFielders": get_season_stat(user_stats, "pointsMidFielders"),
-            "pointsForwards": get_season_stat(user_stats, "pointsForwards"),
-            "combinedTransfers": get_season_stat(user_stats, "bought", 0) + get_season_stat(user_stats, "sold", 0),
+            "pointsGoalKeeper": leagues.battles(user_token, selected_league.id, 4)["us"][0]["v"],
+            "pointsDefenders": leagues.battles(user_token, selected_league.id, 5)["us"][0]["v"],
+            "pointsMidFielders": leagues.battles(user_token, selected_league.id, 6)["us"][0]["v"],
+            "pointsForwards": leagues.battles(user_token, selected_league.id, 7)["us"][0]["v"],
             # "avgGoalKeeper": user_stats["seasons"][0]["averageGoalKeeper"],
             # "avgDefenders": user_stats["seasons"][0]["averageDefenders"],
             # "avgMidFielders": user_stats["seasons"][0]["averageMidFielders"],
