@@ -303,15 +303,12 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
     miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_market_value_changes.json")
 
 
-def taken_free_players(user_token: str, selected_league: object) -> dict:
+def taken_free_players(user_token: str, selected_league: object):
     """### Retrieves all taken and free players in the league.
 
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
-
-    Returns:
-        dict: A dictionary containing all users in the league.
     """
     logging.info("Getting taken and free players...")
 

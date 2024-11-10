@@ -131,24 +131,29 @@ def get_free_players(token: str, taken_players: list) -> None:
     write_json_to_file(free_players, "free_players.json")
     write_json_to_file({"time": datetime.now().isoformat()}, "ts_free_players.json")
 
-def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
+
+def calculate_revenue_data_daily(turnovers: dict) -> None:
     """### Calculate daily revenue data.
 
     Args:
         turnovers (dict): A dictionary containing all buy-sell pairs.
-        manager (list): A list of all users in the Kickbase league.
     """
     logging.info("Calculating daily revenue data...")
 
-    ### Create an empty dict with all users as keys
-    user_transfer_revenue = {user["name"]: [] for user in manager}
+    ### Load STATIC_users.json
+    with open(path.join(DATA_DIR, "STATIC_users.json"), "r") as f:
+        league_users = json.load(f)
+
+    ### Create an empty dict with all user names as keys
+    user_transfer_revenue = {user_name: [] for user_name in league_users.values()}
 
     ### This loop iterates over each buy-sell pair in the turnovers list. It calculates the revenue by subtracting the buy value from the sell value.
     ### The revenue and the date of the sell transfer are then appended to the corresponding user's list in user_transfer_revenue.
     
     for buy, sell in turnovers:
-        revenue = sell['price'] - buy['price']
-        user_transfer_revenue[buy['user']].append((revenue, sell['date']))
+        revenue = sell["price"] - buy["price"]
+        if buy["user"] in league_users.values():
+            user_transfer_revenue[buy["user"]].append((revenue, sell["date"]))
 
     ### Add start and end points for the graph
     for _, data in user_transfer_revenue.items():
@@ -160,18 +165,18 @@ def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
     ### The resulting DataFrames are stored in the dataframes dictionary.
     dataframes = {}
     for user, data in user_transfer_revenue.items():
-        df = pd.DataFrame(data, columns=['revenue', 'date'])
-        df['date'] = pd.to_datetime(df['date'], utc=True)
-        df = df.groupby(pd.Grouper(key='date', freq='D'))['revenue'] \
-            .sum().reset_index().sort_values('date')
-        df['revenue'] = df['revenue'].cumsum()
-        df['date'] = df['date'].dt.strftime('%Y-%m-%d')
+        df = pd.DataFrame(data, columns=["revenue", "date"])
+        df["date"] = pd.to_datetime(df["date"], utc=True)
+        df = df.groupby(pd.Grouper(key="date", freq="D"))["revenue"] \
+            .sum().reset_index().sort_values("date")
+        df["revenue"] = df["revenue"].cumsum()
+        df["date"] = df["date"].dt.strftime("%Y-%m-%d")
 
         dataframes[user] = df
 
     ### Here, the data is formatted into a dictionary called data.
     ### Each user's name is a key, and the corresponding value is a list of tuples containing revenue and date information
-    data = {user["name"]: [] for user in manager}
+    data = {user_name: [] for user_name in league_users.values()}
     for user, df in dataframes.items():
         for entry in df.to_numpy().tolist():
             data[user].append((entry[0], entry[1]))
@@ -181,6 +186,7 @@ def calculate_revenue_data_daily(turnovers: dict, manager: list) -> None:
     ### Save to file + timestamp
     write_json_to_file(data, "revenue_sum.json")
     write_json_to_file({"time": datetime.now().isoformat()}, "ts_revenue_sum.json")
+
 
 def write_json_to_file(data, file_name: str) -> None:
     """Writes a JSON object to a file.
