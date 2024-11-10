@@ -199,6 +199,26 @@ def user_stats(token: str, league_id: str, user_id: str) -> dict:
     return json_response
 
 
+def user_performance(token: str, league_id: str, user_id: str) -> dict:
+    """
+    Get the performance of a given user in the given league.
+    """
+    url = f"https://api.kickbase.com/v4/leagues/{league_id}/managers/{user_id}/performance"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the statistics of a given user in the given league
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
+    
+    return json_response
+
+
 def ranking(token: str, league_id: str, match_day: int) -> dict:
     """
     ### Get the ranking of the league.
@@ -212,6 +232,26 @@ def ranking(token: str, league_id: str, match_day: int) -> dict:
     }
 
     ### Send GET request to get the ranking of the league
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
+    
+    return json_response
+
+
+def battles(token: str, league_id: str, battle_id: int) -> dict:
+    """
+    ### Get the battles of the league.
+    """
+    url = f"https://api.kickbase.com/v4/leagues/{league_id}/battles/{battle_id}/users"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the battles of the league
     try:
         json_response = requests.get(url, headers=headers).json()
     except:
