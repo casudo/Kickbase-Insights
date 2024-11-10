@@ -112,7 +112,7 @@ def main() -> None:
         # turnovers_v1(user_token, selected_league, league_users)
         turnovers(user_token, selected_league)
 
-        team_value_per_match_day(user_token, selected_league, league_users)
+        team_value_per_match_day(user_token, selected_league)
         league_user_stats_tables(user_token, selected_league, league_users)
         live_points(user_token, selected_league) # needs to be run first to initialize the live_points.json file
 
@@ -585,29 +585,24 @@ def turnovers(user_token: str, selected_league: object) -> None:
     miscellaneous.calculate_revenue_data_daily(final_turnovers)
 
 
-def team_value_per_match_day(user_token: str, selected_league: object, league_users: dict) -> None:
+def team_value_per_match_day(user_token: str, selected_league: object) -> None:
     """### Calculates the team value per match day for all users in the league.
 
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
-        league_users (dict): A dictionary containing all users in the league.
     """
     logging.info("Calculating team value per match day...")
 
     final_team_value = {}
 
     ### Get all match days of the season
-    match_days_list = competition_v3.match_days(user_token)
-
-    ### Get the current match day and team values per match day
-    match_day_stats = leagues_v1.league_stats(user_token, selected_league.id)
+    current_match_day, match_days_list = competitions.match_days(user_token)
     
     ### Loop through all users in the league
-    for real_user in league_users.get("users"):
-        ### Get the current match day from league_stats
-        current_match_day = match_day_stats["currentDay"]
-
+    with open(path.join(DATA_DIR, "STATIC_users.json"), "r") as f:
+        league_users = json.load(f)
+    for user_id, user_name in league_users.items():
         ### Get the team value for each match day
         team_value = {match_day: 0 for match_day in range(1, current_match_day + 1)}
     
@@ -617,18 +612,18 @@ def team_value_per_match_day(user_token: str, selected_league: object, league_us
             if match_day["day"] > current_match_day:
                 continue
         
-            team_value_on_match_day = 0
+            ranking_data = leagues.ranking(user_token, selected_league.id, match_day["day"])
+            team_value_on_match_day = None
 
-            ### Loop through all users of the match day
-            for match_day_user in match_day_stats["matchDays"][match_day["day"] - 1]["users"]:
-                if match_day_user["userId"] == real_user["id"]:
-                    team_value_on_match_day = match_day_user["teamValue"]
+            for real_user in ranking_data["us"]:
+                if real_user["i"] == user_id:
+                    team_value_on_match_day = real_user["tv"]
                     break
         
             if len(team_value) >= match_day["day"]:
                 team_value[match_day["day"]] = team_value_on_match_day
         
-        final_team_value[real_user["name"]] = team_value
+        final_team_value[user_name] = team_value
 
     logging.info("Calculated team value per match day.")
 
