@@ -6,7 +6,7 @@ TODO: Maybe list all functions here automatically?
 
 import requests
 
-from backend import exceptions
+from backend import exceptions, miscellaneous
 from backend.kickbase.endpoints.leagues import League_Info, Market_Players
 
 
@@ -136,3 +136,44 @@ def get_users(token: str, league_id: str):
     miscellaneous.write_json_to_file(user_id_to_name, "STATIC_users.json")
     
     return json_response["us"] ### Only return the "us" list which contains alls usernames and IDs
+
+
+def transfers(token: str, league_id: str) -> dict:
+    """### Get all transfers of all users in a league.
+
+    Args:
+        token (str): The user's kkstrauth token.
+        league_id (str): The league ID.
+
+    Returns:
+        dict: A dictionary containing the user's players.
+    """
+    start_point = 0
+    user_transfers = []
+
+    while True:
+        query_params = f"?max=26&start={start_point}"
+        url = f"https://api.kickbase.com/v4/leagues/{league_id}/activitiesFeed/{query_params}"
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Cookie": f"kkstrauth={token};",
+        }
+
+        ### Send GET request to get the next 26 entries
+        try:
+            json_response = requests.get(url, headers=headers).json()
+        except Exception as e:
+            raise exceptions.NotificatonException(f"Notification failed! Please check your Discord Webhook URL. Error: {e}") # TODO: Change exception
+
+        ### Filter transfers where "t" == 15
+        filtered_transfers = [entry for entry in json_response.get("af", []) if entry.get("t") == 15]
+        user_transfers += filtered_transfers
+
+        ### Check if there are more entries to fetch
+        if not json_response.get("af"):
+            break
+
+        start_point += 26
+
+    return user_transfers
