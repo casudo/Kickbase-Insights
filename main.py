@@ -107,7 +107,7 @@ def main() -> None:
 
         taken_free_players(user_token, selected_league)
 
-        balances(user_token, selected_league, league_users)
+        balances(user_token, selected_league)
 
         # turnovers_v1(user_token, selected_league, league_users)
         turnovers_v2(user_token, selected_league, league_users)
@@ -864,16 +864,12 @@ def live_points(user_token: str, selected_league: object) -> None:
     miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_live_points.json")
 
 
-def balances(user_token: str, selected_league: object, league_users: dict) -> None:
+def balances(user_token: str, selected_league: object) -> None:
     """### Retrieves the estiamted balances for all users in the league. Daily login bonus and money from achievements are not considered.
 
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
-        league_users (dict): A dictionary containing all users in the league.
-
-    Returns:
-        None
     """
     logging.info("Getting balances...")
 
@@ -881,44 +877,44 @@ def balances(user_token: str, selected_league: object, league_users: dict) -> No
     final_balances = []
 
     ### Get all transfers from the API
-    all_transfers = leagues_v2.transfers(user_token, selected_league.id)
+    all_transfers = leagues.transfers(user_token, selected_league.id)
     logging.debug(f"Found {len(all_transfers)} transfers in total")
 
     ### Initialize user balances
-    user_balances = {user["id"]: initial_balance for user in league_users.get("users")}
+    with open(path.join(DATA_DIR, "STATIC_users.json"), "r") as f:
+        league_users = json.load(f)
+        user_balances = {user_id: initial_balance for user_id, user_name in league_users.items()}
 
     ### Loop through all users in the league
-    for real_user in league_users.get("users"):
-        user_id = real_user["id"]
+    for user_id, user_name in league_users.items():
         balance = user_balances.get(user_id, initial_balance)
 
-        logging.debug(f"User: {real_user['name']}")
-        logging.debug(f"Starter balance: {balance}")
+        logging.debug(f"User: {user_name}; Starter balance: {balance}")
 
-        user_stats = leagues_v1.user_stats(user_token, selected_league.id, real_user["id"])
-        team_value = user_stats["teamValue"]
-
-        logging.debug(f"Team value: {team_value}")
+        user_stats = leagues.user_stats(user_token, selected_league.id, user_id)
+        team_value = user_stats["tv"]
+        logging.debug(f"Team value of {user_name}: {team_value}")
 
         ### Check every item in the all_transfers list if it belongs to the current user
         for item in all_transfers:
-            meta = item["meta"]
-            transfer_amount = meta.get("v")
+            ### Check if item is a buy or sell transfer
+            if item["t"] == 15:
+                transfer_amount = item["data"]["trp"]
 
-            if "b" in meta and meta["b"]["i"] == user_id:
-                ### User bought a player
-                balance -= transfer_amount
+                if "byr" in item["data"] and {value: key for key, value in league_users.items()}.get(item["data"]["byr"]) == user_id:
+                    ### User bought a player
+                    balance -= transfer_amount
 
-                player_name = meta["p"]["n"]
-                logging.debug(f"{real_user['name']} bought {player_name} for {transfer_amount}€")
-                logging.debug(f"New balance: {balance}")
-            elif "s" in meta and meta["s"]["i"] == user_id:
-                ### User sold a player
-                balance += transfer_amount
+                    player_last_name = item["data"]["pn"]
+                    logging.debug(f"{user_name} bought {player_last_name} for {transfer_amount}€")
+                    logging.debug(f"New balance: {balance}")
+                elif "slr" in item["data"] and {value: key for key, value in league_users.items()}.get(item["data"]["slr"]) == user_id:
+                    ### User sold a player
+                    balance += transfer_amount
 
-                player_name = meta["p"]["n"]
-                logging.debug(f"{real_user['name']} sold {player_name} for {transfer_amount}€")
-                logging.debug(f"New balance: {balance}")
+                    player_last_name = item["data"]["pn"]
+                    logging.debug(f"{user_name} sold {player_last_name} for {transfer_amount}€")
+                    logging.debug(f"New balance: {balance}")
 
         ### Update the user balance
         user_balances[user_id] = balance
@@ -941,8 +937,8 @@ def balances(user_token: str, selected_league: object, league_users: dict) -> No
         ### Create a custom json dict for every user
         final_balances.append({
             "userId": user_id,
-            "username": real_user["name"],
-            "profilePic": user_stats.get("profileUrl", None),
+            "username": user_name,
+            "profilePic": miscellaneous.get_profilepic(user_id),
             "teamValue": team_value,
             "balance": round(balance, 0),
             "maxBid": round(maxbid, 0),
