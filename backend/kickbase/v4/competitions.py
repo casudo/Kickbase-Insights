@@ -67,3 +67,52 @@ def get_team_overview(token: str) -> dict:
     miscellaneous.write_json_to_file(all_teams, "STATIC_teams.json")
 
     return all_teams
+
+
+def match_days(token: str, competition_id: int = 1) -> tuple:
+    """### Fetch all matches for every match day in the current season and save to JSON
+
+    Args:
+        token (str): The user's kkstrauth token
+        competition_id (int): The competition ID (default: 1 which is the Bundesliga)
+    
+    Returns:
+        tuple: A tuple containing the current match day number and a list of dictionaries. Each dictionary contains the match day number, the start date & time of the first match, and the start date & time of the last match.
+    """
+    url = f"https://api.kickbase.com/v4/competitions/{competition_id}/matchdays"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    match_days = []
+
+    logging.info("Fetching match days...")
+
+    try:
+        response = requests.get(url, headers=headers).json()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Request failed: {e}")
+
+    current_match_day = response["day"]
+
+    if response["it"]:
+        for match_day in response["it"]:
+            first_match = match_day["it"][0]["dt"] ### Start date & time of the first match
+            last_match = match_day["it"][-1]["dt"] ### Start date & time of the last match
+
+            match_days.append({
+                "day": match_day["day"],
+                "firstMatch": first_match,
+                "lastMatch": last_match,
+            })
+
+    logging.info("Match days fetched.")
+
+    ### Save to file
+    miscellaneous.write_json_to_file(match_days, "match_days.json")
+
+    ### TODO: Timestamp needed here?
+
+    return current_match_day, match_days
