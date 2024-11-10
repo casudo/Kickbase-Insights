@@ -131,4 +131,8 @@ def get_users(token: str, league_id: str):
     except:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
     
+    ### Create a dictionary to map user IDs to user names
+    user_id_to_name = {user["i"]: user["n"] for user in json_response["us"]}
+    miscellaneous.write_json_to_file(user_id_to_name, "STATIC_users.json")
+    
     return json_response["us"] ### Only return the "us" list which contains alls usernames and IDs
