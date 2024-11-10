@@ -212,3 +212,30 @@ def julian_to_date(julian_date: int) -> str:
     reference_date = datetime(1970, 1, 1)
     converted_date = reference_date + timedelta(days=julian_date)
     return converted_date.strftime("%d.%m.%Y")
+
+
+def get_profilepic(user_id: str) -> str:
+    """### Get the profile picture of a user.
+
+    Args:
+        user_id (str): The user ID.
+
+    Returns:
+        str: The URL of the profile picture.
+    """
+    url = f"https://cdn.kickbase.com/files/users/{user_id}/0"
+    headers = {
+        "Content-Type": "image/jpeg",
+    }
+
+    ### Send GET request to get the profile picture
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.url # Profile pic is set
+        elif response.status_code == 404:
+            return None # Profile pic is not set
+        else:
+            response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") from e
