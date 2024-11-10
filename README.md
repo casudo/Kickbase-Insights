@@ -58,7 +58,6 @@ docker run -d \
     --name=kickbase_insights \
     --restart=unless-stopped \
     -p <frontend_port>:3000 -p <backend_port>:5000 \
-    -v /PATH_TO_CONFIG/kickbase-insights/all_transfers.json:/code/frontend/src/data/all_transfers.json \
     -e KB_MAIL=<kickbase_email> \
     -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
@@ -78,8 +77,6 @@ services:
     ports:
       - <frontend_port>:3000 # Web GUI
       - <backend_port>:5000 # Backend API (../api/livepoints)  
-    volumes:
-      - /PATH_TO_CONFIG/kickbase-insights/all_transfers.json:/code/frontend/src/data/all_transfers.json
     environment:
       - KB_MAIL=<kickbase_email>
       - KB_PASSWORD=<kickbase_password>
