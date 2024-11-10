@@ -197,3 +197,24 @@ def user_stats(token: str, league_id: str, user_id: str) -> dict:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
     
     return json_response
+
+
+def ranking(token: str, league_id: str, match_day: int) -> dict:
+    """
+    ### Get the ranking of the league.
+    """
+    query_params = f"?dayNumber={match_day}"
+    url = f"https://api.kickbase.com/v4/leagues/{league_id}/ranking/{query_params}"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the ranking of the league
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
+    
+    return json_response
