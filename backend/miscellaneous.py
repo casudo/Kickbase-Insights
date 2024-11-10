@@ -9,7 +9,7 @@ import json
 import logging
 
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from os import getenv, path
 from main import DATA_DIR, TIMESTAMP_DIR
 
@@ -208,3 +208,12 @@ def write_json_to_file(data, file_name: str) -> None:
             logging.debug(f"Created file {file_name}")
     except Exception as e:
         logging.error(f"Failed to write JSON to {file_path}: {e}")
+
+
+def julian_to_date(julian_date: int) -> str:
+    """Convert a Julian date to a standard date format (YYYY-MM-DD)."""
+    # Assuming the Julian date starts from a known reference date
+    # For example, Julian date 0 corresponds to 2000-01-01
+    reference_date = datetime(1970, 1, 1)
+    converted_date = reference_date + timedelta(days=julian_date)
+    return converted_date.strftime("%d.%m.%Y")

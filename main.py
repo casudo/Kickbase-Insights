@@ -105,8 +105,7 @@ def main() -> None:
         market(user_token, selected_league)
         market_value_changes(user_token, selected_league)
 
-        # league_users = taken_free_players_v1(user_token, selected_league)
-        league_users = taken_free_players_v2(user_token, selected_league)
+        taken_free_players(user_token, selected_league)
 
         balances(user_token, selected_league, league_users)
 
@@ -453,22 +452,19 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
     free_players = []
 
     ### Get all users in the league
-    league_users = leagues_v1.league_users(user_token, selected_league.id)
-    logging.debug(f"DEBUG of USERS: {league_users['users'][0]}")
-
-    ### Create a set of user IDs for quick lookup
-    user_ids = {user["id"]: user["name"] for user in league_users.get("users")}
+    with open(path.join(DATA_DIR, "STATIC_users.json"), "r") as f:
+        league_users = json.load(f)
 
     ### Get all transfers in the league
-    all_transfers = leagues_v2.transfers(user_token, selected_league.id)
+    all_transfers = leagues.transfers(user_token, selected_league.id)
 
     ### Create a dictionary to store buy prices from transfers
     buy_prices = {}
     for transfer in all_transfers:
-        if "b" in transfer["meta"]:
-            user_id = transfer["meta"]["b"]["i"]
-            player_id = transfer["meta"]["p"]["i"]
-            buy_price = transfer["meta"]["v"]
+        if "byr" in transfer["data"]:
+            user_id = {value: key for key, value in league_users.items()}.get(transfer["data"]["byr"]) # Reverse mapping from user name to user ID
+            player_id = transfer["data"]["pi"]
+            buy_price = transfer["data"]["trp"]
 
             if user_id not in buy_prices:
                 buy_prices[user_id] = []
@@ -476,69 +472,77 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
             buy_prices[user_id].append((player_id, buy_price))
 
     ### Cycle through all teams
-    for team_id in miscellaneous.get_team_ids(user_token):
+    with open(path.join(DATA_DIR, "STATIC_teams.json"), "r") as f:
+        all_teams = json.load(f)
+    for team in all_teams:
         ### Cycle through all players of the team
-        for player in competition_v1.team_players(user_token, team_id):
+        for player in team["players"]:
+
             ### Search the stats of the given player ID to fill the missing attributes for the player
-            player_stats = leagues_v1.player_statistics(user_token, selected_league.id, player.id)
+            player_stats = leagues.player_statistics(user_token, selected_league.id, player["i"])
 
             ### Check if the player is owned by a user
-            if player_stats.get("userName") in user_ids.values():
-                logging.debug(f"Player {player.firstName} {player.lastName} is owned by user {player_stats.get('userName')}!")
+            if player_stats["oui"] != "0":  # "oui" = "ownedUserId"
+                logging.debug(f"Player {player_stats.get('fn', None)} {player['n']} is owned by user {league_users.get(player_stats['oui'], 'Unknown')}!")
 
                 ### Check if position number is valid
-                if player.position not in miscellaneous.POSITIONS:
-                    logging.warning(f"Invalid position number: {player.position} for player {player.firstName} {player.lastName} (PID: {player.id})")
-                    player.position = 1 ### Default to "Torwart" (Goalkeeper)
+                if player["pos"] not in miscellaneous.POSITIONS:
+                    logging.warning(f"Invalid position number: {player['pos']} for player {player_stats.get('fn', None)} {player['n']} (PID: {player['i']})")
+                    player["pos"] = 1 ### Default to "Torwart" (Goalkeeper)
 
                 ### Determine the buy price
-                current_user_id = player_stats["userId"]
+                current_user_id = player_stats["oui"]
                 buy_price = 0
                 if current_user_id in buy_prices:
                     for pid, price in buy_prices[current_user_id]:
-                        if pid == player.id:
+                        if pid == player["i"]:
                             buy_price = price
                             break
 
-                if buy_price == 0:
-                    ### Set the buyPrice to the "m" value in the "marketValues" list where "day" is the START_DATE
-                    ### Loop through all marketValues of the player until the "day" matches the START_DATE
-                    start_date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").date()
+                ### TODO: Find a way to get the marketValue on user join date (START_DATE) or leave it as 0
+                # if buy_price == 0:
+                #     ### Set the buyPrice to the first entry in the player_marketvalues list
+                #     ### NOTE: THe first entry might be at a later date than the start of the season!!
+                #     ### e.g. START_DATE = 16.07.24, but the first entry in the player_marketvalues list is at 10.08.24
+                #     ### This isn't a great solution, so it's WIP for now
+                #     start_date = getenv("START_DATE")
 
-                    for marketValue in player_stats["marketValues"]:
-                        ### Normalize the marketValue date to date only
-                        market_value_date = datetime.fromisoformat(marketValue["d"].replace("Z", "")).date()
+                #     player_marketvalues = leagues.player_marketvalue(user_token, selected_league.id, player["i"])
 
-                        if market_value_date == start_date:
-                            buy_price = marketValue["m"]
-                            logging.debug(f"Player {player.firstName} {player.lastName} was assigned at the start of the season. Market value on START_DATE {start_date}: {buy_price}€.")
-                            break
+                #     for marketValue in player_marketvalues:
+                #         ### Convert the Julian date to a standard date
+                #         market_value_date = miscellaneous.julian_to_date(marketValue["dt"]) # 10.08.24  -erster Eintrag
+
+                #         if market_value_date == start_date:
+                #             buy_price = marketValue["mv"]
+                #             logging.debug(f"Player {player_stats.get('fn', None)} {player['n']} was assigned at the start of the season. Market value on START_DATE {start_date}: {buy_price}€.")
+                #             break
 
                 ### Create a custom json dict for every taken player. This will be passed to the frontend later.
                 taken_players.append({
-                    "owner": player_stats["userName"],
-                    "playerId": player.id,
-                    "teamId": player.teamId,
-                    "position": miscellaneous.POSITIONS[player.position],
-                    "firstName": player.firstName,
-                    "lastName": player.lastName,
+                    "owner": league_users.get(player_stats["oui"], "Unknown"),
+                    "playerId": player["i"],
+                    "teamId": player["tid"],
+                    "position": miscellaneous.POSITIONS[player["pos"]],
+                    "firstName": player_stats.get("fn", None),
+                    "lastName": player["n"],
                     "buyPrice": buy_price,
-                    "marketValue": player.marketValue,
-                    "status": player.status,
-                    "trend": player.marketValueTrend,
+                    "marketValue": player["mv"],
+                    "status": player["st"],
+                    "trend": player["mvt"],
                 })
             else:
                 ### Create a custom json dict for every free player. This will be passed to the frontend later.
                 free_players.append({
-                    "playerId": player.id,
-                    "teamId": player.teamId,
-                    "position": miscellaneous.POSITIONS[player.position],
-                    "firstName": player.firstName,
-                    "lastName": player.lastName,
-                    "marketValue": player.marketValue,
-                    "points": player.totalPoints,
-                    "status": player.status,
-                    "trend": player.marketValueTrend,
+                    "playerId": player["i"],
+                    "teamId": player["tid"],
+                    "position": miscellaneous.POSITIONS[player["pos"]],
+                    "firstName": player_stats.get("fn", None),
+                    "lastName": player["n"],
+                    "marketValue": player["mv"],
+                    "points": player_stats.get("tp", 0),
+                    "status": player["st"],
+                    "trend": player["mvt"],
                 })
 
     logging.info("Got all taken and free players.")
@@ -550,8 +554,6 @@ def taken_free_players_v2(user_token: str, selected_league: object) -> dict:
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(free_players, "free_players.json")
     miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_free_players.json")
-
-    return league_users
 
 
 def turnovers_v1(user_token: str, selected_league: object, league_users: dict) -> None:
