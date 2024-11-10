@@ -38,20 +38,15 @@ POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
 # 256: Abwesend (Grey Clock)
 ### Conversion from number to icon for the frontend in "SharedConstants.js"
 
-### TYPE (from league feed)
-# Type 2: Verkauft an Kickbase
-# Type 2 + meta[bn]: Verkauft an Spieler (bn = buyerName)
-# Type 3: Free player listed by Kickbase
-# Type 8: Final matchday points
-# Type 12: Gekauft von Kickbase
-
-### TYPE (from v2 League Feed)
-# Type 3: Free player listed by Kickbase
+### TYPE (from Activity Feed v4)
+# Type 3: New on Transfer Market/Free player listed by Kickbase (Cannot be seen when using Postman?! Only seen in the app (probably because target is set))
 # Type 5: User joined the Kickbase league
-# Type 15 + meta["s"]: User sold Player to Kickbase
-# Type 15 + meta["b"]: User bought Player from Kickbase
-# Type 15 + meta["s"] + meta["b"]: User sold Player to User
-# Type 16: News from Kickbase?
+# Type 15 + data[byr]: User bought player from Kickbase
+# Type 15 + data[slr]: User sold player to Kickbase
+# Type 15 + data[slr] + data[byr]: User sold player to User
+# Type 17: Matchday final points and ranking
+# Type 22: Daily Login Bonus
+# Type 26: Achievement
 
 ### ===============================================================================
 
