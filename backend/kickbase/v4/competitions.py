@@ -64,6 +64,6 @@ def get_team_overview(token: str) -> dict:
     logging.info("Got all teams.")
 
     ### Save to file
-    miscellaneous.write_json_to_file(all_teams, "team_ids.json") # TODO: Change to "team_overview.json"
+    miscellaneous.write_json_to_file(all_teams, "STATIC_teams.json")
 
     return all_teams
