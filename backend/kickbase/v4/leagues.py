@@ -177,3 +177,23 @@ def transfers(token: str, league_id: str) -> dict:
         start_point += 26
 
     return user_transfers
+
+
+def user_stats(token: str, league_id: str, user_id: str) -> dict:
+    """
+    Get the statistics of a given user in the given league.
+    """
+    url = f"https://api.kickbase.com/v4/leagues/{league_id}/managers/{user_id}/dashboard"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the statistics of a given user in the given league
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
+    
+    return json_response
