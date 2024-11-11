@@ -100,7 +100,7 @@ def main() -> None:
         league_list, selected_league, user_token = login()
 
         ### Get the daily login gift in every available league
-        get_gift(user_token, league_list)
+        get_gift(user_token)
 
         market(user_token, selected_league)
         market_value_changes(user_token, selected_league)
@@ -173,24 +173,20 @@ def login() -> tuple:
     return league_list, selected_league, user_token
 
 
-def get_gift(user_token: str, league_list: list) -> None:
+def get_gift(user_token: str) -> None:
     """### Collect the daily login gift in every available league.
 
     Args:
         user_token (str): The user's kkstrauth token.
-        league_list (list): List of leagues the user is in.
     """
-    for league in league_list:
-        gift = leagues_v1.is_gift_available(user_token, league.id)
+    gift = user.collect_gift(user_token)
 
-        ### Check if dict in gift has {'isAvailable': True}:
-        if gift["isAvailable"]:
-            logging.info(f"Gift available in league {league.name}!")
-            miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['amount']}\nLevel: {gift['level']}", 6617600, discord_webhook) # TODO: Change color
-            leagues_v1.get_gift(user_token, league.id) # TODO: Try, except needed here?, TODO: Check response
-        else:
-            logging.info(f"Gift has already been collected in league '{league.name}'!")
-            # miscellaneous.discord_notification("Kickbase Gift not available!", f"Gift not available!", 6617600, discord_webhook) # TODO: Change color
+    ### Check if response["it"] is not empty:
+    if gift["it"]:
+        logging.info(f"Gift available in league {gift['it'][0]['lnm']}!")
+        miscellaneous.discord_notification("Kickbase Gift available!", f"Amount: {gift['it'][0]['v']}\nLevel: {gift['it'][0]['day']}", 6617600, discord_webhook) # TODO: Change color
+    else:
+        logging.info("Gift has already been collected!")
 
 
 def market(user_token: str, selected_league: object) -> None:

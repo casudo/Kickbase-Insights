@@ -53,3 +53,28 @@ def login(email: str, password: str, discord_webhook: str) -> tuple:
 
     ### TODO: Set return type
     return user, token
+
+
+def collect_gift(token: str) -> dict:
+    """### Collects the current gift of the user in every league.
+
+    Args:
+        token (str): The token of the user.
+
+    Returns:
+        dict: The response of the API call.
+    """
+    url = "https://api.kickbase.com/v4/bonus/collect"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the current gift
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
+    
+    return json_response
