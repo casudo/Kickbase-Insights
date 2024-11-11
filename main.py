@@ -642,14 +642,22 @@ def league_user_stats_tables(user_token: str, selected_league: object) -> None:
         ### Get stats for each user
         user_stats = leagues.user_stats(user_token, selected_league.id, user_id)
 
-        ### Create a custom json dict for every user
+        ### Find the user's points in the specific battle
+        def get_user_points(battle_type):
+            battles_data = leagues.battles(user_token, selected_league.id, battle_type)
+            for entry in battles_data["us"]:
+                if entry["u"]["i"] == user_id:
+                    return entry["v"]
+            return 0
+
+        ### Create a custom json list for every user
         final_user_stats.append({
             ### Shared stats 
             "userId": user_id,
             "userName": user_name,
             "profilePic": miscellaneous.get_profilepic(user_id),
             "mdWins": user_stats["mdw"],
-            "maxPoints": leagues.battles(user_token, selected_league.id, 8)["us"][0]["v"],
+            "maxPoints": get_user_points(8),
             ### Stats for "Liga -> Tabelle" ONLY
             "placement": user_stats["pl"],
             "points": user_stats["tp"],
@@ -667,10 +675,10 @@ def league_user_stats_tables(user_token: str, selected_league: object) -> None:
             # "sold": get_season_stat(user_stats, "sold"),
             "trades": user_stats["t"],
             ### Stats for "Liga -> Battles" ONLY
-            "pointsGoalKeeper": leagues.battles(user_token, selected_league.id, 4)["us"][0]["v"],
-            "pointsDefenders": leagues.battles(user_token, selected_league.id, 5)["us"][0]["v"],
-            "pointsMidFielders": leagues.battles(user_token, selected_league.id, 6)["us"][0]["v"],
-            "pointsForwards": leagues.battles(user_token, selected_league.id, 7)["us"][0]["v"],
+            "pointsGoalKeeper": get_user_points(4),
+            "pointsDefenders": get_user_points(5),
+            "pointsMidFielders": get_user_points(6),
+            "pointsForwards": get_user_points(7),
             # "avgGoalKeeper": user_stats["seasons"][0]["averageGoalKeeper"],
             # "avgDefenders": user_stats["seasons"][0]["averageDefenders"],
             # "avgMidFielders": user_stats["seasons"][0]["averageMidFielders"],
