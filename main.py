@@ -9,9 +9,6 @@ from logging.config import dictConfig
 from datetime import datetime, timedelta
 
 from backend import exceptions, miscellaneous
-# from backend.kickbase.v1 import user, leagues as leagues_v1, competition as competition_v1
-# from backend.kickbase.v2 import leagues as leagues_v2
-# from backend.kickbase.v3 import competition as competition_v3
 from backend.kickbase.v4 import competitions, user, leagues
 
 ### -------------------------------------------------------------------
@@ -97,7 +94,7 @@ def main() -> None:
     dictConfig(LOGGING)
 
     try:
-        league_list, selected_league, user_token = login()
+        selected_league, user_token = login()
 
         ### Get the daily login gift in every available league
         get_gift(user_token)
@@ -109,13 +106,13 @@ def main() -> None:
 
         balances(user_token, selected_league)
 
-        # turnovers_v1(user_token, selected_league, league_users)
         turnovers(user_token, selected_league)
 
         team_value_per_match_day(user_token, selected_league)
-        league_user_stats_tables(user_token, selected_league)
-        live_points(user_token, selected_league) # needs to be run first to initialize the live_points.json file
 
+        league_user_stats_tables(user_token, selected_league)
+
+        # live_points(user_token, selected_league) # needs to be run first to initialize the live_points.json file
     except exceptions.LoginException as e:
         print(e)
         return
@@ -132,7 +129,6 @@ def login() -> tuple:
 
     Returns:
         tuple: A tuple containing the following elements:
-            -- league_list (list): List of leagues the user is in.
             -- selected_league (object): The league the user wants to get data from for the frontend.
             -- user_token (str): User token for authentication.
     """
@@ -170,7 +166,7 @@ def login() -> tuple:
         logging.info(f"No preferred league set. Using the first league in the list: {league_list[0].name}")
         selected_league = league_list[0]
 
-    return league_list, selected_league, user_token
+    return selected_league, user_token
 
 
 def get_gift(user_token: str) -> None:

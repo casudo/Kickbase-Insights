@@ -14,7 +14,6 @@ from os import getenv, path
 from main import DATA_DIR, TIMESTAMP_DIR
 
 from backend import exceptions
-from backend.kickbase.v1 import competition
 
 ### ===============================================================================
 
@@ -81,55 +80,6 @@ def discord_notification(title: str, message: str, color: int, webhook_url: str)
         requests.post(url, json=payload, headers=headers)
     except:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.")
-    
-
-def get_free_players(token: str, taken_players: list) -> None:
-    """### Get all free players based on the taken players.
-
-    Args:
-        token (str): The user's kkstrauth token.
-        taken_players (list): A list of all taken players.
-
-    Returns:
-        None
-    """
-    logging.info("Getting free players...")
-
-    free_players = []
-
-    ### Get all taken player ids
-    taken_player_ids = [player["playerId"] for player in taken_players]
-
-    ### Cycle through all teams and get the players who are not taken
-    for team_id in get_team_ids(token):
-        ### Cycle through all players of the team
-        for player in competition.team_players(token, team_id):
-            ### Check if the player is not taken
-            if player.id not in taken_player_ids:
-
-                ### Check if position number is valid
-                position_nr = player.position
-                if position_nr not in POSITIONS:
-                    logging.warning(f"Invalid position number: {position_nr} for player {player.firstName} {player.lastName} (PID: {player.id})")
-                    position_nr = 1    
-
-                free_players.append({
-                    "playerId": player.id,
-                    "teamId": player.teamId,
-                    "position": POSITIONS[position_nr],
-                    "firstName": player.firstName,
-                    "lastName": player.lastName,
-                    "marketValue": player.marketValue,
-                    "trend": player.marketValueTrend,
-                    "status": player.status,
-                    "points": player.totalPoints,
-                })
-
-    logging.info("Got all free players.")
-
-    ### Save to file + timestamp
-    write_json_to_file(free_players, "free_players.json")
-    write_json_to_file({"time": datetime.now().isoformat()}, "ts_free_players.json")
 
 
 def calculate_revenue_data_daily(turnovers: dict) -> None:
