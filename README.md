@@ -192,6 +192,7 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 - Battles: Spieltagsdominator: Fix placements being wrong for people with the same amount of mdWins  
 - Change behavior if player has the position number of "0". Instead of defaulting that to "1", do smth else
 - Support for multiple leagues via ports (League 1: 5000, League 2: 5001, etc.)
+- Rename "endpoints" to "classes" and put all of them into one file
 
 **Misc:**  
 - Add Postman workspace  
