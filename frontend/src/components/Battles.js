@@ -16,7 +16,7 @@ function Battles() {
     const battles = [
         { type: "Spieltagsdominator", valueField: "mdWins", label: "Siege", explanation: "Die meisten Spieltagssiege" },
         { type: "Punktejäger", valueField: "maxPoints", label: "Punkte", explanation: "Die meisten Punkte an einem Spieltag" },
-        { type: "Transferkönig", valueField: "combinedTransfers", label: "Transfers", explanation: "Die meisten Transfers der Saison" },
+        { type: "Transferkönig", valueField: "trades", label: "Transfers", explanation: "Die meisten Transfers der Saison" },
         { type: "Angriffslustig", valueField: "pointsForwards", label: "Punkte", explanation: "Die meisten Punkte mit Angreifern" },
         { type: "Saubermann", valueField: "pointsGoalKeeper", label: "Punkte", explanation: "Die meisten Punkte mit dem Towart" },
         { type: "Abwehrbollwerk", valueField: "pointsDefenders", label: "Punkte", explanation: "Die meisten Punkte mit Abwehrspielern" },

@@ -45,18 +45,18 @@ function SeasonStatsTable() {
                 return params.value.toLocaleString('de-DE');
             },
         },
-        {
-            field: "minPoints",
-            headerName: "Wenigste Punkte",
-            type: "number",
-            flex: 1,
-            headerAlign: "center",
-            align: "center",
-            // Format the number with thousand separators (.)
-            valueFormatter: (params) => {
-                return params.value.toLocaleString('de-DE');
-            },
-        },
+        // {
+        //     field: "minPoints",
+        //     headerName: "Wenigste Punkte",
+        //     type: "number",
+        //     flex: 1,
+        //     headerAlign: "center",
+        //     align: "center",
+        //     // Format the number with thousand separators (.)
+        //     valueFormatter: (params) => {
+        //         return params.value.toLocaleString('de-DE');
+        //     },
+        // },
         {
             field: "mdWins",
             headerName: "Spieltagssiege",
@@ -69,9 +69,33 @@ function SeasonStatsTable() {
                 return params.value.toLocaleString('de-DE');
             },
         },
+        // {
+        //     field: "bought",
+        //     headerName: "Gekauft",
+        //     type: "number",
+        //     flex: 1,
+        //     headerAlign: "center",
+        //     align: "center",
+        //     // Format the number with thousand separators (.)
+        //     valueFormatter: (params) => {
+        //         return params.value.toLocaleString('de-DE');
+        //     },
+        // },
+        // {
+        //     field: "sold",
+        //     headerName: "Verkauft",
+        //     type: "number",
+        //     flex: 1,
+        //     headerAlign: "center",
+        //     align: "center",
+        //     // Format the number with thousand separators (.)
+        //     valueFormatter: (params) => {
+        //         return params.value.toLocaleString('de-DE');
+        //     },
+        // },
         {
-            field: "bought",
-            headerName: "Gekauft",
+            field: "trades",
+            headerName: "Trades",
             type: "number",
             flex: 1,
             headerAlign: "center",
@@ -79,20 +103,8 @@ function SeasonStatsTable() {
             // Format the number with thousand separators (.)
             valueFormatter: (params) => {
                 return params.value.toLocaleString('de-DE');
-            },
-        },
-        {
-            field: "sold",
-            headerName: "Verkauft",
-            type: "number",
-            flex: 1,
-            headerAlign: "center",
-            align: "center",
-            // Format the number with thousand separators (.)
-            valueFormatter: (params) => {
-                return params.value.toLocaleString('de-DE');
-            },
-        },
+            }
+        }
     ]
 
     // Fill the rows with the players attributes from the JSON file
@@ -103,10 +115,11 @@ function SeasonStatsTable() {
             profilePic: row.profilePic,
             avgPoints: row.avgPoints,
             maxPoints: row.maxPoints,
-            minPoints: row.minPoints,
+            // minPoints: row.minPoints,
             mdWins: row.mdWins,
-            bought: row.bought,
-            sold: row.sold,
+            // bought: row.bought,
+            // sold: row.sold,
+            trades: row.trades
         }
     ))
 

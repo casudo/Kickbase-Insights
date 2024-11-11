@@ -146,8 +146,8 @@ function MarketValueChangesTable() {
             today: row.today,
             yesterday: row.yesterday,
             twoDays: row.twoDays,
-            SevenDaysAvg: row.SevenDaysAvg,
-            ThirtyDaysAvg: row.ThirtyDaysAvg,
+            SevenDaysAvg: row.sevenDaysAvg,
+            ThirtyDaysAvg: row.thirtyDaysAvg,
             manager: row.manager,
         }
     ))

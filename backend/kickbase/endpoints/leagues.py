@@ -5,6 +5,42 @@
 `/vX/leagues/...`
 """
 
+class League_Info:
+    """
+    ### Create an object for a league with all its attributes.
+
+    Used for endpoint URL:
+    `/leagues/selection` -> get all leagues the user is in
+    """
+    def __init__(self, league_dict: dict):
+        self.id: str = league_dict.get("i", None)  ### League ID
+        self.name: str = league_dict.get("n", None)  ### League name
+        self.cpi: str = league_dict.get("cpi", None)
+        self.b: int = league_dict.get("b", None)  ### Budget of player
+        self.un: int = league_dict.get("un", None)
+        self.f: str = league_dict.get("f", None) ### League Image
+        self.lpc: int = league_dict.get("lpc", None)
+        self.bs: int = league_dict.get("bs", None)
+        self.vr: int = league_dict.get("vr", None)
+        self.adm: bool = league_dict.get("adm", None) ### Admin
+        self.pl: int = league_dict.get("pl", None)
+        self.tv: int = league_dict.get("tv", None) ### Team value of player
+        # self.creator: str = league_dict.get("creator", None)  ### League creator's username
+        # self.creatorId: str = league_dict.get("creatorId", None)  ### League creator's ID
+        # self.creation: str = league_dict.get("creation", None)  ### League creation date
+        # self.ai: str = league_dict.get("ai", None)
+        # self.t: str = league_dict.get("t", None)
+        # self.au: str = league_dict.get("au", None)
+        # self.mu: str = league_dict.get("mu", None)
+        # self.ap: str = league_dict.get("ap", None)  ### Not always present
+        # self.pub: str = league_dict.get("pub", None)
+        # self.gm: str = league_dict.get("gm", None)
+        # self.mpl: str = league_dict.get("mpl", None)
+        # self.ci: str = league_dict.get("ci", None)
+        # self.btlg: str = league_dict.get("btlg", None)  ### Not always present
+        # self.vr: str = league_dict.get("vr", None)
+
+
 class League_User_Info:
     """
     ### Create an object for the league user info with all its attributes.
@@ -152,23 +188,26 @@ class Market_Players:
     `/leagues/{league_id}/market` -> get the whole market
     """
     def __init__(self, market_players_dict: dict):
-        self.id: str = market_players_dict.get("id", None)
-        self.teamId: str = market_players_dict.get("teamId", None)
-        self.userId: str = market_players_dict.get("userId", None)  # Set if player is listed by a user
-        self.userProfile: str = market_players_dict.get("userProfile", None)  # OPTIONAL: Set if player is listed by a user
-        self.username: str = market_players_dict.get("username", None)  # Set if player is listed by a user
-        self.firstName: str = market_players_dict.get("firstName", None)
-        self.lastName: str = market_players_dict.get("lastName", None)
-        self.profile: str = market_players_dict.get("profile", None)  # Somehow not always present e.g. Kevin Müller
-        self.status: int = market_players_dict.get("status", None)
-        self.position: int = market_players_dict.get("position", None)
-        self.number: int = market_players_dict.get("number", None)
-        self.totalPoints: int = market_players_dict.get("totalPoints", None)
-        self.averagePoints: int = market_players_dict.get("averagePoints", None)
-        self.marketValue: float = market_players_dict.get("marketValue", None)
-        self.price: float = market_players_dict.get("price", None)
-        self.date: str = market_players_dict.get("date", None)
-        self.expiry: str = market_players_dict.get("expiry", None)
-        self.offers: list = market_players_dict.get("offers", None)
-        self.lus: int = market_players_dict.get("lus", None)
-        self.marketValueTrend: int = market_players_dict.get("marketValueTrend", None)
+        self.id: str = market_players_dict.get("i", None)
+        self.firstName: str = market_players_dict.get("fn", None)
+        self.lastName: str = market_players_dict.get("n", None)
+        self.teamId: str = market_players_dict.get("tid", None)
+        self.position: int = market_players_dict.get("pos", None)
+        self.status: int = market_players_dict.get("st", None)
+        self.marketValueTrend: int = market_players_dict.get("mvt", None)
+        self.marketValue: float = market_players_dict.get("mv", None)
+        self.totalPoints: int = market_players_dict.get("p", None)
+        self.averagePoints: int = market_players_dict.get("ap", None)
+        self.ofc: int = market_players_dict.get("ofc", None) ### Offer Count?
+        self.expiry: str = market_players_dict.get("exs", None)
+        self.userId: str = market_players_dict.get("u", {}).get("i", None) ### Set if player is listed by a user
+        self.username: str = market_players_dict.get("u", {}).get("n", None) ### Set if player is listed by a user  
+        self.price: float = market_players_dict.get("prc", None)
+        self.isn: bool = market_players_dict.get("isn", None)
+        self.offers: list = market_players_dict.get("ofs", None)
+        self.iposl: bool = market_players_dict.get("iposl", None) ### ???
+        self.listedsince: str = market_players_dict.get("dt", None)
+        # self.userProfile: str = market_players_dict.get("userProfile", None)  # OPTIONAL: Set if player is listed by a user
+        # self.profile: str = market_players_dict.get("profile", None)  # Somehow not always present e.g. Kevin Müller
+        # self.number: int = market_players_dict.get("number", None)
+        # self.lus: int = market_players_dict.get("lus", None)
