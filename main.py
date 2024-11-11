@@ -281,7 +281,7 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
                 "marketValue": player_stats["mv"],
                 "today": player_marketvalue[-1]["mv"] - player_marketvalue[-2]["mv"],
                 "yesterday": player_marketvalue[-2]["mv"] - player_marketvalue[-3]["mv"],
-                "twoDaysAgo": player_marketvalue[-3]["mv"] - player_marketvalue[-4]["mv"],
+                "twoDays": player_marketvalue[-3]["mv"] - player_marketvalue[-4]["mv"],
                 "sevenDaysAvg": player_marketvalue[-1]["mv"] - player_marketvalue[-8]["mv"] if len(player_marketvalue) >= 8 else None,
                 "thirtyDaysAvg": player_marketvalue[-1]["mv"] - player_marketvalue[-31]["mv"] if len(player_marketvalue) >= 31 else None,
                 "manager": manager,
