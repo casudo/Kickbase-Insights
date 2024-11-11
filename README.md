@@ -52,6 +52,10 @@ If you want to run this in a Docker container, you'll first need to set some man
 | `START_MONEY` | No | The amount of money you started with. If not set, defaults to 50.000.000€ |
 | `TZ` | No | The timezone to use. Defaults to `Europe/Berlin` |
 
+> [!IMPORTANT]
+> The live points feature is currently on-hold and not present as of v2.4.0!
+> To handle the re-implementation of the live points with more ease, the ports for the backend are not commented out.
+
 ### docker run
 ```bash
 docker run -d \

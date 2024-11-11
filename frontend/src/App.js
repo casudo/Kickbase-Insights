@@ -16,7 +16,7 @@ import FormControlLabel from "@mui/material/FormControlLabel"
 import Grid from "@mui/material/Grid"
 import IconButton from "@mui/material/IconButton"
 import CloseIcon from "@mui/icons-material/Close"
-import Button from "@mui/material/Button";
+// import Button from "@mui/material/Button";
 
 // Import custom components from the project
 import MarketTableKickbase from "./components/MarketTableKickbase"
@@ -32,7 +32,7 @@ import TeamValueLineChart from "./components/TeamValueLineChart"
 import Changelog from "./components/Changelog"
 import LeagueUserTable from "./components/LeagueUserTable"
 import SeasonStatsTable from "./components/SeasonStatsTable"
-import LivePoints from "./components/LivePoints"
+// import LivePoints from "./components/LivePoints"
 import Balances from "./components/Balances"
 import Battles from "./components/Battles"
 
@@ -47,7 +47,7 @@ import timestamp_turnovers from "./data/timestamps/ts_turnovers.json"
 import timestamp_team_values from "./data/timestamps/ts_team_values.json"
 import timestamp_revenue_sum from "./data/timestamps/ts_revenue_sum.json"
 import timestamp_league_user_stats from "./data/timestamps/ts_league_user_stats.json"
-import timestamp_live_points from "./data/timestamps/ts_live_points.json"
+// import timestamp_live_points from "./data/timestamps/ts_live_points.json"
 import timestamp_balances from "./data/timestamps/ts_balances.json"
 
 // Create dark and light themes using Material-UI
@@ -60,34 +60,34 @@ function App() {
   const [selectedTab, setSelectedTab] = useState("1")
   const [darkModeEnabled, setDarkModeEnabled] = useState(false)
   const [disclaimerVisible, setDisclaimerVisible] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // State to manage refreshing
+  // const [refreshing, setRefreshing] = useState(false); // State to manage refreshing
   
   // Handlers
   const handleCloseDisclaimer = () => setDisclaimerVisible(false);
 
-  const RefreshButtonLivepoints = () => (
-    <Button onClick={handleRefreshLivepoints} disabled={refreshing}>
-      {refreshing ? "Refreshing..." : "Refresh Live Points"}
-    </Button>
-  );
+  // const RefreshButtonLivepoints = () => (
+  //   <Button onClick={handleRefreshLivepoints} disabled={refreshing}>
+  //     {refreshing ? "Refreshing..." : "Refresh Live Points"}
+  //   </Button>
+  // );
 
-  // Function to handle Live Points refresh button click
-  const handleRefreshLivepoints = async () => {
-    // Set refreshing to true to indicate the refresh is in progress
-    setRefreshing(true);
+  // // Function to handle Live Points refresh button click
+  // const handleRefreshLivepoints = async () => {
+  //   // Set refreshing to true to indicate the refresh is in progress
+  //   setRefreshing(true);
 
-    try {
-      const response = await fetch("/api/livepoints")
-      const data = await response.json();
-      // Handle the retrieved data (update state, etc.)
-      console.log(data);
-    } catch (error) {
-      console.error("Error refreshing live points data:", error);
-    } finally {
-      // Set refreshing to false once the refresh is complete
-      setRefreshing(false);
-    }
-  };
+  //   try {
+  //     const response = await fetch("/api/livepoints")
+  //     const data = await response.json();
+  //     // Handle the retrieved data (update state, etc.)
+  //     console.log(data);
+  //   } catch (error) {
+  //     console.error("Error refreshing live points data:", error);
+  //   } finally {
+  //     // Set refreshing to false once the refresh is complete
+  //     setRefreshing(false);
+  //   }
+  // };
 
   // Return the JSX for the App component
   // TODO: The what?
@@ -138,7 +138,7 @@ function App() {
                 <Tab label="Transfers" value="1" />
                 <Tab label="Transfererlöse" value="2" />
                 <Tab label="Spieler" value="3" />
-                <Tab label="Live" value="4" />
+                {/* <Tab label="Live" value="4" /> */}
                 <Tab label="Liga" value="5" />
                 <Tab label="Changelog" value="6" />
                 <Tab label="Dev" value="7" />
@@ -201,13 +201,13 @@ function App() {
             </Paper>
           </TabPanel>
 
-          <TabPanel sx={{ padding: 0 }} value="4">
+          {/* <TabPanel sx={{ padding: 0 }} value="4"> */}
             {/* "Live" related components */}
-            <Paper sx={{ marginTop: "25px"}} elevation={5}>
-              <Typography variant="h4" sx={{ padding: "15px" }}>Live Punkte <HelpIcon text="Um die Live Punkte zu benutzen, aktualisiert die Punkte mit den dafür vorgesehenen Knopf. Anschließend muss die Website einmal neu geladen werden."/> <RefreshButtonLivepoints/> </Typography>
-              <LivePoints />
-            </Paper>
-          </TabPanel>
+            {/* <Paper sx={{ marginTop: "25px"}} elevation={5}> */}
+              {/* <Typography variant="h4" sx={{ padding: "15px" }}>Live Punkte <HelpIcon text="Um die Live Punkte zu benutzen, aktualisiert die Punkte mit den dafür vorgesehenen Knopf. Anschließend muss die Website einmal neu geladen werden."/> <RefreshButtonLivepoints/> </Typography> */}
+              {/* <LivePoints /> */}
+            {/* </Paper> */}
+          {/* </TabPanel> */}
 
           <TabPanel sx={{ padding: 0 }} value="5">
             {/* "Liga" related components */}
@@ -255,7 +255,7 @@ function App() {
                 Revenue Sum: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_revenue_sum.time).toLocaleString("de-DE")}</Typography><br/>
                 Team Values: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_team_values.time).toLocaleString("de-DE")}</Typography><br/>
                 League User Stats: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_league_user_stats.time).toLocaleString("de-DE")}</Typography><br/>
-                Live Points: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_live_points.time).toLocaleString("de-DE")}</Typography><br/>
+                {/* Live Points: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_live_points.time).toLocaleString("de-DE")}</Typography><br/> */}
                 Balances: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_balances.time).toLocaleString("de-DE")}</Typography><br/>
               </Typography>
             </Paper>
