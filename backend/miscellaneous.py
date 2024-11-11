@@ -163,8 +163,6 @@ def write_json_to_file(data, file_name: str) -> None:
 
 def julian_to_date(julian_date: int) -> str:
     """Convert a Julian date to a standard date format (YYYY-MM-DD)."""
-    # Assuming the Julian date starts from a known reference date
-    # For example, Julian date 0 corresponds to 2000-01-01
     reference_date = datetime(1970, 1, 1)
     converted_date = reference_date + timedelta(days=julian_date)
     return converted_date.strftime("%d.%m.%Y")

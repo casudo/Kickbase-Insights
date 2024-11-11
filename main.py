@@ -259,7 +259,7 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
         for player in team["players"]:
             ### Get the market value changes for the player
             player_stats = leagues.player_statistics(user_token, selected_league.id, player["i"])
-            player_marketvalue = leagues.player_marketvalue(user_token, selected_league.id, player["i"])
+            player_marketvalue = leagues.player_marketvalue(user_token, player["i"])
 
             ### Check if player is owned by user
             if player_stats["oui"] != "0":  # "oui" = "ownedUserId"
@@ -355,24 +355,21 @@ def taken_free_players(user_token: str, selected_league: object):
                             buy_price = price
                             break
 
-                ### TODO: Find a way to get the marketValue on user join date (START_DATE) or leave it as 0
-                # if buy_price == 0:
-                #     ### Set the buyPrice to the first entry in the player_marketvalues list
-                #     ### NOTE: THe first entry might be at a later date than the start of the season!!
-                #     ### e.g. START_DATE = 16.07.24, but the first entry in the player_marketvalues list is at 10.08.24
-                #     ### This isn't a great solution, so it's WIP for now
-                #     start_date = getenv("START_DATE")
+                if buy_price == 0:
+                    ### Set the buyPrice to the START_DATE value in the player_marketvalues list
+                    ### Do this because the player was assigned at the start of the season
+                    start_date = getenv("START_DATE")
 
-                #     player_marketvalues = leagues.player_marketvalue(user_token, selected_league.id, player["i"])
+                    player_marketvalues = leagues.player_marketvalue(user_token, player["i"])
 
-                #     for marketValue in player_marketvalues:
-                #         ### Convert the Julian date to a standard date
-                #         market_value_date = miscellaneous.julian_to_date(marketValue["dt"]) # 10.08.24  -erster Eintrag
+                    for marketValue in player_marketvalues:
+                        ### Convert the Julian date to a standard date
+                        market_value_date = miscellaneous.julian_to_date(marketValue["dt"])
 
-                #         if market_value_date == start_date:
-                #             buy_price = marketValue["mv"]
-                #             logging.debug(f"Player {player_stats.get('fn', None)} {player['n']} was assigned at the start of the season. Market value on START_DATE {start_date}: {buy_price}€.")
-                #             break
+                        if market_value_date == start_date:
+                            buy_price = marketValue["mv"]
+                            logging.debug(f"Player {player_stats.get('fn', None)} {player['n']} was assigned at the start of the season. Market value on START_DATE {start_date}: {buy_price}€.")
+                            break
 
                 ### Create a custom json dict for every taken player. This will be passed to the frontend later.
                 taken_players.append({
@@ -531,24 +528,22 @@ def turnovers(user_token: str, selected_league: object) -> None:
         ### This condition checks if the current sell transfer is not already part of a buy-sell pair in the turnovers list.
         if transfer not in [turnover[1] for turnover in turnovers]:
 
-            ### TODO: Find a way to get the marketValue on user join date (START_DATE) or leave it as 0
-            # ### Search the stats of the given player ID to fill the missing attributes for the player
-            # player_stats = leagues_v1.player_statistics(user_token, selected_league.id, transfer["playerId"])
+            ### Loop through all marketValues of the player until the "day" matches the START_DATE
+            start_date = getenv("START_DATE")
 
-            # ### Loop through all marketValues of the player until the "day" matches the START_DATE
-            # start_date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").date()
+            ### Search the stats of the given player ID to fill the missing attributes for the player
+            player_marketvalues = leagues.player_marketvalue(user_token, transfer["playerId"])
 
-            # for marketValue in player_stats["marketValues"]:
-            #     ### Normalize the marketValue date to date only
-            #     market_value_date = datetime.fromisoformat(marketValue["d"].replace("Z", "")).date()
+            ### Set the price to the START_DATE value in the player_marketvalues list
+            ### Do this because the player was assigned at the start of the season
+            for marketValue in player_marketvalues:
+                ### Convert the Julian date to a standard date
+                market_value_date = miscellaneous.julian_to_date(marketValue["dt"])
 
-            #     if market_value_date == start_date:
-            #         price = marketValue["m"]
-            #         logging.debug(f"Starter player {transfer['firstName']} {transfer['lastName']} was sold! Market value on START_DATE {start_date}: {price}€.")
-            #         break
-
-            price = 0
-            logging.debug(f"Starter player {transfer['firstName']} {transfer['lastName']} was sold! Buy price will be set to 0€.")
+                if market_value_date == start_date:
+                    price = marketValue["mv"]
+                    logging.debug(f"Starter player {transfer['firstName']} {transfer['lastName']} was sold! Market value on START_DATE {start_date}: {price}€.")
+                    break
 
             ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
             date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").isoformat()
