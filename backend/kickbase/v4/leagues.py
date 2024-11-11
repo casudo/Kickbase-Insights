@@ -94,11 +94,12 @@ def player_statistics(token: str, league_id: str, player_id: str):
     return json_response
 
 
-def player_marketvalue(token: str, league_id: str, player_id: str):
+def player_marketvalue(token: str, player_id: str):
     """
     ### Get the statistics of a given player.
     """
-    url = f"https://api.kickbase.com/v4/competitions/1/players/{player_id}/marketValue/92?leagueId={league_id}"
+    url_3months = f"https://api.kickbase.com/v4/competitions/1/players/{player_id}/marketValue/92"
+    url_1year = f"https://api.kickbase.com/v4/competitions/1/players/{player_id}/marketValue/365"
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -107,7 +108,7 @@ def player_marketvalue(token: str, league_id: str, player_id: str):
 
     ### Send GET request to get the market value changes of ALL players in the league
     try:
-        json_response = requests.get(url, headers=headers).json()
+        json_response = requests.get(url_1year, headers=headers).json()
     except:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
     
