@@ -655,7 +655,7 @@ def league_user_stats_tables(user_token: str, selected_league: object) -> None:
             "maxPoints": get_user_points(8),
             ### Stats for "Liga -> Tabelle" ONLY
             "placement": user_stats["pl"],
-            "points": user_stats["tp"],
+            "points": user_stats.get("tp", 0),
             "teamValue": user_stats["tv"],
             # "maxBuyPrice": user_stats["leagueUser"]["maxBuyPrice"],
             # "maxBuyFirstName": user_stats["leagueUser"]["maxBuyFirstName"],
@@ -668,7 +668,7 @@ def league_user_stats_tables(user_token: str, selected_league: object) -> None:
             # "minPoints": get_season_stat(user_stats, "minPoints"),
             # "bought": get_season_stat(user_stats, "bought"),
             # "sold": get_season_stat(user_stats, "sold"),
-            "trades": user_stats["t"],
+            "trades": user_stats.get("t", 0),
             ### Stats for "Liga -> Battles" ONLY
             "pointsGoalKeeper": get_user_points(4),
             "pointsDefenders": get_user_points(5),
