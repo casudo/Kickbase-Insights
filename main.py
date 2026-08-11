@@ -279,9 +279,12 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
             player_stats = leagues.player_statistics(user_token, selected_league.id, player["i"])
             player_marketvalue = leagues.player_marketvalue(user_token, player["i"])
 
-            ### Check if player is owned by user
-            if player_stats["oui"] != "0":  # "oui" = "ownedUserId"
-                manager = user_id_to_name.get(player_stats["oui"], "Unknown")
+            ### Check if player is owned by a user in this league.
+            ### Ownership lives in the per-league "opl" list, not in the top level "oui".
+            owner = miscellaneous.get_player_owner(player_stats, selected_league.id)
+
+            if owner:
+                manager = owner.get("onm") or user_id_to_name.get(owner["oui"], "Unknown")
             else:
                 manager = "Kickbase"
                 
@@ -355,9 +358,12 @@ def taken_free_players(user_token: str, selected_league: object):
             ### Search the stats of the given player ID to fill the missing attributes for the player
             player_stats = leagues.player_statistics(user_token, selected_league.id, player["i"])
 
-            ### Check if the player is owned by a user
-            if player_stats["oui"] != "0":  # "oui" = "ownedUserId"
-                logging.debug(f"Player {player_stats.get('fn', None)} {player['n']} is owned by user {league_users.get(player_stats['oui'], 'Unknown')}!")
+            ### Check if the player is owned by a user in this league.
+            ### Ownership lives in the per-league "opl" list, not in the top level "oui".
+            owner = miscellaneous.get_player_owner(player_stats, selected_league.id)
+
+            if owner:
+                logging.debug(f"Player {player_stats.get('fn', None)} {player['n']} is owned by user {owner.get('onm', 'Unknown')}!")
 
                 ### Check if position number is valid
                 if player["pos"] not in miscellaneous.POSITIONS:
@@ -365,7 +371,7 @@ def taken_free_players(user_token: str, selected_league: object):
                     player["pos"] = 1 ### Default to "Torwart" (Goalkeeper)
 
                 ### Determine the buy price
-                current_user_id = player_stats["oui"]
+                current_user_id = owner["oui"]
                 buy_price = 0
                 if current_user_id in buy_prices:
                     for pid, price in buy_prices[current_user_id]:
@@ -392,7 +398,7 @@ def taken_free_players(user_token: str, selected_league: object):
 
                 ### Create a custom json dict for every taken player. This will be passed to the frontend later.
                 taken_players.append({
-                    "owner": league_users.get(player_stats["oui"], "Unknown"),
+                    "owner": owner.get("onm") or league_users.get(owner["oui"], "Unknown"),
                     "playerId": player["i"],
                     "teamId": player["tid"],
                     "position": miscellaneous.POSITIONS[player["pos"]],
