@@ -9,6 +9,7 @@ import json
 import logging
 
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from os import getenv, path, makedirs
 from backend.paths import DATA_DIR, TIMESTAMP_DIR
@@ -22,6 +23,10 @@ from backend import exceptions
 ### seconds to report a missing one, with GET and with HEAD alike. That accounted for
 ### 253 of the 259 seconds balances() spent.
 PROFILEPIC_TIMEOUT = 5
+
+### How many profile picture lookups to run at once. They are almost entirely spent
+### waiting, so threads suit them, and a league has at most a few dozen managers.
+MAX_PROFILEPIC_WORKERS = 16
 
 ### Per-run cache for profile pictures. Each lookup downloads the full image, and both
 ### balances() and league_user_stats_tables() ask for every user.
@@ -297,6 +302,9 @@ def get_profilepic(user_id: str) -> str:
     Cached per user for the duration of the run. Each call downloads the full image, and
     balances() and league_user_stats_tables() both ask for every user.
 
+    Call prefetch_profilepics() first to fill the cache concurrently, otherwise every
+    user without a picture costs a full timeout one after another.
+
     Args:
         user_id (str): The user ID.
 
@@ -307,6 +315,45 @@ def get_profilepic(user_id: str) -> str:
     if cache_key in _profilepic_cache:
         return _profilepic_cache[cache_key]
 
+    profile_pic = _fetch_profilepic(cache_key)
+    _profilepic_cache[cache_key] = profile_pic
+
+    return profile_pic
+
+
+def prefetch_profilepics(user_ids) -> None:
+    """### Look up several profile pictures at once and fill the cache.
+
+    The lookups are independent and almost entirely spent waiting, so they run
+    concurrently. For a league where nobody has a picture set this turns one timeout per
+    manager into a single timeout for all of them.
+
+    Args:
+        user_ids (iterable): The user IDs to look up.
+    """
+    missing = sorted({str(user_id) for user_id in user_ids} - set(_profilepic_cache))
+
+    if not missing:
+        return
+
+    logging.debug(f"Prefetching {len(missing)} profile picture(s)...")
+
+    with ThreadPoolExecutor(max_workers=min(len(missing), MAX_PROFILEPIC_WORKERS)) as executor:
+        results = list(executor.map(_fetch_profilepic, missing))
+
+    for user_id, profile_pic in zip(missing, results):
+        _profilepic_cache[user_id] = profile_pic
+
+
+def _fetch_profilepic(user_id: str) -> str:
+    """### Ask the CDN for one profile picture, without touching the cache.
+
+    Args:
+        user_id (str): The user ID.
+
+    Returns:
+        str: The URL of the profile picture, or None if it is not set.
+    """
     url = f"https://cdn.kickbase.com/files/users/{user_id}/0"
     headers = {
         "Content-Type": "image/jpeg",
@@ -330,7 +377,5 @@ def get_profilepic(user_id: str) -> str:
         profile_pic = None
     except requests.exceptions.RequestException as e:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") from e
-
-    _profilepic_cache[cache_key] = profile_pic
 
     return profile_pic

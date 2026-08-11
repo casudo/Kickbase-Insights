@@ -116,6 +116,84 @@ def test_connection_error_still_raises():
 
 
 ### ===============================================================================
+### prefetch_profilepics()
+### ===============================================================================
+
+
+def test_prefetch_fills_the_cache_for_every_user():
+    users = ["u1", "u2", "u3"]
+    _, fake = with_cdn(lambda url: Response(404), lambda: miscellaneous.prefetch_profilepics(users))
+
+    assert len(fake.timeouts) == 3, f"expected 3 lookups, got {len(fake.timeouts)}"
+    for user_id in users:
+        assert user_id in miscellaneous._profilepic_cache, f"{user_id} was not cached"
+
+
+def test_prefetch_makes_later_lookups_free():
+    users = ["u1", "u2"]
+
+    fake = FakeCdn(lambda url: Response(404))
+    original = miscellaneous.requests
+    miscellaneous.requests = fake
+    try:
+        miscellaneous.prefetch_profilepics(users)
+        after_prefetch = len(fake.timeouts)
+        miscellaneous.get_profilepic("u1")
+        miscellaneous.get_profilepic("u2")
+        after_lookups = len(fake.timeouts)
+    finally:
+        miscellaneous.requests = original
+
+    assert after_lookups == after_prefetch, \
+        f"lookups after prefetch hit the network: {after_prefetch} -> {after_lookups}"
+
+
+def test_prefetch_skips_users_already_cached():
+    fake = FakeCdn(lambda url: Response(404))
+    original = miscellaneous.requests
+    miscellaneous.requests = fake
+    try:
+        miscellaneous.get_profilepic("u1")
+        miscellaneous.prefetch_profilepics(["u1", "u2"])
+        count = len(fake.timeouts)
+    finally:
+        miscellaneous.requests = original
+
+    assert count == 2, f"expected 2 lookups total (u1 once, u2 once), got {count}"
+
+
+def test_prefetch_runs_lookups_concurrently():
+    """The whole point: 13 managers must not cost 13 timeouts back to back."""
+    import time
+
+    delay = 0.2
+    users = [f"u{i}" for i in range(8)]
+
+    def slow(url):
+        time.sleep(delay)
+        return Response(404)
+
+    start = time.time()
+    with_cdn(slow, lambda: miscellaneous.prefetch_profilepics(users))
+    elapsed = time.time() - start
+
+    sequential = delay * len(users)
+    assert elapsed < sequential / 2, \
+        f"took {elapsed:.2f}s, sequential would be {sequential:.2f}s - not running concurrently"
+
+
+def test_prefetch_handles_an_empty_list():
+    _, fake = with_cdn(lambda url: Response(404), lambda: miscellaneous.prefetch_profilepics([]))
+    assert len(fake.timeouts) == 0, "an empty list should make no requests"
+
+
+def test_prefetch_deduplicates_repeated_ids():
+    _, fake = with_cdn(lambda url: Response(404),
+                       lambda: miscellaneous.prefetch_profilepics(["u1", "u1", "u1"]))
+    assert len(fake.timeouts) == 1, f"expected 1 lookup for a repeated id, got {len(fake.timeouts)}"
+
+
+### ===============================================================================
 
 if __name__ == "__main__":
     print("get_profilepic()")
@@ -124,6 +202,14 @@ if __name__ == "__main__":
     check("missing picture returns None", test_missing_picture_returns_none)
     check("existing picture returns its url", test_existing_picture_returns_its_url)
     check("connection error still raises", test_connection_error_still_raises)
+
+    print("\nprefetch_profilepics()")
+    check("fills the cache for every user", test_prefetch_fills_the_cache_for_every_user)
+    check("makes later lookups free", test_prefetch_makes_later_lookups_free)
+    check("skips users already cached", test_prefetch_skips_users_already_cached)
+    check("runs lookups concurrently", test_prefetch_runs_lookups_concurrently)
+    check("handles an empty list", test_prefetch_handles_an_empty_list)
+    check("deduplicates repeated ids", test_prefetch_deduplicates_repeated_ids)
 
     total, passed = len(PASSED), sum(PASSED)
     print(f"\n{passed}/{total} passed")
