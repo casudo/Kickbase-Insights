@@ -96,6 +96,10 @@ def main() -> None:
         logging.error(f"{e} Exiting...")
         exit(1)
 
+    ### Start every run with empty API caches, so a long lived process (app.py) never
+    ### serves data from a previous run
+    leagues.clear_caches()
+
     try:
         selected_league, user_token = login()
 

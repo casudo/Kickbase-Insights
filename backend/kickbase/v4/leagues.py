@@ -9,6 +9,25 @@ import requests
 from backend import exceptions, miscellaneous
 from backend.kickbase.endpoints.leagues import League_Info, Market_Players
 
+### -------------------------------------------------------------------
+
+### Per-run caches.
+### main.py walks every player twice, in market_value_changes() and in
+### taken_free_players(), and pages the activity feed three times. None of that changes
+### during a run, so each response is fetched once and reused.
+### One run is one process, so these live for the lifetime of the process. Call
+### clear_caches() to start over.
+_player_statistics_cache = {}
+_player_marketvalue_cache = {}
+_transfers_cache = {}
+
+
+def clear_caches() -> None:
+    """### Empty the per-run API caches."""
+    _player_statistics_cache.clear()
+    _player_marketvalue_cache.clear()
+    _transfers_cache.clear()
+
 
 def get_league_list(token: str) -> list:
     """Get a list of all leagues the user is in.
@@ -77,7 +96,14 @@ def get_market(token: str, league_id: str):
 def player_statistics(token: str, league_id: str, player_id: str):
     """
     ### Get the statistics of a given player.
+
+    Cached per league and player for the duration of the run. The response carries
+    league specific data (ownership in "opl"), so the league is part of the key.
     """
+    cache_key = (league_id, str(player_id))
+    if cache_key in _player_statistics_cache:
+        return _player_statistics_cache[cache_key]
+
     url = f"https://api.kickbase.com/v4/competitions/1/players/{player_id}?leagueId={league_id}"
     headers = {
         "Content-Type": "application/json",
@@ -90,15 +116,22 @@ def player_statistics(token: str, league_id: str, player_id: str):
         json_response = requests.get(url, headers=headers).json()
     except:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
-    
+
+    _player_statistics_cache[cache_key] = json_response
+
     return json_response
 
 
 def player_marketvalue(token: str, player_id: str):
     """
-    ### Get the statistics of a given player.
+    ### Get the market value history of a given player.
+
+    Cached per player for the duration of the run.
     """
-    url_3months = f"https://api.kickbase.com/v4/competitions/1/players/{player_id}/marketValue/92"
+    cache_key = str(player_id)
+    if cache_key in _player_marketvalue_cache:
+        return _player_marketvalue_cache[cache_key]
+
     url_1year = f"https://api.kickbase.com/v4/competitions/1/players/{player_id}/marketValue/365"
     headers = {
         "Content-Type": "application/json",
@@ -111,7 +144,9 @@ def player_marketvalue(token: str, player_id: str):
         json_response = requests.get(url_1year, headers=headers).json()
     except:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") # TODO: Change exception
-    
+
+    _player_marketvalue_cache[cache_key] = json_response["it"]
+
     return json_response["it"] ### Only return the "it" list
 
 
@@ -148,7 +183,14 @@ def transfers(token: str, league_id: str) -> dict:
 
     Returns:
         dict: A dictionary containing the user's players.
+
+    Cached per league for the duration of the run. main.py asks for the feed in
+    taken_free_players(), turnovers() and balances(), and each call pages through the
+    whole thing.
     """
+    if league_id in _transfers_cache:
+        return _transfers_cache[league_id]
+
     start_point = 0
     user_transfers = []
 
@@ -176,6 +218,8 @@ def transfers(token: str, league_id: str) -> dict:
             break
 
         start_point += 26
+
+    _transfers_cache[league_id] = user_transfers
 
     return user_transfers
 
