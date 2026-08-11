@@ -151,13 +151,24 @@ def get_player_owner(player_stats: dict, league_id: str) -> dict:
         player_stats (dict): A player_statistics response.
         league_id (str): The league to look up ownership for.
 
+    An entry for the league is present even when nobody owns the player, carrying an
+    owner id of "0". Matching on the league alone therefore reports every unowned player
+    as owned by "Unknown", so the owner id has to be checked as well.
+
     Returns:
         dict: The matching "opl" entry, holding the owner id in "oui" and the owner name
             in "onm". None if nobody in this league owns the player.
     """
     for entry in player_stats.get("opl") or []:
-        if entry.get("li") == league_id:
-            return entry
+        if entry.get("li") != league_id:
+            continue
+
+        ### "0", "", None and a missing key all mean nobody owns the player
+        owner_id = entry.get("oui")
+        if not owner_id or str(owner_id) == "0":
+            return None
+
+        return entry
 
     return None
 

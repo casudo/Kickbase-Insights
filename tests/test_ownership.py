@@ -60,6 +60,17 @@ FREE_PLAYER_EMPTY_LIST = {"i": "173", "fn": "Jonathan", "ln": "Tah", "oui": "0",
 ### The same, but the API omits the list entirely
 FREE_PLAYER_NO_LIST = {"i": "173", "fn": "Jonathan", "ln": "Tah", "oui": "0"}
 
+### A free player still gets an entry for the league, with owner id "0".
+### Matching on the league alone treated this as ownership and put every unowned
+### player into taken_players with owner "Unknown".
+FREE_PLAYER_LISTED_UNOWNED = {
+    "i": "173",
+    "fn": "Jonathan",
+    "ln": "Tah",
+    "oui": "0",
+    "opl": [{"li": LEAGUE_ID, "oui": "0", "lnm": "Kickbase-Elite 26/27", "iposl": False}],
+}
+
 
 def test_finds_the_owner_id_for_the_league():
     owner = miscellaneous.get_player_owner(OWNED_PLAYER, LEAGUE_ID)
@@ -78,6 +89,25 @@ def test_free_player_with_empty_list_has_no_owner():
 
 def test_free_player_without_the_list_has_no_owner():
     assert miscellaneous.get_player_owner(FREE_PLAYER_NO_LIST, LEAGUE_ID) is None
+
+
+def test_league_entry_with_owner_zero_is_not_ownership():
+    """An "opl" entry exists for the league even when nobody owns the player."""
+    assert miscellaneous.get_player_owner(FREE_PLAYER_LISTED_UNOWNED, LEAGUE_ID) is None, \
+        "an owner id of '0' means unowned, not owned by 'Unknown'"
+
+
+def test_blank_owner_id_is_not_ownership():
+    """Be robust to the API expressing 'nobody' as an empty value rather than '0'."""
+    for blank in ("", None):
+        player = {"i": "173", "opl": [{"li": LEAGUE_ID, "oui": blank}]}
+        assert miscellaneous.get_player_owner(player, LEAGUE_ID) is None, \
+            f"owner id {blank!r} must not count as ownership"
+
+
+def test_missing_owner_id_is_not_ownership():
+    player = {"i": "173", "opl": [{"li": LEAGUE_ID, "lnm": "Kickbase-Elite 26/27"}]}
+    assert miscellaneous.get_player_owner(player, LEAGUE_ID) is None
 
 
 def test_ownership_in_a_different_league_does_not_count():
@@ -143,7 +173,9 @@ def test_owned_player_lands_in_taken_not_free():
                 ],
             }], f)
 
-        stats_by_id = {"14300": OWNED_PLAYER, "173": FREE_PLAYER_EMPTY_LIST}
+        ### The free player carries an "opl" entry for the league with owner id "0",
+        ### which is what the API actually returns
+        stats_by_id = {"14300": OWNED_PLAYER, "173": FREE_PLAYER_LISTED_UNOWNED}
 
         original = (main.DATA_DIR, miscellaneous.DATA_DIR, miscellaneous.TIMESTAMP_DIR,
                     leagues.transfers, leagues.player_statistics, leagues.player_marketvalue)
@@ -189,6 +221,9 @@ if __name__ == "__main__":
     check("exposes the owner name", test_exposes_the_owner_name)
     check("free player with empty list has no owner", test_free_player_with_empty_list_has_no_owner)
     check("free player without the list has no owner", test_free_player_without_the_list_has_no_owner)
+    check("league entry with owner '0' is not ownership", test_league_entry_with_owner_zero_is_not_ownership)
+    check("blank owner id is not ownership", test_blank_owner_id_is_not_ownership)
+    check("missing owner id is not ownership", test_missing_owner_id_is_not_ownership)
     check("ownership in another league does not count", test_ownership_in_a_different_league_does_not_count)
     check("picks the right league among several", test_picks_the_right_league_when_several_are_present)
     check("ignores the legacy top level oui", test_legacy_top_level_oui_is_ignored)
