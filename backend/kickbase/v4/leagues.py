@@ -241,6 +241,45 @@ def ranking(token: str, league_id: str, match_day: int) -> dict:
     return json_response
 
 
+def live_points(token: str, league_id: str) -> dict:
+    """
+    ### Get the live points of all users in the given league.
+
+    Expected response:
+    ```json
+    {
+        "u": [
+            {
+                "id": "xxxx",       ### User ID
+                "n": "USERNAME",
+                "t": 419,           ### Live points
+                "st": 12199,        ### Total points
+                "pl": [ ... ]       ### Players of the user
+            }
+        ]
+    }
+    ```
+
+    NOTE: This still targets the legacy (v1) `/leagues/{id}/live` endpoint, since
+    Kickbase has no v4 equivalent implemented here yet. The live points feature is
+    on-hold, so this call is unverified against the current API.
+    """
+    url = f"https://api.kickbase.com/leagues/{league_id}/live"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Cookie": f"kkstrauth={token};",
+    }
+
+    ### Send GET request to get the live points of the league
+    try:
+        json_response = requests.get(url, headers=headers).json()
+    except:
+        raise exceptions.KickbaseException("Couldn't get the live points of the league.")
+
+    return json_response
+
+
 def battles(token: str, league_id: str, battle_id: int) -> dict:
     """
     ### Get the battles of the league.

@@ -2,7 +2,7 @@ import json
 import time
 import logging
 
-from os import getenv, makedirs, path, getcwd
+from os import getenv, makedirs, path
 from art import tprint
 from sys import stdout
 from logging.config import dictConfig
@@ -10,19 +10,13 @@ from datetime import datetime, timedelta
 
 from backend import exceptions, miscellaneous
 from backend.kickbase.v4 import competitions, user, leagues
+from backend.paths import LOG_DIR, DATA_DIR, TIMESTAMP_DIR
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 
 __version__ = getenv("REACT_APP_VERSION", "Warning: Couldn't load version")
-
-### Get the current working directory dynamically
-BASE_PATH = getcwd()
-### Paths for logs and data files
-LOG_DIR = path.join(BASE_PATH, "logs")
-DATA_DIR = path.join(BASE_PATH, "frontend", "src", "data")
-TIMESTAMP_DIR = path.join(DATA_DIR, "timestamps")
 
 
 def main() -> None:
@@ -145,6 +139,21 @@ def login() -> tuple:
         exit()
     logging.info(f"Available leagues: {', '.join([league.name for league in league_list])}") # Print all available leagues the user is in
 
+    return select_league(league_list), user_token
+
+
+def select_league(league_list: list) -> object:
+    """### Picks the league the frontend should show data for.
+
+    Uses the league named in the `KB_LIGA` environment variable and falls back to the
+    first league the user is in.
+
+    Args:
+        league_list (list): All leagues the user is in.
+
+    Returns:
+        object: The league the user wants to get data from for the frontend.
+    """
     ### Fetch the preferred league name from the environment variable
     preferred_league_name = getenv("KB_LIGA")
 
@@ -166,7 +175,7 @@ def login() -> tuple:
         logging.info(f"No preferred league set. Using the first league in the list: {league_list[0].name}")
         selected_league = league_list[0]
 
-    return selected_league, user_token
+    return selected_league
 
 
 def get_gift(user_token: str) -> None:
@@ -687,17 +696,20 @@ def league_user_stats_tables(user_token: str, selected_league: object) -> None:
     miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_league_user_stats.json")
 
 
-def live_points(user_token: str, selected_league: object) -> None:
+def live_points(user_token: str, selected_league: object) -> list:
     """### Retrieves the live points for the players in a users team.
 
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
+
+    Returns:
+        list: The live points of every user in the league, including their players.
     """
     logging.info("Getting live points...")
 
     ### Get the current live points
-    live_points = leagues_v1.live_points(user_token, selected_league.id)
+    live_points = leagues.live_points(user_token, selected_league.id)
 
     ### Create a custom json dict for every user and his players
     final_live_points = []
@@ -736,6 +748,8 @@ def live_points(user_token: str, selected_league: object) -> None:
     ### Save to file + timestamp
     miscellaneous.write_json_to_file(final_live_points, "live_points.json")
     miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_live_points.json")
+
+    return final_live_points
 
 
 def balances(user_token: str, selected_league: object) -> None:
