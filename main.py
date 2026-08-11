@@ -90,14 +90,10 @@ def main() -> None:
     ### Validate START_DATE before doing any work.
     ### entrypoint.py checks this for Docker runs, but running main.py directly skips
     ### that check and would only fail minutes later, in turnovers().
-    start_date = getenv("START_DATE")
-    if not start_date:
-        logging.error("START_DATE is not set. Set it to the date your season started (dd.mm.yyyy). Exiting...")
-        exit(1)
     try:
-        datetime.strptime(start_date, "%d.%m.%Y")
-    except ValueError:
-        logging.error(f"START_DATE '{start_date}' is not in the format dd.mm.yyyy. Exiting...")
+        miscellaneous.get_start_datetime()
+    except exceptions.KickbaseException as e:
+        logging.error(f"{e} Exiting...")
         exit(1)
 
     try:
@@ -379,8 +375,9 @@ def taken_free_players(user_token: str, selected_league: object):
 
                 if buy_price == 0:
                     ### Set the buyPrice to the START_DATE value in the player_marketvalues list
-                    ### Do this because the player was assigned at the start of the season
-                    start_date = getenv("START_DATE")
+                    ### Do this because the player was assigned at the start of the season.
+                    ### Market values exist per day, so only the date part is used here.
+                    start_date = miscellaneous.get_start_datetime().strftime("%d.%m.%Y")
 
                     player_marketvalues = leagues.player_marketvalue(user_token, player["i"])
 
@@ -474,6 +471,17 @@ def turnovers(user_token: str, selected_league: object) -> None:
 
     logging.debug(f"Total transfers after appending new ones: {len(all_transfers)}")
 
+    ### Drop everything from before the season start or league reset.
+    ### This runs on the merged list, so a cache still holding pre-reset events is
+    ### repaired here instead of having to be deleted by hand.
+    start_datetime = miscellaneous.get_start_datetime()
+    transfer_count = len(all_transfers)
+    all_transfers = miscellaneous.filter_transfers_from(all_transfers, start_datetime)
+
+    dropped = transfer_count - len(all_transfers)
+    if dropped:
+        logging.info(f"Ignored {dropped} transfer(s) from before START_DATE ({start_datetime.isoformat()}).")
+
     ### Save updated transfers back to all_transfers.json
     miscellaneous.write_json_to_file(all_transfers, "all_transfers.json")
     logging.debug("Updated all_transfers.json with new transfers")
@@ -550,8 +558,9 @@ def turnovers(user_token: str, selected_league: object) -> None:
         ### This condition checks if the current sell transfer is not already part of a buy-sell pair in the turnovers list.
         if transfer not in [turnover[1] for turnover in turnovers]:
 
-            ### Loop through all marketValues of the player until the "day" matches the START_DATE
-            start_date = getenv("START_DATE")
+            ### Loop through all marketValues of the player until the "day" matches the START_DATE.
+            ### Market values exist per day, so only the date part is used here.
+            start_date = start_datetime.strftime("%d.%m.%Y")
 
             ### Search the stats of the given player ID to fill the missing attributes for the player
             player_marketvalues = leagues.player_marketvalue(user_token, transfer["playerId"])
@@ -577,7 +586,7 @@ def turnovers(user_token: str, selected_league: object) -> None:
                 continue
 
             ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
-            date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").isoformat()
+            date = start_datetime.isoformat()
             buy_transfer = {"date": date,
                             "type": "assigned_at_start",
                             "user": transfer["user"],

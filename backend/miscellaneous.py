@@ -9,7 +9,7 @@ import json
 import logging
 
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from os import getenv, path, makedirs
 from backend.paths import DATA_DIR, TIMESTAMP_DIR
 
@@ -105,10 +105,12 @@ def calculate_revenue_data_daily(turnovers: dict) -> None:
         if buy["user"] in league_users.values():
             user_transfer_revenue[buy["user"]].append((revenue, sell["date"]))
 
-    ### Add start and end points for the graph
+    ### Add start and end points for the graph.
+    ### Both are timezone aware UTC, so they line up with the feed timestamps that make
+    ### up the rest of the series instead of being shifted by the local timezone.
     for _, data in user_transfer_revenue.items():
-        data.append((0, datetime.strptime(getenv("START_DATE"), "%d.%m.%Y")))
-        data.append((0, datetime.now()))
+        data.append((0, get_start_datetime()))
+        data.append((0, datetime.now(timezone.utc)))
 
     ### This section converts the data in user_transfer_revenue into Pandas DataFrames.
     ### It performs operations to aggregate daily revenues and calculates cumulative sums.
@@ -136,6 +138,75 @@ def calculate_revenue_data_daily(turnovers: dict) -> None:
     ### Save to file + timestamp
     write_json_to_file(data, "revenue_sum.json")
     write_json_to_file({"time": datetime.now().isoformat()}, "ts_revenue_sum.json")
+
+
+def get_start_datetime() -> datetime:
+    """### Parse the START_DATE environment variable.
+
+    START_DATE is the instant the season started or the league was reset. Activity feed
+    events from before it are ignored, so it has to be an exact instant: a league can be
+    reset partway through a day.
+
+    Raises:
+        exceptions.KickbaseException: If START_DATE is missing or not a valid ISO 8601
+            timestamp with an explicit UTC offset.
+
+    Returns:
+        datetime: The start instant, as a timezone aware UTC datetime.
+    """
+    raw = getenv("START_DATE")
+
+    if not raw:
+        raise exceptions.KickbaseException(
+            "START_DATE is not set. Set it to the instant your season started or your "
+            "league was reset, e.g. 2026-08-01T18:00:00Z."
+        )
+
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        raise exceptions.KickbaseException(
+            f"START_DATE '{raw}' is not a valid ISO 8601 timestamp. Use e.g. "
+            "2026-08-01T18:00:00Z. The old dd.mm.yyyy format is no longer accepted, "
+            "because reading it as midnight would silently shift every result."
+        )
+
+    ### Without an offset there is no way to tell UTC from local time, and the feed is UTC
+    if parsed.tzinfo is None:
+        raise exceptions.KickbaseException(
+            f"START_DATE '{raw}' has no UTC offset. Add one, e.g. 2026-08-01T18:00:00Z, "
+            "so the cutoff cannot shift with the local timezone."
+        )
+
+    return parsed.astimezone(timezone.utc)
+
+
+def parse_feed_timestamp(timestamp: str) -> datetime:
+    """### Convert an activity feed timestamp to a timezone aware UTC datetime.
+
+    Args:
+        timestamp (str): A feed timestamp, e.g. "2026-08-01T16:43:17Z".
+
+    Returns:
+        datetime: The timestamp as a timezone aware UTC datetime.
+    """
+    return datetime.fromisoformat(timestamp.replace("Z", "+00:00")).astimezone(timezone.utc)
+
+
+def filter_transfers_from(transfers: list, cutoff: datetime) -> list:
+    """### Drop activity feed items from before the cutoff.
+
+    Used to ignore events that happened before a league reset. The boundary is
+    inclusive: an item exactly on the cutoff is kept.
+
+    Args:
+        transfers (list): Activity feed items, each with a "dt" timestamp.
+        cutoff (datetime): The timezone aware start instant.
+
+    Returns:
+        list: The items at or after the cutoff, in their original order.
+    """
+    return [item for item in transfers if parse_feed_timestamp(item["dt"]) >= cutoff]
 
 
 def write_json_to_file(data, file_name: str) -> None:

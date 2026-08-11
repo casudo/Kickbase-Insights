@@ -5,6 +5,8 @@ from time import sleep
 from croniter import croniter
 from datetime import datetime
 
+from backend import exceptions, miscellaneous
+
 ### ===============================================================================
 
 ### Convert RUN_SCHEDULE (cron expression) to a valid date. Only run the python script (main.py) when the cron expression is met.
@@ -61,18 +63,14 @@ if RUN_SCHEDULE == "10 2,6,10,14,18,22 * * *":
 else:
     print("  ⚠️ RUN_SCHEDULE has been set to a custom value:", RUN_SCHEDULE)
 
-### Check if START_DATE is set by user
-if START_DATE is None:
-    print("  ❌ START_DATE is not set. Exiting...")
+### Check if START_DATE is set by user.
+### Uses the same parser as main.py so both agree on what a valid value is.
+try:
+    parsed_date = miscellaneous.get_start_datetime()
+    print(f"  ✅ START_DATE is set to '{START_DATE}'.")
+except exceptions.KickbaseException as e:
+    print(f"  ❌ {e} Exiting...")
     exit()
-else:
-    try:
-        ### Attempt to parse the date string to ensure it is in the correct format
-        parsed_date = datetime.strptime(START_DATE, "%d.%m.%Y")
-        print(f"  ✅ START_DATE is set to '{START_DATE}'.")
-    except ValueError:
-        print("  ❌ START_DATE format is incorrect. Please use 'DD.MM.YYYY'. Exiting...")
-        exit()
 
 ### Check if START_MONEY is set
 if START_MONEY == "50000000":

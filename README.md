@@ -48,9 +48,13 @@ If you want to run this in a Docker container, you'll first need to set some man
 | `KB_LIGA` | No | The name of the league you want to see data for in the GUI. If not set, defaults to the first league you're in. |
 | `DISCORD_WEBHOOK` | **Yes** | The Discord webhook URL to send notifications to. |
 | `RUN_SCHEDULE` | No | The cron expression when the script should fetch new information from the API. If not set, defaults to `10 2,6,10,14,18,22 * * *`. |
-| `START_DATE` | **Yes** | The date when the season started in format `dd.mm.yyyy`. |
+| `START_DATE` | **Yes** | The instant the season started or your league was reset, as an ISO 8601 timestamp with an explicit UTC offset, e.g. `2026-08-01T18:00:00Z`. Events in the Kickbase activity feed from before this instant are excluded from the transfer and revenue calculations. |
 | `START_MONEY` | No | The amount of money you started with. If not set, defaults to 50.000.000€ |
 | `TZ` | No | The timezone to use. Defaults to `Europe/Berlin` |
+
+> [!IMPORTANT]
+> The format of `START_DATE` changed: the old `dd.mm.yyyy` format is no longer accepted and now causes a hard error on startup.
+> If you are upgrading, migrate your value to an ISO 8601 timestamp with an explicit UTC offset (e.g. `2026-08-01T18:00:00Z`) and use the actual time of day the season started or your league was reset - the container will refuse to start otherwise.
 
 > [!IMPORTANT]
 > The live points feature is currently on-hold and not present as of v2.4.0!
@@ -65,9 +69,10 @@ docker run -d \
     -e KB_MAIL=<kickbase_email> \
     -e KB_PASSWORD=<kickbase_password> \
     -e DISCORD_WEBHOOK=<discord_webhook> \
-    -e START_DATE=<start_date> \
+    -e START_DATE=<start_timestamp> \
     ghcr.io/casudo/kickbase-insights:latest
 ```  
+`<start_timestamp>` is an ISO 8601 timestamp in UTC, e.g. `2026-08-01T18:00:00Z`.  
 
 ### Docker Compose
 ```yaml
@@ -85,7 +90,7 @@ services:
       - KB_MAIL=<kickbase_email>
       - KB_PASSWORD=<kickbase_password>
       - DISCORD_WEBHOOK=<discord_webhook>
-      - START_DATE=<start_date>
+      - START_DATE=<start_timestamp> # ISO 8601 in UTC, e.g. 2026-08-01T18:00:00Z
 ```  
 
 ---
@@ -141,7 +146,7 @@ It may take some time to initially start the container, so check the logs!
 ## Development
 If you want to contribute to this project, you can follow the steps below to jump right into the development environment.  
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> ubuntu
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_timestamp> ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash
@@ -150,7 +155,7 @@ mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano
 
 If you have this project already cloned, you can run the following command to bind mount the files inside the container:  
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_date> -v <your_folder>\Kickbase-Insights:/code ubuntu
+docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_timestamp> -v <your_folder>\Kickbase-Insights:/code ubuntu
 ```  
 Run this long command to setup the container:  
 ```bash

@@ -75,8 +75,13 @@ the full instant. One setting, two granularities, deliberately.
 - `main.py` startup validation
 - `main.py` `taken_free_players()` — assigned-player buy price
 - `main.py` `turnovers()` — starter market value, simulated buy date, new filter
-- `entrypoint.py` — env validation
-- `README.md` — variable table and both Docker examples
+- `miscellaneous.py` `calculate_revenue_data_daily()` — the revenue graph anchors its
+  start point at START_DATE. Found during implementation, not in the original list;
+  it would have crashed on the run after `turnovers()` succeeded. Its end anchor used
+  a naive `datetime.now()` against a UTC-labelled series, so it was also shifted by the
+  local timezone offset; both anchors are now aware UTC.
+- `entrypoint.py` — env validation, via the shared parser
+- `README.md` — variable table, migration callout and all four Docker examples
 - `.env.example`
 
 ## Testing
