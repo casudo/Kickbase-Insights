@@ -17,6 +17,12 @@ from backend import exceptions
 
 ### ===============================================================================
 
+### Seconds to wait for a profile picture before giving up and treating it as unset.
+### The CDN answers in well under a second when a picture exists, but takes about 20
+### seconds to report a missing one, with GET and with HEAD alike. That accounted for
+### 253 of the 259 seconds balances() spent.
+PROFILEPIC_TIMEOUT = 5
+
 ### Per-run cache for profile pictures. Each lookup downloads the full image, and both
 ### balances() and league_user_stats_tables() ask for every user.
 _profilepic_cache = {}
@@ -308,7 +314,7 @@ def get_profilepic(user_id: str) -> str:
 
     ### Send GET request to get the profile picture
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=PROFILEPIC_TIMEOUT)
         if response.status_code == 200:
             profile_pic = response.url # Profile pic is set
         elif response.status_code == 404:
@@ -316,6 +322,12 @@ def get_profilepic(user_id: str) -> str:
         else:
             response.raise_for_status()
             profile_pic = None
+    except requests.exceptions.Timeout:
+        ### The CDN takes about 20 seconds to answer for a user without a picture, so a
+        ### timeout is the normal case rather than a failure. A missing picture is not
+        ### worth holding up the run for.
+        logging.debug(f"Profile picture lookup for user {user_id} timed out, treating it as unset.")
+        profile_pic = None
     except requests.exceptions.RequestException as e:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") from e
 
