@@ -20,6 +20,8 @@ from backend.kickbase.endpoints.leagues import League_Info, Market_Players
 _player_statistics_cache = {}
 _player_marketvalue_cache = {}
 _transfers_cache = {}
+_user_stats_cache = {}
+_battles_cache = {}
 
 
 def clear_caches() -> None:
@@ -27,6 +29,10 @@ def clear_caches() -> None:
     _player_statistics_cache.clear()
     _player_marketvalue_cache.clear()
     _transfers_cache.clear()
+    _user_stats_cache.clear()
+    _battles_cache.clear()
+
+    miscellaneous.clear_caches()
 
 
 def get_league_list(token: str) -> list:
@@ -227,7 +233,14 @@ def transfers(token: str, league_id: str) -> dict:
 def user_stats(token: str, league_id: str, user_id: str) -> dict:
     """
     Get the statistics of a given user in the given league.
+
+    Cached per league and user for the duration of the run. balances() and
+    league_user_stats_tables() both ask for every user.
     """
+    cache_key = (league_id, str(user_id))
+    if cache_key in _user_stats_cache:
+        return _user_stats_cache[cache_key]
+
     url = f"https://api.kickbase.com/v4/leagues/{league_id}/managers/{user_id}/dashboard"
     headers = {
         "Content-Type": "application/json",
@@ -240,7 +253,9 @@ def user_stats(token: str, league_id: str, user_id: str) -> dict:
         json_response = requests.get(url, headers=headers).json()
     except:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
-    
+
+    _user_stats_cache[cache_key] = json_response
+
     return json_response
 
 
@@ -327,7 +342,15 @@ def live_points(token: str, league_id: str) -> dict:
 def battles(token: str, league_id: str, battle_id: int) -> dict:
     """
     ### Get the battles of the league.
+
+    Cached per league and battle type for the duration of the run. The response holds
+    the standings for the whole league, but league_user_stats_tables() asks for the same
+    five battle types once per user and then scans the result for that one user.
     """
+    cache_key = (league_id, battle_id)
+    if cache_key in _battles_cache:
+        return _battles_cache[cache_key]
+
     url = f"https://api.kickbase.com/v4/leagues/{league_id}/battles/{battle_id}/users"
     headers = {
         "Content-Type": "application/json",
@@ -340,5 +363,7 @@ def battles(token: str, league_id: str, battle_id: int) -> dict:
         json_response = requests.get(url, headers=headers).json()
     except:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") ### TODO: Change exception
-    
+
+    _battles_cache[cache_key] = json_response
+
     return json_response

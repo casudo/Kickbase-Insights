@@ -17,6 +17,16 @@ from backend import exceptions
 
 ### ===============================================================================
 
+### Per-run cache for profile pictures. Each lookup downloads the full image, and both
+### balances() and league_user_stats_tables() ask for every user.
+_profilepic_cache = {}
+
+
+def clear_caches() -> None:
+    """### Empty the per-run caches held in this module."""
+    _profilepic_cache.clear()
+
+
 POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
 ### 0 = Vereinslos oder sehr neue Spieler in der Liga
 
@@ -278,12 +288,19 @@ def julian_to_date(julian_date: int) -> str:
 def get_profilepic(user_id: str) -> str:
     """### Get the profile picture of a user.
 
+    Cached per user for the duration of the run. Each call downloads the full image, and
+    balances() and league_user_stats_tables() both ask for every user.
+
     Args:
         user_id (str): The user ID.
 
     Returns:
         str: The URL of the profile picture.
     """
+    cache_key = str(user_id)
+    if cache_key in _profilepic_cache:
+        return _profilepic_cache[cache_key]
+
     url = f"https://cdn.kickbase.com/files/users/{user_id}/0"
     headers = {
         "Content-Type": "image/jpeg",
@@ -293,10 +310,15 @@ def get_profilepic(user_id: str) -> str:
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            return response.url # Profile pic is set
+            profile_pic = response.url # Profile pic is set
         elif response.status_code == 404:
-            return None # Profile pic is not set
+            profile_pic = None # Profile pic is not set
         else:
             response.raise_for_status()
+            profile_pic = None
     except requests.exceptions.RequestException as e:
         raise exceptions.NotificatonException("Notification failed! Please check your Discord Webhook URL.") from e
+
+    _profilepic_cache[cache_key] = profile_pic
+
+    return profile_pic

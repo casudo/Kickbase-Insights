@@ -134,6 +134,76 @@ def test_transfers_pages_the_feed_once_per_league():
     assert first == second, "cached feed returned different data"
 
 
+def test_battles_fetches_each_battle_type_once():
+    """Every user asks for the same 5 battle standings; fetch each one once."""
+    fake = use_fake({"/battles/": {"us": [{"u": {"i": "1"}, "v": 10}]}})
+
+    ### 13 users each asking for battle types 8, 4, 5, 6, 7
+    for _ in range(13):
+        for battle_type in (8, 4, 5, 6, 7):
+            leagues.battles("token", "league1", battle_type)
+
+    assert len(fake.urls) == 5, f"expected 5 HTTP calls for 5 battle types, got {len(fake.urls)}"
+
+
+def test_battles_keeps_battle_types_apart():
+    fake = use_fake({"/battles/": {"us": []}})
+
+    leagues.battles("token", "league1", 4)
+    leagues.battles("token", "league1", 5)
+
+    assert len(fake.urls) == 2, f"expected 2 HTTP calls for 2 battle types, got {len(fake.urls)}"
+
+
+def test_user_stats_fetches_each_user_once():
+    """balances() and league_user_stats_tables() both ask for every user."""
+    fake = use_fake({"/managers/": {"tv": 1, "pl": 1}})
+
+    leagues.user_stats("token", "league1", "user1")
+    leagues.user_stats("token", "league1", "user1")
+
+    assert len(fake.urls) == 1, f"expected 1 HTTP call, got {len(fake.urls)}"
+
+
+def test_user_stats_keeps_users_apart():
+    fake = use_fake({"/managers/": {"tv": 1}})
+
+    leagues.user_stats("token", "league1", "user1")
+    leagues.user_stats("token", "league1", "user2")
+
+    assert len(fake.urls) == 2, f"expected 2 HTTP calls for 2 users, got {len(fake.urls)}"
+
+
+def test_profile_picture_is_downloaded_once_per_user():
+    """Each call downloads a full JPEG, and both functions ask for every user."""
+    from backend import miscellaneous
+
+    class ImageResponse:
+        status_code = 200
+        url = "https://cdn.kickbase.com/files/users/1/0"
+
+    class CountingCdn:
+        def __init__(self):
+            self.urls = []
+
+        def get(self, url, headers=None, timeout=None):
+            self.urls.append(url)
+            return ImageResponse()
+
+    cdn = CountingCdn()
+    original = miscellaneous.requests
+    miscellaneous.requests = cdn
+    try:
+        miscellaneous.clear_caches()
+        miscellaneous.get_profilepic("user1")
+        miscellaneous.get_profilepic("user1")
+        count = len(cdn.urls)
+    finally:
+        miscellaneous.requests = original
+
+    assert count == 1, f"expected 1 image download, got {count}"
+
+
 def test_clear_caches_forces_a_refetch():
     fake = use_fake({"/players/14300": {"i": "14300"}})
 
@@ -155,6 +225,11 @@ if __name__ == "__main__":
     check("player_statistics is scoped per league", test_player_statistics_is_scoped_per_league)
     check("player_marketvalue fetches a player once", test_player_marketvalue_fetches_a_player_once)
     check("transfers pages the feed once per league", test_transfers_pages_the_feed_once_per_league)
+    check("battles fetches each battle type once", test_battles_fetches_each_battle_type_once)
+    check("battles keeps battle types apart", test_battles_keeps_battle_types_apart)
+    check("user_stats fetches each user once", test_user_stats_fetches_each_user_once)
+    check("user_stats keeps users apart", test_user_stats_keeps_users_apart)
+    check("profile picture downloaded once per user", test_profile_picture_is_downloaded_once_per_user)
     check("clear_caches forces a refetch", test_clear_caches_forces_a_refetch)
 
     leagues.requests = real_requests
