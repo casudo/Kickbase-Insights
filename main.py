@@ -87,6 +87,19 @@ def main() -> None:
     ### Configure logging with the settings from the dictionary
     dictConfig(LOGGING)
 
+    ### Validate START_DATE before doing any work.
+    ### entrypoint.py checks this for Docker runs, but running main.py directly skips
+    ### that check and would only fail minutes later, in turnovers().
+    start_date = getenv("START_DATE")
+    if not start_date:
+        logging.error("START_DATE is not set. Set it to the date your season started (dd.mm.yyyy). Exiting...")
+        exit(1)
+    try:
+        datetime.strptime(start_date, "%d.%m.%Y")
+    except ValueError:
+        logging.error(f"START_DATE '{start_date}' is not in the format dd.mm.yyyy. Exiting...")
+        exit(1)
+
     try:
         selected_league, user_token = login()
 
@@ -545,6 +558,8 @@ def turnovers(user_token: str, selected_league: object) -> None:
 
             ### Set the price to the START_DATE value in the player_marketvalues list
             ### Do this because the player was assigned at the start of the season
+            price = None
+
             for marketValue in player_marketvalues:
                 ### Convert the Julian date to a standard date
                 market_value_date = miscellaneous.julian_to_date(marketValue["dt"])
@@ -553,6 +568,13 @@ def turnovers(user_token: str, selected_league: object) -> None:
                     price = marketValue["mv"]
                     logging.debug(f"Starter player {transfer['firstName']} {transfer['lastName']} was sold! Market value on START_DATE {start_date}: {price}€.")
                     break
+
+            ### Without a market value on START_DATE there is no buy price to work with.
+            ### Skip the transfer instead of reusing the previous player's price, which
+            ### would silently distort the revenue numbers.
+            if price is None:
+                logging.warning(f"No market value found for {transfer['firstName']} {transfer['lastName']} on START_DATE {start_date}. Skipping this sell transfer.")
+                continue
 
             ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
             date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").isoformat()
