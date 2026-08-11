@@ -8,7 +8,15 @@ import requests
 import logging
 import json
 
+from concurrent.futures import ThreadPoolExecutor
+
 from backend import miscellaneous
+
+### -------------------------------------------------------------------
+
+### How many team ids to probe at once. Kept modest on purpose: this runs against the
+### user's own Kickbase account, and being throttled costs more than it saves.
+MAX_TEAM_WORKERS = 8
 
 
 def get_team_overview(token: str) -> dict:
@@ -29,37 +37,44 @@ def get_team_overview(token: str) -> dict:
         "Cookie": f"kkstrauth={token};",
     }
 
-    all_teams = []
+    ### There is no endpoint listing the teams of a competition, so the ids are probed.
+    ### Team IDs 33 and 38 are skipped cuz they are leading to "500 Internal Server Error"
+    team_ids = [team_id for team_id in range(2, 101) if team_id not in (33, 38)]
 
-    ### Loop through team IDs from 2 to 100
-    for team_id in range(2, 101):
-        if team_id in [33, 38]:  ### Skip team IDs 33 and 38 cuz they are leading to "500 Internal Server Error"
-            continue
-
+    def fetch_team(team_id):
+        """Probe one team id. Returns the team info, or None if there is no such team."""
         try:
             response = requests.get(url.format(team_id=team_id), headers=headers)
             response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
-            if response.content:  # Check if the response is not empty
-                json_response = response.json()
-            else:
+            if not response.content:  # Check if the response is not empty
                 logging.warning(f"Empty response for team id {team_id}")
-                continue
+                return None
+            json_response = response.json()
         except requests.exceptions.RequestException as e:
-            logging.warning(f"Failed to get team id {team_id}: {e}")
-            continue
+            logging.debug(f"Failed to get team id {team_id}: {e}")
+            return None
         except json.JSONDecodeError as e:
             logging.warning(f"Failed to decode JSON for team id {team_id}: {e}")
-            continue
-        
+            return None
+
         ### Check if team has players
-        if json_response["it"]:
-            ### Get team id, name, and players
-            team_info = {
-                "teamId": json_response["tid"],
-                "teamName": json_response["tn"],
-                "players": json_response["it"]
-            }
-            all_teams.append(team_info)
+        if not json_response["it"]:
+            return None
+
+        ### Get team id, name, and players
+        return {
+            "teamId": json_response["tid"],
+            "teamName": json_response["tn"],
+            "players": json_response["it"],
+        }
+
+    ### Most of these ids do not exist, and each probe is almost entirely spent waiting,
+    ### so they run concurrently. map keeps the results in team id order, which keeps
+    ### STATIC_teams.json stable between runs.
+    with ThreadPoolExecutor(max_workers=MAX_TEAM_WORKERS) as executor:
+        results = list(executor.map(fetch_team, team_ids))
+
+    all_teams = [team for team in results if team]
 
     logging.info("Got all teams.")
 

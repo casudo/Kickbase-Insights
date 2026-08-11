@@ -204,6 +204,70 @@ def test_profile_picture_is_downloaded_once_per_user():
     assert count == 1, f"expected 1 image download, got {count}"
 
 
+def test_prefetch_players_fills_both_caches():
+    fake = use_fake({"/marketValue/": {"it": [{"mv": 1}]}, "/players/": {"i": "x"}})
+
+    leagues.prefetch_players("token", "league1", ["1", "2", "3"])
+
+    ### one statistics call and one market value call per player
+    assert len(fake.urls) == 6, f"expected 6 HTTP calls, got {len(fake.urls)}: {fake.urls}"
+
+
+def test_prefetch_players_makes_later_lookups_free():
+    fake = use_fake({"/marketValue/": {"it": [{"mv": 1}]}, "/players/": {"i": "x"}})
+
+    leagues.prefetch_players("token", "league1", ["1", "2"])
+    after_prefetch = len(fake.urls)
+    leagues.player_statistics("token", "league1", "1")
+    leagues.player_marketvalue("token", "1")
+
+    assert len(fake.urls) == after_prefetch, \
+        f"lookups after prefetch hit the network: {after_prefetch} -> {len(fake.urls)}"
+
+
+def test_prefetch_players_skips_what_is_cached():
+    fake = use_fake({"/marketValue/": {"it": [{"mv": 1}]}, "/players/": {"i": "x"}})
+
+    leagues.player_statistics("token", "league1", "1")
+    before = len(fake.urls)
+    leagues.prefetch_players("token", "league1", ["1"])
+
+    ### only the market value is still missing for player 1
+    assert len(fake.urls) == before + 1, \
+        f"expected 1 further call, got {len(fake.urls) - before}"
+
+
+def test_prefetch_players_runs_concurrently():
+    """463 players at ~90ms each must not be fetched one after another."""
+    import time
+
+    delay = 0.05
+    players = [str(i) for i in range(16)]
+
+    fake = use_fake({})
+
+    def slow(url, headers=None, timeout=None):
+        fake.urls.append(url)
+        time.sleep(delay)
+        return FakeResponse({"it": [{"mv": 1}], "i": "x"})
+
+    fake.get = slow
+
+    start = time.time()
+    leagues.prefetch_players("token", "league1", players)
+    elapsed = time.time() - start
+
+    sequential = delay * len(players) * 2  # statistics + market value each
+    assert elapsed < sequential / 3, \
+        f"took {elapsed:.2f}s, sequential would be {sequential:.2f}s - not concurrent"
+
+
+def test_prefetch_players_handles_an_empty_list():
+    fake = use_fake({})
+    leagues.prefetch_players("token", "league1", [])
+    assert len(fake.urls) == 0, "an empty list should make no requests"
+
+
 def test_clear_caches_forces_a_refetch():
     fake = use_fake({"/players/14300": {"i": "14300"}})
 
@@ -230,6 +294,13 @@ if __name__ == "__main__":
     check("user_stats fetches each user once", test_user_stats_fetches_each_user_once)
     check("user_stats keeps users apart", test_user_stats_keeps_users_apart)
     check("profile picture downloaded once per user", test_profile_picture_is_downloaded_once_per_user)
+
+    print("\nprefetch_players()")
+    check("fills both caches", test_prefetch_players_fills_both_caches)
+    check("makes later lookups free", test_prefetch_players_makes_later_lookups_free)
+    check("skips what is cached", test_prefetch_players_skips_what_is_cached)
+    check("runs concurrently", test_prefetch_players_runs_concurrently)
+    check("handles an empty list", test_prefetch_players_handles_an_empty_list)
     check("clear_caches forces a refetch", test_clear_caches_forces_a_refetch)
 
     leagues.requests = real_requests

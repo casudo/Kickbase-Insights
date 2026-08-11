@@ -4,7 +4,10 @@
 TODO: Maybe list all functions here automatically?
 """
 
+import logging
 import requests
+
+from concurrent.futures import ThreadPoolExecutor
 
 from backend import exceptions, miscellaneous
 from backend.kickbase.endpoints.leagues import League_Info, Market_Players
@@ -17,6 +20,10 @@ from backend.kickbase.endpoints.leagues import League_Info, Market_Players
 ### during a run, so each response is fetched once and reused.
 ### One run is one process, so these live for the lifetime of the process. Call
 ### clear_caches() to start over.
+### How many player lookups to run at once. Kept modest on purpose: this runs against
+### the user's own Kickbase account, and being throttled costs more than it saves.
+MAX_PLAYER_WORKERS = 8
+
 _player_statistics_cache = {}
 _player_marketvalue_cache = {}
 _transfers_cache = {}
@@ -97,6 +104,41 @@ def get_market(token: str, league_id: str):
     players_on_market = [Market_Players(player) for player in json_response["it"]]
 
     return players_on_market
+
+
+def prefetch_players(token: str, league_id: str, player_ids) -> None:
+    """### Fetch statistics and market value history for many players at once.
+
+    market_value_changes() needs both for every player in the competition, which is two
+    requests each and around a thousand in total. They are independent and almost
+    entirely spent waiting, so they run concurrently and fill the same caches the
+    individual functions use. Those functions then find their answers already there.
+
+    Args:
+        token (str): The user's kkstrauth token.
+        league_id (str): The league to fetch statistics for.
+        player_ids (iterable): The player IDs to fetch.
+    """
+    ids = sorted({str(player_id) for player_id in player_ids})
+
+    missing_statistics = [p for p in ids if (league_id, p) not in _player_statistics_cache]
+    missing_marketvalues = [p for p in ids if p not in _player_marketvalue_cache]
+
+    if not missing_statistics and not missing_marketvalues:
+        return
+
+    logging.debug(f"Prefetching {len(missing_statistics)} player statistic(s) "
+                  f"and {len(missing_marketvalues)} market value history/histories...")
+
+    with ThreadPoolExecutor(max_workers=MAX_PLAYER_WORKERS) as executor:
+        futures = [executor.submit(player_statistics, token, league_id, p)
+                   for p in missing_statistics]
+        futures += [executor.submit(player_marketvalue, token, p)
+                    for p in missing_marketvalues]
+
+        ### Surface any exception rather than letting it disappear into the pool
+        for future in futures:
+            future.result()
 
 
 def player_statistics(token: str, league_id: str, player_id: str):
