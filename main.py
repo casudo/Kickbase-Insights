@@ -6,7 +6,7 @@ from os import getenv, makedirs, path, getcwd
 from art import tprint
 from sys import stdout
 from logging.config import dictConfig
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from backend import exceptions, miscellaneous
 from backend.kickbase.v4 import competitions, user, leagues
@@ -93,8 +93,14 @@ def main() -> None:
     ### Configure logging with the settings from the dictionary
     dictConfig(LOGGING)
 
+    ### Validate START_DATE before doing any work.
+    ## entrypoint.py checks this for Docker runs, but running main.py directly skips
+    ## that check and would only fail minutes later, in turnovers().
     try:
-        selected_league, user_token = login()
+        miscellaneous.get_start_datetime()
+    except exceptions.KickbaseException as e:
+        logging.error(f"{e} Exiting...")
+        exit()
 
         ### Get the daily login gift in every available league
         get_gift(user_token)
@@ -358,7 +364,7 @@ def taken_free_players(user_token: str, selected_league: object):
                 if buy_price == 0:
                     ### Set the buyPrice to the START_DATE value in the player_marketvalues list
                     ### Do this because the player was assigned at the start of the season
-                    start_date = getenv("START_DATE")
+                    start_date = miscellaneous.get_start_datetime().strftime("%d.%m.%Y")
 
                     player_marketvalues = leagues.player_marketvalue(user_token, player["i"])
 
@@ -452,6 +458,15 @@ def turnovers(user_token: str, selected_league: object) -> None:
 
     logging.debug(f"Total transfers after appending new ones: {len(all_transfers)}")
 
+    ### Drop everything from before the season start or league reset
+    start_datetime = miscellaneous.get_start_datetime()
+    transfer_count = len(all_transfers)
+    all_transfers = miscellaneous.filter_transfers_from(all_transfers, start_datetime)
+
+    dropped = transfer_count - len(all_transfers)
+    if dropped:
+        logging.info(f"Ignored {dropped} transfer(s) from before START_DATE ({start_datetime.isoformat()}).")
+
     ### Save updated transfers back to all_transfers.json
     miscellaneous.write_json_to_file(all_transfers, "all_transfers.json")
     logging.debug("Updated all_transfers.json with new transfers")
@@ -529,13 +544,15 @@ def turnovers(user_token: str, selected_league: object) -> None:
         if transfer not in [turnover[1] for turnover in turnovers]:
 
             ### Loop through all marketValues of the player until the "day" matches the START_DATE
-            start_date = getenv("START_DATE")
+            start_date = start_datetime.strftime("%d.%m.%Y")
 
             ### Search the stats of the given player ID to fill the missing attributes for the player
             player_marketvalues = leagues.player_marketvalue(user_token, transfer["playerId"])
 
             ### Set the price to the START_DATE value in the player_marketvalues list
             ### Do this because the player was assigned at the start of the season
+            price = None
+
             for marketValue in player_marketvalues:
                 ### Convert the Julian date to a standard date
                 market_value_date = miscellaneous.julian_to_date(marketValue["dt"])
@@ -545,8 +562,15 @@ def turnovers(user_token: str, selected_league: object) -> None:
                     logging.debug(f"Starter player {transfer['firstName']} {transfer['lastName']} was sold! Market value on START_DATE {start_date}: {price}€.")
                     break
 
+            ### Without a market value on START_DATE there is no buy price to work with
+            ## Skip the transfer instead of reusing the previous player's price, which
+            ## would silently distort the revenue numbers.
+            if price is None:
+                logging.warning(f"No market value found for {transfer['firstName']} {transfer['lastName']} on START_DATE {start_date}. Skipping this sell transfer.")
+                continue
+
             ### If an unmatched sell transfer is found, a simulated buy transfer is created with some default values
-            date = datetime.strptime(getenv("START_DATE"), "%d.%m.%Y").isoformat()
+            date = start_datetime.isoformat()
             buy_transfer = {"date": date,
                             "type": "assigned_at_start",
                             "user": transfer["user"],
