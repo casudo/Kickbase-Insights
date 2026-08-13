@@ -1,4 +1,4 @@
-import { DataGrid } from "@mui/x-data-grid"
+import PagedDataGrid from "./PagedDataGrid"
 import { currencyFormatter } from "./SharedConstants"
 import Avatar from "@mui/material/Avatar"
 
@@ -107,12 +107,9 @@ function LeagueUserTable() {
 
     // Populate the table
     return (
-        <DataGrid
-            autoHeight
+        <PagedDataGrid
             rows={rows}
             columns={columns}
-            pageSize={10}
-            rowsPerPageOptions={[10]}
             initialState={{ sorting: { sortModel: [{ field: "points", sort: "desc" }] } }}
         />
     )

@@ -19,8 +19,7 @@ import CloseIcon from "@mui/icons-material/Close"
 // import Button from "@mui/material/Button";
 
 // Import custom components from the project
-import MarketTableKickbase from "./components/MarketTableKickbase"
-import MarketTableUser from "./components/MarketTableUser"
+import MarketTable from "./components/MarketTable"
 import TurnoversTable from "./components/TurnoversTable"
 import TakenPlayersTable from "./components/TakenPlayersTable"
 import FreePlayersTable from "./components/FreePlayersTable"
@@ -38,8 +37,7 @@ import Battles from "./components/Battles"
 
 // Import timestamps
 import timestamp_main from "./data/timestamps/ts_main.json"
-import timestamp_market_user from "./data/timestamps/ts_market_user.json"
-import timestamp_market_kickbase from "./data/timestamps/ts_market_kickbase.json"
+import timestamp_market from "./data/timestamps/ts_market.json"
 import timestamp_market_value_changes from "./data/timestamps/ts_market_value_changes.json"
 import timestamp_taken_players from "./data/timestamps/ts_taken_players.json"
 import timestamp_free_players from "./data/timestamps/ts_free_players.json"
@@ -98,7 +96,9 @@ function App() {
       <CssBaseline />
 
       {/* Main container for the application */}
-      <Box sx={{ maxWidth: "1000px", minWidth: "700px", margin: "auto", position: "relative", marginBottom: "100px"}}>
+      {/* The merged market table needs the room for its 15 columns. Capped so it does not
+          spread itself across an ultrawide monitor. */}
+      <Box sx={{ maxWidth: "1800px", width: "100%", minWidth: "700px", margin: "auto", position: "relative", marginBottom: "100px"}}>
 
         {/* TabContext manages the state of the tabs */}
         <TabContext value={selectedTab}>
@@ -156,12 +156,8 @@ function App() {
             
             {/* "Transfers" related components */}
             <Paper sx={{ marginTop: "25px" }} elevation={5}>
-              <Typography variant="h4" sx={{ padding: "15px" }}>Transfermarkt (Kickbase) <HelpIcon text="Alle Spieler die von Kickbase direkt gelistet sind."/></Typography>
-              <MarketTableKickbase />
-            </Paper>
-            <Paper sx={{ marginTop: "25px" }} elevation={5}>
-              <Typography variant="h4" sx={{ padding: "15px" }}>Transfermarkt (Spieler) <HelpIcon text="Alle Spieler die von Nutzern aus der Liga gelistet sind."/></Typography>
-              <MarketTableUser />
+              <Typography variant="h4" sx={{ padding: "15px" }}>Transfermarkt <HelpIcon text="Alle Spieler auf dem Transfermarkt. Hellblau hinterlegte Zeilen sind Free Agents, also direkt von Kickbase gelistet; alle anderen sind von Nutzern aus der Liga gelistet. 'Dein Gebot' zeigt dein laufendes Gebot und den Aufschlag auf den aktuellen Marktwert. Ein Ablaufdatum liefert Kickbase nur für die eigenen Angebote."/></Typography>
+              <MarketTable />
             </Paper>
             <Paper sx={{ marginTop: "25px" }} elevation={5}>
               <Typography variant="h4" sx={{ padding: "15px" }}>Marktwertveränderungen</Typography>
@@ -246,8 +242,7 @@ function App() {
               <Typography variant="h6" sx={{ padding: "0px 15px 0px 15px" }}>Timestamps</Typography>
               <Typography variant="body1" sx={{ padding: "0px 15px 15px 15px" }}>
                 Main: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_main.time).toLocaleString("de-DE")}</Typography><br/>
-                Market User: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_market_user.time).toLocaleString("de-DE")}</Typography><br/> 
-                Market Kickbase: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_market_kickbase.time).toLocaleString("de-DE")}</Typography><br/> 
+                Market: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_market.time).toLocaleString("de-DE")}</Typography><br/>
                 Market Value Changes: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_market_value_changes.time).toLocaleString("de-DE")}</Typography><br/>
                 Taken Players: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_taken_players.time).toLocaleString("de-DE")}</Typography><br/>
                 Free Players: <Typography variant="button" style={{ color: "green", opacity: "0.7" }}>{new Date(timestamp_free_players.time).toLocaleString("de-DE")}</Typography><br/>

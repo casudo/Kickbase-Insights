@@ -1,7 +1,7 @@
-import { DataGrid } from '@mui/x-data-grid'
+import PagedDataGrid from './PagedDataGrid'
 import Tooltip from '@mui/material/Tooltip'
 
-import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
+import { trendIcons, currencyFormatter, getStatusIcon } from './SharedConstants'
 
 import data from '../data/free_players.json'
 
@@ -53,8 +53,8 @@ function FreePlayersTable() {
             align: 'center',
             flex: 1,
             renderCell: (params) => (
-                <Tooltip title={statusIcons[params.value].tooltip} arrow>
-                    {statusIcons[params.value].icon}
+                <Tooltip title={getStatusIcon(params.value).tooltip} arrow>
+                    {getStatusIcon(params.value).icon}
                 </Tooltip>
             )
         },  
@@ -99,13 +99,10 @@ function FreePlayersTable() {
     ))
 
     return (
-        <DataGrid
+        <PagedDataGrid
             width={window.innerWidth}
-            autoHeight
             rows={rows}
             columns={columns}
-            pageSize={10}
-            rowsPerPageOptions={[10]}
             initialState={{ sorting: { sortModel: [{ field: 'marketValue', sort: 'desc' }] } }}
         />
     )

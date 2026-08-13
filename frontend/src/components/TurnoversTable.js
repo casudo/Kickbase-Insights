@@ -1,4 +1,4 @@
-import { DataGrid } from '@mui/x-data-grid'
+import PagedDataGrid from './PagedDataGrid'
 import { currencyFormatter } from './SharedConstants'
 import { Box } from '@mui/material'
 
@@ -111,13 +111,10 @@ function TurnoversTable() {
             '& .positive-number::before': { content: '"+"' } 
             }}>
 
-            <DataGrid
+            <PagedDataGrid
                 width={window.innerWidth}
-                autoHeight
                 rows={rows}
                 columns={columns}
-                pageSize={10}
-                rowsPerPageOptions={[10]}
                 initialState={{ sorting: { sortModel: [{ field: 'turnover', sort: 'desc' }] } }}
             />
         </Box>

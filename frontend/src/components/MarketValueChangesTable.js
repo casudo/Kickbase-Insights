@@ -1,6 +1,6 @@
-import { DataGrid } from '@mui/x-data-grid'
-import { currencyFormatter } from './SharedConstants'
 import { Box } from '@mui/material'
+import PagedDataGrid from './PagedDataGrid'
+import { currencyOrDash, deltaCellClassName, deltaColumnStyles } from './SharedConstants'
 
 import data from '../data/market_value_changes.json'
 
@@ -43,7 +43,7 @@ function MarketValueChangesTable() {
             headerName: 'Marktwert',
             type: 'number',
             flex: 2,
-            valueFormatter: ({ value }) => currencyFormatter.format(Number(value)),
+            valueFormatter: currencyOrDash,
             headerAlign: 'center',
             cellClassName: 'font-tabular-nums'
         },
@@ -52,80 +52,45 @@ function MarketValueChangesTable() {
             headerName: 'Heute',
             type: 'number',
             flex: 2,
-            valueFormatter: ({ value }) => currencyFormatter.format(Number(value)),
+            valueFormatter: currencyOrDash,
             headerAlign: 'center',
-            cellClassName: (params) => {
-                if (params.value < 0)
-                    return ['font-tabular-nums', 'negative-number']
-                else if (params.value > 0)
-                    return ['font-tabular-nums', 'positive-number']
-                else
-                    return 'font-tabular-nums'
-            }
+            cellClassName: deltaCellClassName
         },
         {
             field: 'yesterday',
             headerName: 'Gestern',
             type: 'number',
             flex: 2,
-            valueFormatter: ({ value }) => currencyFormatter.format(Number(value)),
+            valueFormatter: currencyOrDash,
             headerAlign: 'center',
-            cellClassName: (params) => {
-                if (params.value < 0)
-                    return ['font-tabular-nums', 'negative-number']
-                else if (params.value > 0)
-                    return ['font-tabular-nums', 'positive-number']
-                else
-                    return 'font-tabular-nums'
-            }
+            cellClassName: deltaCellClassName
         },
         {
             field: 'twoDays',
             headerName: 'Vorgestern',
             type: 'number',
             flex: 2,
-            valueFormatter: ({ value }) => currencyFormatter.format(Number(value)),
+            valueFormatter: currencyOrDash,
             headerAlign: 'center',
-            cellClassName: (params) => {
-                if (params.value < 0)
-                    return ['font-tabular-nums', 'negative-number']
-                else if (params.value > 0)
-                    return ['font-tabular-nums', 'positive-number']
-                else
-                    return 'font-tabular-nums'
-            }
+            cellClassName: deltaCellClassName
         },
         {
             field: 'SevenDaysAvg',
-            headerName: '7 Days (⌀)',
+            headerName: '7 Tage',
             type: 'number',
             flex: 2,
-            valueFormatter: ({ value }) => currencyFormatter.format(Number(value)),
+            valueFormatter: currencyOrDash,
             headerAlign: 'center',
-            cellClassName: (params) => {
-                if (params.value < 0)
-                    return ['font-tabular-nums', 'negative-number']
-                else if (params.value > 0)
-                    return ['font-tabular-nums', 'positive-number']
-                else
-                    return 'font-tabular-nums'
-            }
+            cellClassName: deltaCellClassName
         },
         {
             field: 'ThirtyDaysAvg',
-            headerName: '30 Days (⌀)',
+            headerName: '30 Tage',
             type: 'number',
             flex: 2,
-            valueFormatter: ({ value }) => currencyFormatter.format(Number(value)),
+            valueFormatter: currencyOrDash,
             headerAlign: 'center',
-            cellClassName: (params) => {
-                if (params.value < 0)
-                    return ['font-tabular-nums', 'negative-number']
-                else if (params.value > 0)
-                    return ['font-tabular-nums', 'positive-number']
-                else
-                    return 'font-tabular-nums'
-            }
+            cellClassName: deltaCellClassName
         },
         {
             field: 'manager',
@@ -153,17 +118,10 @@ function MarketValueChangesTable() {
     ))
 
     return (
-        <Box sx={{
-            '& .negative-number': { color: 'red' },
-            '& .positive-number': { color: 'green' },
-            '& .positive-number::before': { content: '"+"' }
-        }}>
-            <DataGrid
-                autoHeight
+        <Box sx={deltaColumnStyles}>
+            <PagedDataGrid
                 rows={rows}
                 columns={columns}
-                pageSize={10}
-                rowsPerPageOptions={[10]}
                 initialState={{ sorting: { sortModel: [{ field: 'today', sort: 'desc' }] } }}
             />
         </Box>

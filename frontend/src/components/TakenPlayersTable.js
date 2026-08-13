@@ -1,6 +1,6 @@
-import { DataGrid } from '@mui/x-data-grid'
+import PagedDataGrid from './PagedDataGrid'
 import Tooltip from '@mui/material/Tooltip'
-import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
+import { trendIcons, currencyFormatter, getStatusIcon } from './SharedConstants'
 import { Box } from '@mui/material'
 
 import data from '../data/taken_players.json'
@@ -46,8 +46,8 @@ function TakenPlayersTable() {
             align: 'center',
             flex: 1,
             renderCell: (params) => (
-                <Tooltip title={statusIcons[params.value].tooltip} arrow>
-                    {statusIcons[params.value].icon}
+                <Tooltip title={getStatusIcon(params.value).tooltip} arrow>
+                    {getStatusIcon(params.value).icon}
                 </Tooltip>
             )
         },        
@@ -124,13 +124,10 @@ function TakenPlayersTable() {
             '& .positive-number::before': { content: '"+"' }
             }}>
 
-            <DataGrid
+            <PagedDataGrid
                 width={window.innerWidth}
-                autoHeight
                 rows={rows}
                 columns={columns}
-                pageSize={10}
-                rowsPerPageOptions={[10]}
                 initialState={{ sorting: { sortModel: [{ field: 'turnover', sort: 'desc' }] } }}
             />
         </Box>

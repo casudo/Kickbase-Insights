@@ -10,7 +10,7 @@ import { NumericFormat } from 'react-number-format'
 import Paper from '@mui/material/Paper'
 import Tooltip from '@mui/material/Tooltip'
 
-import { trendIcons, currencyFormatter, statusIcons } from './SharedConstants'
+import { trendIcons, currencyFormatter, getStatusIcon } from './SharedConstants'
 
 import data from '../data/taken_players.json'
 
@@ -104,8 +104,8 @@ function LineupPlanner() {
             align: 'center',
             flex: 1,
             renderCell: (params) => (
-                <Tooltip title={statusIcons[params.value].tooltip} arrow>
-                    {statusIcons[params.value].icon}
+                <Tooltip title={getStatusIcon(params.value).tooltip} arrow>
+                    {getStatusIcon(params.value).icon}
                 </Tooltip>
             )
         },
