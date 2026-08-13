@@ -96,6 +96,9 @@ def main() -> None:
         logging.error(f"{e} Exiting...")
         exit()
 
+    try:
+        selected_league, user_token, own_user_id = login()
+
         ### Get the daily login gift in every available league
         get_gift(user_token)
 
@@ -131,6 +134,8 @@ def login() -> tuple:
         tuple: A tuple containing the following elements:
             -- selected_league (object): The league the user wants to get data from for the frontend.
             -- user_token (str): User token for authentication.
+            -- own_user_id (str): The logged in user's ID. market() needs it to tell the
+               user's own bids apart from anyone else's.
     """
     logging.info("Logging in...")
 
@@ -145,6 +150,21 @@ def login() -> tuple:
         exit()
     logging.info(f"Available leagues: {', '.join([league.name for league in league_list])}") # Print all available leagues the user is in
 
+    return select_league(league_list), user_token, user_info.id
+
+
+def select_league(league_list: list) -> object:
+    """### Picks the league the frontend should show data for.
+
+    Uses the league named in the `KB_LIGA` environment variable and falls back to the
+    first league the user is in.
+
+    Args:
+        league_list (list): All leagues the user is in.
+
+    Returns:
+        object: The league the user wants to get data from for the frontend.
+    """
     ### Fetch the preferred league name from the environment variable
     preferred_league_name = getenv("KB_LIGA")
 
@@ -166,7 +186,7 @@ def login() -> tuple:
         logging.info(f"No preferred league set. Using the first league in the list: {league_list[0].name}")
         selected_league = league_list[0]
 
-    return selected_league, user_token
+    return selected_league
 
 
 def get_gift(user_token: str) -> None:
