@@ -34,7 +34,7 @@ def clear_caches() -> None:
     _user_stats_cache.clear()
     _battles_cache.clear()
 
-    miscellaneous.clear_caches()
+    #miscellaneous.clear_caches()
 
 
 def get_league_list(token: str) -> list:
