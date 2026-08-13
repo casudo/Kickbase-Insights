@@ -2,7 +2,7 @@ import json
 import time
 import logging
 
-from os import getenv, makedirs, path, getcwd
+from os import getenv, makedirs, path
 from art import tprint
 from sys import stdout
 from logging.config import dictConfig
@@ -10,19 +10,13 @@ from datetime import datetime, timedelta, timezone
 
 from backend import exceptions, miscellaneous
 from backend.kickbase.v4 import competitions, user, leagues
+from backend.paths import LOG_DIR, DATA_DIR, TIMESTAMP_DIR
 
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 ### -------------------------------------------------------------------
 
 __version__ = getenv("REACT_APP_VERSION", "Warning: Couldn't load version")
-
-### Get the current working directory dynamically
-BASE_PATH = getcwd()
-### Paths for logs and data files
-LOG_DIR = path.join(BASE_PATH, "logs")
-DATA_DIR = path.join(BASE_PATH, "frontend", "src", "data")
-TIMESTAMP_DIR = path.join(DATA_DIR, "timestamps")
 
 
 def main() -> None:

@@ -10,6 +10,8 @@ import logging
 
 import pandas as pd
 from datetime import datetime, timedelta, timezone
+from os import getenv, path, makedirs
+from backend.paths import DATA_DIR, TIMESTAMP_DIR
 
 from backend import exceptions
 
@@ -243,6 +245,9 @@ def write_json_to_file(data, file_name: str) -> None:
         data (any): data to be written to the file
         file_name (str): file name
     """
+    ### Make sure the data directories exist, since app.py can write files before main.py ever ran
+    makedirs(TIMESTAMP_DIR, exist_ok=True)
+
     ### Check if it is a data or timestamp file
     try:
         if file_name.startswith("ts_"):
