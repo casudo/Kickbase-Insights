@@ -697,7 +697,7 @@ def league_user_stats_tables(user_token: str, selected_league: object) -> None:
         league_users = json.load(f)
 
     ### Normally a no-op, since balances() runs first and fills the cache
-    miscellaneous.prefetch_profilepics(league_users.keys())
+    #miscellaneous.prefetch_profilepics(league_users.keys())
 
     for user_id, user_name in league_users.items():
         ### Get stats for each user
@@ -832,7 +832,7 @@ def balances(user_token: str, selected_league: object) -> None:
 
     ### Look the profile pictures up all at once. A user without one costs a full
     ### timeout, so doing them one by one dominated the runtime of this function.
-    miscellaneous.prefetch_profilepics(league_users.keys())
+    #miscellaneous.prefetch_profilepics(league_users.keys())
 
     ### Loop through all users in the league
     for user_id, user_name in league_users.items():
