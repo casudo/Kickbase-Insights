@@ -17,7 +17,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
 ### Update pip and install dependencies
-RUN pip install --upgrade pip && pip install --upgrade -r requirements.txt
+RUN pip install --break-system-packages --upgrade -r requirements.txt
 
 ### Set environment variables / build arguments
 ### Will later be read from frontend
