@@ -204,10 +204,38 @@ class Market_Players:
         self.username: str = market_players_dict.get("u", {}).get("n", None) ### Set if player is listed by a user  
         self.price: float = market_players_dict.get("prc", None)
         self.isn: bool = market_players_dict.get("isn", None)
-        self.offers: list = market_players_dict.get("ofs", None)
+        self.offers: list = market_players_dict.get("ofs", None) # The user's OWN offers
+        self.ownOfferUserId: str = market_players_dict.get("uoid", None) # Bidder of the offer mirrored below
+        self.ownOfferPrice: float = market_players_dict.get("uop", None) # Same price as in "ofs"
         self.iposl: bool = market_players_dict.get("iposl", None) ### ???
         self.listedsince: str = market_players_dict.get("dt", None)
         # self.userProfile: str = market_players_dict.get("userProfile", None)  # OPTIONAL: Set if player is listed by a user
         # self.profile: str = market_players_dict.get("profile", None)  # Somehow not always present e.g. Kevin Müller
         # self.number: int = market_players_dict.get("number", None)
         # self.lus: int = market_players_dict.get("lus", None)
+
+    def own_offer(self, own_user_id: str) -> float:
+        """### What the logged in user currently bids for this player, if anything.
+
+        Kickbase only reveals the user's own offers: "ofs" never contains another
+        manager's bid. The same price is mirrored on the item itself as "uop", with
+        "uoid" naming the bidder, and some items carry only that mirror. "ofs" is read
+        first and the mirror serves as the fallback.
+
+        Args:
+            own_user_id (str): The logged in user's ID.
+
+        Returns:
+            float: The user's own offer price, or None if no offer of theirs is placed.
+        """
+        wanted = str(own_user_id)
+
+        for offer in self.offers or []:
+            bidder = offer.get("u") or offer.get("uoid")
+            if bidder is not None and str(bidder) == wanted:
+                return offer.get("uop")
+
+        if self.ownOfferUserId is not None and str(self.ownOfferUserId) == wanted:
+            return self.ownOfferPrice
+
+        return None
