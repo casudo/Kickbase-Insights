@@ -107,7 +107,7 @@ def calculate_revenue_data_daily(turnovers: dict) -> None:
 
     ### Add start and end points for the graph
     ## Both are timezone aware UTC
-    for _, data in user_transfer_revenue.values():
+    for _, data in user_transfer_revenue.items():
         data.append((0, get_start_datetime()))
         data.append((0, datetime.now(timezone.utc)))
 
