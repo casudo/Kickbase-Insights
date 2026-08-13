@@ -303,9 +303,12 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
             player_stats = leagues.player_statistics(user_token, selected_league.id, player["i"])
             player_marketvalue = leagues.player_marketvalue(user_token, player["i"])
 
-            ### Check if player is owned by user
-            if player_stats["oui"] != "0":  # "oui" = "ownedUserId"
-                manager = user_id_to_name.get(player_stats["oui"], "Unknown")
+            ### Check if player is owned by a user in this league
+            ## Ownership lives in the per-league "opl" list, not in the top level "oui"
+            owner = miscellaneous.get_player_owner(player_stats, selected_league.id)
+
+            if owner:
+                manager = owner.get("onm") or user_id_to_name.get(owner["oui"], "Unknown")
             else:
                 manager = "Kickbase"
                 
@@ -375,9 +378,12 @@ def taken_free_players(user_token: str, selected_league: object):
             ### Search the stats of the given player ID to fill the missing attributes for the player
             player_stats = leagues.player_statistics(user_token, selected_league.id, player["i"])
 
-            ### Check if the player is owned by a user
-            if player_stats["oui"] != "0":  # "oui" = "ownedUserId"
-                logging.debug(f"Player {player_stats.get('fn', None)} {player['n']} is owned by user {league_users.get(player_stats['oui'], 'Unknown')}!")
+            ### Check if the player is owned by a user in this league
+            ### Ownership lives in the per-league "opl" list, not in the top level "oui".
+            owner = miscellaneous.get_player_owner(player_stats, selected_league.id)
+
+            if owner:
+                logging.debug(f"Player {player_stats.get('fn', None)} {player['n']} is owned by user {owner.get('onm', 'Unknown')}!")
 
                 ### Check if position number is valid
                 if player["pos"] not in miscellaneous.POSITIONS:
@@ -385,7 +391,7 @@ def taken_free_players(user_token: str, selected_league: object):
                     player["pos"] = 1 ### Default to "Torwart" (Goalkeeper)
 
                 ### Determine the buy price
-                current_user_id = player_stats["oui"]
+                current_user_id = owner["oui"]
                 buy_price = 0
                 if current_user_id in buy_prices:
                     for pid, price in buy_prices[current_user_id]:
@@ -411,7 +417,7 @@ def taken_free_players(user_token: str, selected_league: object):
 
                 ### Create a custom json dict for every taken player. This will be passed to the frontend later.
                 taken_players.append({
-                    "owner": league_users.get(player_stats["oui"], "Unknown"),
+                    "owner": owner.get("onm") or league_users.get(owner["oui"], "Unknown"),
                     "playerId": player["i"],
                     "teamId": player["tid"],
                     "position": miscellaneous.POSITIONS[player["pos"]],
@@ -689,6 +695,10 @@ def league_user_stats_tables(user_token: str, selected_league: object) -> None:
     ### Loop through all users in the league
     with open(path.join(DATA_DIR, "STATIC_users.json"), "r") as f:
         league_users = json.load(f)
+
+    ### Normally a no-op, since balances() runs first and fills the cache
+    miscellaneous.prefetch_profilepics(league_users.keys())
+
     for user_id, user_name in league_users.items():
         ### Get stats for each user
         user_stats = leagues.user_stats(user_token, selected_league.id, user_id)
@@ -743,17 +753,20 @@ def league_user_stats_tables(user_token: str, selected_league: object) -> None:
     miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_league_user_stats.json")
 
 
-def live_points(user_token: str, selected_league: object) -> None:
+def live_points(user_token: str, selected_league: object) -> list:
     """### Retrieves the live points for the players in a users team.
 
     Args:
         user_token (str): The user's kkstrauth token.
         selected_league (object): The league the user wants to get data from for the frontend.
+
+    Returns:
+        list: The live points of every user in the league, including their players.
     """
     logging.info("Getting live points...")
 
     ### Get the current live points
-    live_points = leagues_v1.live_points(user_token, selected_league.id)
+    live_points = leagues.live_points(user_token, selected_league.id)
 
     ### Create a custom json dict for every user and his players
     final_live_points = []
@@ -793,6 +806,8 @@ def live_points(user_token: str, selected_league: object) -> None:
     miscellaneous.write_json_to_file(final_live_points, "live_points.json")
     miscellaneous.write_json_to_file({"time": datetime.now().isoformat()}, "ts_live_points.json")
 
+    return final_live_points
+
 
 def balances(user_token: str, selected_league: object) -> None:
     """### Retrieves the estiamted balances for all users in the league. Daily login bonus and money from achievements are not considered.
@@ -814,6 +829,10 @@ def balances(user_token: str, selected_league: object) -> None:
     with open(path.join(DATA_DIR, "STATIC_users.json"), "r") as f:
         league_users = json.load(f)
         user_balances = {user_id: initial_balance for user_id, user_name in league_users.items()}
+
+    ### Look the profile pictures up all at once. A user without one costs a full
+    ### timeout, so doing them one by one dominated the runtime of this function.
+    miscellaneous.prefetch_profilepics(league_users.keys())
 
     ### Loop through all users in the league
     for user_id, user_name in league_users.items():

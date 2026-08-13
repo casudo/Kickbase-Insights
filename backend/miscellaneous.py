@@ -138,6 +138,35 @@ def calculate_revenue_data_daily(turnovers: dict) -> None:
     write_json_to_file(data, "revenue_sum.json")
     write_json_to_file({"time": datetime.now().isoformat()}, "ts_revenue_sum.json")
 
+
+def get_player_owner(player_stats: dict, league_id: str) -> dict:
+    """### Find out which manager owns a player in the given league.
+
+    Kickbase reports ownership per league in the "opl" list, one entry per league the
+    player is owned in. The top level "oui" field still exists but is always "0", so it
+    cannot be used.
+
+    Args:
+        player_stats (dict): A player_statistics response.
+        league_id (str): The league to look up ownership for.
+
+    Returns:
+        dict: The matching "opl" entry, holding the owner id in "oui" and the owner name
+            in "onm". None if nobody in this league owns the player.
+    """
+    for entry in player_stats.get("opl") or []:
+        if entry.get("li") != league_id:
+            continue
+
+        ### "0", "", None and a missing key all mean nobody owns the player
+        owner_id = entry.get("oui")
+        if not owner_id or str(owner_id) == "0":
+            return None
+
+        return entry
+    return None
+
+
 def market_value_deltas(market_value_history: list) -> dict:
     """### Work out how much a player's market value moved over the usual periods.
 
