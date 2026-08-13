@@ -28,15 +28,15 @@ This is a hobby project to test stuff with JSON and the cores of Python. Feel fr
 ---
 
 ## Screenshots
+
 You can find some screenshots of the frontend below, not all features are shown.  
 
 > [!WARNING]
-As of v1.4.0  
+As of v2.5.0  
 
 ![Transfers](repo_pictures/transfers.png)  
 ![MarketValue](repo_pictures/marketvalue.png)  
 ![Revenue](repo_pictures/revenue.png)  
-![LivePoints](repo_pictures/livepoints.png)  
 
 ## Docker
 If you want to run this in a Docker container, you'll first need to set some mandatory environment variables:  
