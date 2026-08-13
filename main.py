@@ -96,6 +96,9 @@ def main() -> None:
         logging.error(f"{e} Exiting...")
         exit()
 
+    ### Start every run with empty API caches
+    leagues.clear_caches()
+
     try:
         selected_league, user_token, own_user_id = login()
 
