@@ -9,5 +9,5 @@ node_modules/
 !package-lock.json
 *.log
 logs/
-
+tests/
 .env
