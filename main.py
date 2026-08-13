@@ -290,6 +290,11 @@ def market_value_changes(user_token: str, selected_league: object) -> None:
 
     all_teams_in_competition = competitions.get_team_overview(user_token)
 
+    ### Fetch every player's statistics and market value history up front
+    ## The loop below needs two requests per player
+    all_player_ids = [player["i"] for team in all_teams_in_competition for player in team["players"]]
+    leagues.prefetch_players(user_token, selected_league.id, all_player_ids)
+
     ### Loop through all teams
     for team in all_teams_in_competition:
         ### Loop through all players in the team
