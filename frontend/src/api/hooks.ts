@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useMemo } from "react"
 import { useLeagueId } from "@/lib/league"
-import { ApiError, api } from "./client"
+import { api } from "./client"
 import type {
   Battle,
   Fixtures,
   Lineups,
   Live,
+  LivePlayer,
   Manager,
   MarketPlayer,
   MatchdayCharts,
@@ -109,6 +110,18 @@ export const useFixtures = (day?: number) =>
 export const useLineups = () => useLeagueQuery<Lineups>(["lineups"], "/lineups", { staleTime: 120_000 })
 export const useLive = (autoRefresh: boolean) =>
   useLeagueQuery<Live>(["live"], "/live", { refetchInterval: autoRefresh ? 60_000 : false, staleTime: 30_000 })
+
+/** Live points of any player of the matchday, for the search on the live page */
+export function useLivePlayer(id: string | null) {
+  const leagueId = useLeagueId()
+  return useQuery({
+    queryKey: ["live-player", id, leagueId],
+    queryFn: () => api<LivePlayer>(withLeague(`/live/players/${id}`, leagueId)),
+    enabled: id !== null && leagueId !== null,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+}
 
 export function usePlayer(id: string | null) {
   const leagueId = useLeagueId()

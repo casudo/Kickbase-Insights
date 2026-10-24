@@ -231,6 +231,11 @@ class MatchOut(Schema):
     status: int | None = None
     minute: str | None = None
 
+    @computed_field
+    @property
+    def state(self) -> MatchState:
+        return analytics.match_state(self.status, self.minute)
+
 
 class FixturesOut(Schema):
     day: int | None
@@ -277,13 +282,15 @@ class LiveManagerOut(Schema):
     season_points: int | None = None
     placement: int | None = None
     players_started: int = 0
+    players_on_field: int = 0
     lineup_size: int = 0
     players: list[LivePlayerOut] = []
 
 
 class LiveOut(Schema):
     day: int | None
-    updated_at: datetime
+    updated_at: datetime # When Kickbase was asked, the answer is reused for cache_seconds
+    cache_seconds: int
     matches: list[MatchOut]
     managers: list[LiveManagerOut]
 

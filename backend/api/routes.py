@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 
@@ -25,6 +25,7 @@ from api.schemas import (
     LeagueOut,
     LineupsOut,
     LiveOut,
+    LivePlayerOut,
     LoginIn,
     ManagerOut,
     MarketPlayerOut,
@@ -415,3 +416,12 @@ async def live(state: StateDep, league: LeagueDep, viewer: ViewerDep) -> LiveOut
     return await ask_kickbase(state, viewer, lambda client: state.live.get(league, client, viewer.user_id))
 
 
+@router.get("/live/players/{player_id}", response_model=LivePlayerOut)
+async def live_player(
+    state: StateDep,
+    league: LeagueDep,
+    viewer: ViewerDep,
+    player_id: Annotated[str, Path(pattern=r"^\d+$")],
+) -> LivePlayerOut:
+    """Live points and events of any player of the current matchday, for the search on the live page."""
+    return await ask_kickbase(state, viewer, lambda client: state.live.player(league, client, player_id))

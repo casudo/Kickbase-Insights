@@ -216,6 +216,10 @@ export type LivePlayer = {
   points: number
   matchStatus: number | null
   matchState: MatchState
+  matchMinute: string | null
+  minute: number | null /** Minutes the player has played */
+  role: "start" | "sub" | "bench" | null
+  onField: boolean
   goals: number
   assists: number
   ownGoals: number
@@ -234,13 +238,16 @@ export type LiveManager = {
   seasonPoints: number | null
   placement: number | null
   playersStarted: number
+  playersOnField: number
   lineupSize: number
   players: LivePlayer[]
 }
 
 export type Live = {
   day: number | null
+  /** When Kickbase was asked. The server reuses that answer for `cacheSeconds`. */
   updatedAt: string
+  cacheSeconds: number
   matches: Match[]
   managers: LiveManager[]
 }

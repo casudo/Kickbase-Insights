@@ -35,7 +35,7 @@
 - **Übersicht** – your placement, team value, real budget and max bid, today's biggest market value movers, listings about to expire, the league table and the current matchday at a glance.
 - **Transfermarkt** – every listing with price, markup, your own bid, market value changes (today, yesterday, 7 and 30 days) and a live countdown.
 - **Spieler** – all players of the competition with market value trends, owner and gain since purchase. Tap a player anywhere for the player screen: on desktop a large view with a detailed market value chart (high, low and purchase price marked), the daily changes as bars, statistics for 7 days up to the whole history (best and worst day, rising and falling streaks, distance to the high, volatility), the last 14 days, the ownership and the league's transfers of that player. On phones the same as a compact sheet.
-- **Live** – live points of the current matchday, counted only for the starting eleven, with goals, assists, cards and the scoring events of every player.
+- **Live** – live points of the current matchday, counted for all players, with goals, assists, cards and the scoring events of every player.
 - **Liga** – table, estimated balances and max bids of every manager, battles and the Bundesliga table.
 - **Transfers** – profit of every sale, summed transfer revenue over time, team value, points and placement per matchday and the full transfer feed.
 - **Aufstellungsplaner** – your eleven on a pitch, like in the Kickbase app. It starts with the lineup saved in Kickbase; switch formations, swap players by tapping or with drag and drop, or let it pick the best eleven by average points. Mark players to sell and see the new balance and which formations you can still field.

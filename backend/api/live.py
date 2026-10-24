@@ -35,6 +35,10 @@ class LiveService:
         self.engine = engine
         self._cache: dict[str, tuple[float, LiveOut]] = {}
         self._lineups: dict[str, tuple[float, LineupsOut]] = {}
+        ### Players looked up by the search on the live page, by (league, player)
+        self._players: dict[tuple[str, str], tuple[float, LivePlayerOut]] = {}
+        ### Codes Kickbase sent that are not documented, each logged once so they can be looked into
+        self._unknown_codes: set[tuple[str, int]] = set()
         self._lock = asyncio.Lock()
         ### event type id -> (display name, kind)
         self._event_types: dict[int, tuple[str, analytics.EventKind | None]] = {}
@@ -77,6 +81,38 @@ class LiveService:
             self._cache[league.id] = (time.monotonic(), result)
             return result
 
+    async def player(self, league: League, client: KickbaseClient, player_id: str) -> LivePlayerOut:
+        """Live points and events of any player of the matchday, also of those nobody fielded."""
+        ttl = self.settings.sync.live_cache_seconds
+        now = time.monotonic()
+        self._players = {key: entry for key, entry in self._players.items() if now - entry[0] < ttl}
+        cached = self._players.get((league.id, player_id))
+        if cached:
+            return cached[1]
+        shared = self._cache.get(league.id)
+        day = (shared[1].day if shared else None) or league.current_day
+        player, _ = await asyncio.gather(
+            asyncio.to_thread(self._load_player, player_id), self._load_event_types(client)
+        )
+        center = await self._player_center(client, league.competition_id, player_id, day, league.id)
+        team_states = {}
+        if shared:
+            for match in shared[1].matches:
+                team_states[match.team1_id] = team_states[match.team2_id] = match.state
+        result = self._live_player(player_id, center, player, team_states)
+        self._players[(league.id, player_id)] = (time.monotonic(), result)
+        return result
+
+    def _load_player(self, player_id: str) -> Player | None:
+        with Session(self.engine) as session:
+            return session.get(Player, player_id)
+
+    def _note_code(self, kind: str, code: int | None, known: set[int]) -> None:
+        if code is None or code in known or (kind, code) in self._unknown_codes:
+            return
+        self._unknown_codes.add((kind, code))
+        log.info("Kickbase sent the undocumented %s code %s", kind, code)
+
     async def _load_event_types(self, client: KickbaseClient) -> None:
         now = datetime.now(UTC)
         if self._event_types_at and now - self._event_types_at < EVENT_TYPES_MAX_AGE:
@@ -112,31 +148,6 @@ class LiveService:
         )
         center_by_id = {pid: center for pid, center in zip(lineup_ids, centers, strict=True) if center}
 
-        result_managers = []
-        for user in ranking.users:
-            lineup = [
-                self._live_player(pid, center_by_id.get(pid), players.get(pid)) for pid in user.lineup if pid
-            ]
-            lineup.sort(key=lambda p: (p.position, -p.points))
-            manager = managers.get(user.id)
-            result_managers.append(
-                LiveManagerOut(
-                    id=user.id,
-                    name=user.name or (manager.name if manager else user.id),
-                    image=user.image or (manager.image if manager else None),
-                    ### Kickbase's own total stays authoritative, the per player sum can lag behind
-                    matchday_points=user.matchday_points
-                    if user.matchday_points is not None
-                    else sum(p.points for p in lineup),
-                    season_points=user.season_points,
-                    placement=user.season_placement,
-                    players_started=sum(1 for p in lineup if p.match_status),
-                    lineup_size=len(lineup),
-                    players=lineup,
-                )
-            )
-        result_managers.sort(key=lambda m: m.matchday_points, reverse=True)
-
         current = next((group for group in matchdays.days if group.day == day), None)
         matches = [
             MatchOut(
@@ -152,7 +163,51 @@ class LiveService:
             )
             for m in (current.matches if current else [])
         ]
-        return LiveOut(day=day, updated_at=datetime.now(UTC), matches=matches, managers=result_managers)
+        team_states = {}
+        for match in matches:
+            self._note_code("match status", match.status, analytics.KNOWN_MATCH_CODES)
+            team_states[match.team1_id] = team_states[match.team2_id] = match.state
+
+        result_managers = []
+        for user in ranking.users:
+            fielded = [pid for pid in user.lineup if pid]
+            lineup = [
+                self._live_player(pid, center_by_id.get(pid), players.get(pid), team_states)
+                for pid in fielded
+            ]
+            lineup.sort(key=lambda p: (p.position, -p.points))
+            manager = managers.get(user.id)
+            ### Kickbase updates the totals of the ranking with a delay, the points of the players are live.
+            ### Their sum is what the manager gets, as long as every one of them could be fetched.
+            live_sum = sum(p.points for p in lineup)
+            complete = all(pid in center_by_id for pid in fielded)
+            matchday_points = live_sum if complete or user.matchday_points is None else user.matchday_points
+            season_points = user.season_points
+            if season_points is not None and user.matchday_points is not None:
+                season_points += matchday_points - user.matchday_points
+            result_managers.append(
+                LiveManagerOut(
+                    id=user.id,
+                    name=user.name or (manager.name if manager else user.id),
+                    image=user.image or (manager.image if manager else None),
+                    matchday_points=matchday_points,
+                    season_points=season_points,
+                    placement=user.season_placement,
+                    players_started=sum(1 for p in lineup if p.match_state != "upcoming"),
+                    players_on_field=sum(1 for p in lineup if p.on_field),
+                    lineup_size=len(lineup),
+                    players=lineup,
+                )
+            )
+        result_managers.sort(key=lambda m: m.matchday_points, reverse=True)
+
+        return LiveOut(
+            day=day,
+            updated_at=datetime.now(UTC),
+            cache_seconds=self.settings.sync.live_cache_seconds,
+            matches=matches,
+            managers=result_managers,
+        )
 
     async def _player_center(
         self, client: KickbaseClient, competition_id: int, player_id: str, day: int | None, league_id: str
@@ -166,7 +221,11 @@ class LiveService:
             return None
 
     def _live_player(
-        self, player_id: str, center: kb.PlayerCenter | None, player: Player | None
+        self,
+        player_id: str,
+        center: kb.PlayerCenter | None,
+        player: Player | None,
+        team_states: dict[str | None, analytics.MatchState],
     ) -> LivePlayerOut:
         kinds: Counter[str] = Counter()
         grouped: dict[str, list[int]] = defaultdict(list)
@@ -181,16 +240,31 @@ class LiveService:
             LiveEventOut(name=name, count=len(points), points=sum(points)) for name, points in grouped.items()
         ]
         events.sort(key=lambda e: abs(e.points), reverse=True)
+
+        team_id = (player.team_id if player else None) or (center.team_id if center else None)
+        if center:
+            self._note_code("match status", center.match_status, analytics.KNOWN_MATCH_CODES)
+            self._note_code("player status", center.status, analytics.KNOWN_PLAYER_CODES)
+        state = analytics.later_state(
+            analytics.match_state(center.match_status, center.match_minute) if center else None,
+            team_states.get(team_id),
+        )
+        role = analytics.player_role(center.status if center else None)
+        sent_off = kinds["red"] + kinds["yellow_red"] > 0
         return LivePlayerOut(
             id=player_id,
             first_name=player.first_name if player else None,
             last_name=(player.last_name if player else None) or (center.last_name if center else player_id),
             image=(player.image if player else None) or (center.image if center else None),
-            team_id=(player.team_id if player else None) or (center.team_id if center else None),
+            team_id=team_id,
             position=player.position if player else 0,
             points=center.points if center else 0,
             match_status=center.match_status if center else None,
+            match_state=state,
+            match_minute=center.match_minute if center else None,
             minute=center.minute if center else None,
+            role=role,
+            on_field=analytics.on_field(state, role, sent_off),
             goals=kinds["goal"],
             assists=kinds["assist"],
             own_goals=kinds["own_goal"],
