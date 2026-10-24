@@ -1,0 +1,333 @@
+<mxfile host="drawio" type="device">
+  <diagram id="architecture" name="Architecture">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="architecture-0" />
+        <mxCell id="architecture-1" parent="architecture-0" />
+        <mxCell id="architecture-title" value="&lt;font style=&quot;font-size: 22px&quot;&gt;&lt;b&gt;Kickbase Insights&lt;/b&gt;&lt;/font&gt;&amp;nbsp; how frontend and backend fit together" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;" vertex="1" parent="architecture-1">
+          <mxGeometry x="40" y="10" width="1100" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-browser" value="&lt;b&gt;Browser&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;React app (frontend/)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;arcSize=3;verticalAlign=top;align=left;spacingLeft=12;spacingTop=4;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="architecture-1">
+          <mxGeometry x="40" y="100" width="280" height="620" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-pages" value="&lt;b&gt;Pages&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Übersicht, Transfermarkt, Live, Liga, Spieler, Transfers, Aufstellungsplaner, Status&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="architecture-browser">
+          <mxGeometry x="15" y="60" width="250" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-login" value="&lt;b&gt;Login + AuthGate&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;e-mail and password once, then a session cookie&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="architecture-browser">
+          <mxGeometry x="15" y="158" width="250" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-league" value="&lt;b&gt;League switcher&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;every request names the league&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="architecture-browser">
+          <mxGeometry x="15" y="234" width="250" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-query" value="&lt;b&gt;TanStack Query&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;caches answers, refetches after a sync, revalidates with ETags&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="architecture-browser">
+          <mxGeometry x="15" y="310" width="250" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-screens" value="&lt;b&gt;Player screen, pitch, charts&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;charts are loaded on demand&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="architecture-browser">
+          <mxGeometry x="15" y="396" width="250" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-theme" value="&lt;b&gt;Light / dark&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;the choice is kept in the browser&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#6c8ebf;" vertex="1" parent="architecture-browser">
+          <mxGeometry x="15" y="472" width="250" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-browser-stack" value="&lt;font color=&quot;#555555&quot;&gt;React 19 · TypeScript · Vite · Tailwind CSS · TanStack Query · Recharts&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" vertex="1" parent="architecture-browser">
+          <mxGeometry x="15" y="550" width="250" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-backend" value="&lt;b&gt;Backend&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;one Python process on port 8000 (backend/) · Python 3.13, FastAPI, SQLModel, httpx&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;arcSize=3;verticalAlign=top;align=left;spacingLeft=12;spacingTop=4;fontSize=15;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="architecture-1">
+          <mxGeometry x="470" y="70" width="1110" height="830" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-main" value="&lt;b&gt;main.py&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;python main.py → start · sync · healthcheck (used by Docker)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#666666;" vertex="1" parent="architecture-backend">
+          <mxGeometry x="20" y="40" width="1070" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-api" value="&lt;b&gt;api/&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;HTTP layer&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;arcSize=3;verticalAlign=top;align=left;spacingLeft=12;spacingTop=4;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="architecture-backend">
+          <mxGeometry x="20" y="100" width="260" height="540" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-app" value="&lt;b&gt;app.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;creates the app, gzip + ETags, serves the built frontend&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="architecture-api">
+          <mxGeometry x="15" y="40" width="230" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-routes" value="&lt;b&gt;routes.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;REST endpoints, checks session and league, manual syncs, bids&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="architecture-api">
+          <mxGeometry x="15" y="132" width="230" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-schemas" value="&lt;b&gt;schemas.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;response models, camelCase JSON&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="architecture-api">
+          <mxGeometry x="15" y="224" width="230" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-insights" value="&lt;b&gt;insights.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;builds answers from the database, cached until the next sync&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="architecture-api">
+          <mxGeometry x="15" y="316" width="230" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-live" value="&lt;b&gt;live.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;on demand from Kickbase: live points, lineups, match histories&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#82b366;" vertex="1" parent="architecture-api">
+          <mxGeometry x="15" y="408" width="230" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-auth" value="&lt;b&gt;auth/&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;logins and sessions&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;arcSize=3;verticalAlign=top;align=left;spacingLeft=12;spacingTop=4;fontSize=14;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="architecture-backend">
+          <mxGeometry x="380" y="100" width="300" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-accounts" value="&lt;b&gt;accounts.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;login through Kickbase, sessions, which token syncs which league&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="architecture-auth">
+          <mxGeometry x="15" y="40" width="270" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-security" value="&lt;b&gt;security.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Kickbase tokens encrypted, session cookies hashed&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#9673a6;" vertex="1" parent="architecture-auth">
+          <mxGeometry x="15" y="128" width="270" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-sync" value="&lt;b&gt;sync/&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;Kickbase → database&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;arcSize=3;verticalAlign=top;align=left;spacingLeft=12;spacingTop=4;fontSize=14;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="architecture-backend">
+          <mxGeometry x="380" y="390" width="300" height="250" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-scheduler" value="&lt;b&gt;scheduler.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;cron schedule, by default 6 times a day&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="architecture-sync">
+          <mxGeometry x="15" y="40" width="270" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-service" value="&lt;b&gt;service.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;incremental sync of a league&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="architecture-sync">
+          <mxGeometry x="15" y="108" width="270" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-notify" value="&lt;b&gt;notify.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;optional Discord messages&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#d79b00;" vertex="1" parent="architecture-sync">
+          <mxGeometry x="15" y="176" width="270" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-kickbase" value="&lt;b&gt;kickbase/&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;talks to Kickbase&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;arcSize=3;verticalAlign=top;align=left;spacingLeft=12;spacingTop=4;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="architecture-backend">
+          <mxGeometry x="780" y="100" width="310" height="420" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-client" value="&lt;b&gt;client.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;async API client with retries and a concurrency limit&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="architecture-kickbase">
+          <mxGeometry x="15" y="40" width="280" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-pictures" value="&lt;b&gt;pictures.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;player portraits from the CDN's picture pool&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="architecture-kickbase">
+          <mxGeometry x="15" y="132" width="280" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-kbmodels" value="&lt;b&gt;models.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;typed views on Kickbase's short JSON keys&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="architecture-kickbase">
+          <mxGeometry x="15" y="224" width="280" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-demo" value="&lt;b&gt;demo.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;a fake Kickbase with sample data (KBI_DEMO)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="architecture-kickbase">
+          <mxGeometry x="15" y="316" width="280" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-db" value="&lt;b&gt;db/&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;database access&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;arcSize=3;verticalAlign=top;align=left;spacingLeft=12;spacingTop=4;fontSize=14;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="architecture-backend">
+          <mxGeometry x="20" y="680" width="510" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-dbmodels" value="&lt;b&gt;models.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;tables (SQLModel)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="architecture-db">
+          <mxGeometry x="15" y="40" width="235" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-dbinit" value="&lt;b&gt;__init__.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;engine, schema version check&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#b85450;" vertex="1" parent="architecture-db">
+          <mxGeometry x="260" y="40" width="235" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-core" value="&lt;b&gt;core/&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#555555&quot;&gt;used by every package&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;container=1;collapsible=0;arcSize=3;verticalAlign=top;align=left;spacingLeft=12;spacingTop=4;fontSize=14;fillColor=#f5f5f5;strokeColor=#999999;dashed=1;" vertex="1" parent="architecture-backend">
+          <mxGeometry x="560" y="680" width="530" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-config" value="&lt;b&gt;config.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;settings from KBI_… variables&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#999999;" vertex="1" parent="architecture-core">
+          <mxGeometry x="15" y="40" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-analytics" value="&lt;b&gt;analytics.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;pure calculations: profits, balances, points&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#999999;" vertex="1" parent="architecture-core">
+          <mxGeometry x="185" y="40" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-version" value="&lt;b&gt;version.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;the version number&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#999999;" vertex="1" parent="architecture-core">
+          <mxGeometry x="355" y="40" width="160" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-database" value="&lt;b&gt;Database&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;SQLite file in /data&lt;br&gt;or PostgreSQL&lt;/font&gt;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fontSize=12;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="architecture-1">
+          <mxGeometry x="630" y="950" width="230" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-kbapi" value="&lt;b&gt;Kickbase API v4&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;api.kickbase.com&lt;br&gt;login, leagues, market, offers, players, live&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;dashed=1;fontSize=12;" vertex="1" parent="architecture-1">
+          <mxGeometry x="1660" y="195" width="260" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-cdn" value="&lt;b&gt;Kickbase CDN&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;kickbase.b-cdn.net&lt;br&gt;portraits, club logos, avatars&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;dashed=1;fontSize=12;" vertex="1" parent="architecture-1">
+          <mxGeometry x="1660" y="330" width="260" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-discord" value="&lt;b&gt;Discord&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;optional webhook: failed syncs, collected bonus&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=middle;spacingLeft=8;spacingRight=6;fontSize=12;fillColor=#ffffff;strokeColor=#333333;strokeWidth=1.5;dashed=1;fontSize=12;" vertex="1" parent="architecture-1">
+          <mxGeometry x="1660" y="620" width="260" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-legend" value="&lt;font color=&quot;#555555&quot;&gt;Solid arrows: requests and data · dashed arrow: the built frontend · dashed boxes: outside services, core/ is used everywhere and has no arrows&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;" vertex="1" parent="architecture-1">
+          <mxGeometry x="1030" y="950" width="890" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-request" value="JSON over /api/*&lt;br&gt;with the session cookie" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.389;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-browser" target="architecture-routes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-static" value="the built app" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.24;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-app" target="architecture-browser">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-cdn" value="pictures come straight from Kickbase's CDN" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-browser" target="architecture-cdn">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="60" />
+              <mxPoint x="1960" y="60" />
+              <mxPoint x="1960" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="architecture-e-auth" value="login,&lt;br&gt;session" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.777;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-routes" target="architecture-auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-live" value="on demand (cached)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.607;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-live" target="architecture-kickbase">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="617" />
+              <mxPoint x="800" y="425" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="architecture-e-login" value="login" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.183;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-accounts" target="architecture-kickbase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-fetch" value="fetch" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.12;exitDx=0;exitDy=0;entryX=0;entryY=0.964;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-service" target="architecture-kickbase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-api" value="HTTPS&lt;br&gt;+ token" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.49;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-client" target="architecture-kbapi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-pool" value="HEAD" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-pictures" target="architecture-cdn">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1600" y="341" />
+              <mxPoint x="1600" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="architecture-e-discord" value="webhook" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-notify" target="architecture-discord">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-reads" value="reads" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.255;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-api" target="architecture-db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-writes" value="writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=0.333;exitY=1;exitDx=0;exitDy=0;entryX=0.902;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-sync" target="architecture-db">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="architecture-e-db" value="SQLAlchemy" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="architecture-1" source="architecture-db" target="architecture-database">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="flows" name="What happens when …">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="flows-0" />
+        <mxCell id="flows-1" parent="flows-0" />
+        <mxCell id="flows-title" value="&lt;font style=&quot;font-size: 22px&quot;&gt;&lt;b&gt;What happens when …&lt;/b&gt;&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;" vertex="1" parent="flows-1">
+          <mxGeometry x="40" y="10" width="900" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login" value="&lt;b&gt;Logging in&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;every visitor uses their own Kickbase account&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=13;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;" vertex="1" parent="flows-1">
+          <mxGeometry x="40" y="90" width="170" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-0" value="&lt;b&gt;1 · Login form&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;e-mail and password, sent once to POST /api/auth/login&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="flows-1">
+          <mxGeometry x="240" y="90" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-1" value="&lt;b&gt;2 · auth/accounts.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;hands the password to Kickbase and keeps nothing of it&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="flows-1">
+          <mxGeometry x="490" y="90" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-1-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-login-0" target="flows-login-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-2" value="&lt;b&gt;3 · Kickbase&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;answers with a session token and the user's leagues&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#ffffff;strokeColor=#333333;dashed=1;strokeWidth=1.5;" vertex="1" parent="flows-1">
+          <mxGeometry x="740" y="90" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-2-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-login-1" target="flows-login-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-3" value="&lt;b&gt;4 · auth/security.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;the token is stored encrypted, the browser gets a random session cookie&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="flows-1">
+          <mxGeometry x="990" y="90" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-3-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-login-2" target="flows-login-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-4" value="&lt;b&gt;5 · sync/service.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;syncs the user's leagues in the background, unless they are up to date&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="flows-1">
+          <mxGeometry x="1240" y="90" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-login-4-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-login-3" target="flows-login-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page" value="&lt;b&gt;Opening a page&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;e.g. the Transfermarkt&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=13;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" vertex="1" parent="flows-1">
+          <mxGeometry x="40" y="290" width="170" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-0" value="&lt;b&gt;1 · Browser&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;TanStack Query asks for GET /api/market?league=…&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="flows-1">
+          <mxGeometry x="240" y="290" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-1" value="&lt;b&gt;2 · api/routes.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;who is it (session cookie)? a member of that league?&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="flows-1">
+          <mxGeometry x="490" y="290" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-1-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-page-0" target="flows-page-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-2" value="&lt;b&gt;3 · Cache&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;one answer per league, viewer and sync, until the next sync&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="flows-1">
+          <mxGeometry x="740" y="290" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-2-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-page-1" target="flows-page-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-3" value="&lt;b&gt;4 · api/insights.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;builds the answer from the database, private bids only for their owner&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="flows-1">
+          <mxGeometry x="990" y="290" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-3-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-page-2" target="flows-page-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-4" value="&lt;b&gt;5 · api/app.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;gzip and an ETag: 304 Not Modified when nothing changed&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="flows-1">
+          <mxGeometry x="1240" y="290" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-4-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-page-3" target="flows-page-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-page-back" value="JSON back to the page" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-page-4" target="flows-page-0">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1340.0" y="434" />
+              <mxPoint x="340.0" y="434" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="flows-sync" value="&lt;b&gt;A sync&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;on the schedule, or started on the Status page&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=13;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=2;" vertex="1" parent="flows-1">
+          <mxGeometry x="40" y="530" width="170" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-0" value="&lt;b&gt;1 · sync/scheduler.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;cron, by default at 02:10, 06:10, … 22:10&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="flows-1">
+          <mxGeometry x="240" y="530" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-1" value="&lt;b&gt;2 · Fetch in parallel&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;table, matchdays, overview, market, squads, rankings, battles, activity feed&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="flows-1">
+          <mxGeometry x="490" y="530" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-1-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-sync-0" target="flows-sync-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-2" value="&lt;b&gt;3 · Only what is stale&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;player details every 12 h, value histories once a day, the feed until a known entry&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="flows-1">
+          <mxGeometry x="740" y="530" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-2-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-sync-1" target="flows-sync-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-3" value="&lt;b&gt;4 · Pictures&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;the player's own photo › the CDN's picture pool › the club's placeholder&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="flows-1">
+          <mxGeometry x="990" y="530" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-3-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-sync-2" target="flows-sync-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-4" value="&lt;b&gt;5 · Store&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;one transaction; core/analytics.py works out profits and balances&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="flows-1">
+          <mxGeometry x="1240" y="530" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-4-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-sync-3" target="flows-sync-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-5" value="&lt;b&gt;6 · Private data&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;budget and bids of every logged in member, two requests each&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="flows-1">
+          <mxGeometry x="1490" y="530" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-sync-5-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-sync-4" target="flows-sync-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid" value="&lt;b&gt;Placing a bid&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;from the Transfermarkt page&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fontSize=13;strokeWidth=2;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="flows-1">
+          <mxGeometry x="40" y="730" width="170" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-0" value="&lt;b&gt;1 · Bid dialog&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;Bieten opens it with market value, balance and max bid&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="flows-1">
+          <mxGeometry x="240" y="730" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-1" value="&lt;b&gt;2 · api/routes.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;POST /api/market/{id}/bid, only for members of the league&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="flows-1">
+          <mxGeometry x="490" y="730" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-2" value="&lt;b&gt;3 · Kickbase&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;takes the offer in the user's name, or says why not&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#ffffff;strokeColor=#333333;dashed=1;strokeWidth=1.5;" vertex="1" parent="flows-1">
+          <mxGeometry x="740" y="730" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-3" value="&lt;b&gt;4 · sync/service.py&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;reads the user's budget and bids again&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="flows-1">
+          <mxGeometry x="990" y="730" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-4" value="&lt;b&gt;5 · Market page&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#555555&quot;&gt;the cached answer is dropped, the new bid shows right away&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;align=left;verticalAlign=top;spacingLeft=10;spacingRight=8;spacingTop=6;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="flows-1">
+          <mxGeometry x="1240" y="730" width="200" height="104" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-1-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-bid-0" target="flows-bid-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-2-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-bid-1" target="flows-bid-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-3-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-bid-2" target="flows-bid-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="flows-bid-4-e" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#4d4d4d;strokeWidth=1.5;fontSize=11;fontColor=#333333;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="flows-1" source="flows-bid-3" target="flows-bid-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

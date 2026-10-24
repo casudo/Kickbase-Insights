@@ -1,22 +1,28 @@
-### Dockerfiles
-Dockerfile
-.dockerignore
-
-### Git files
+### Version control and docs
 .git/
 .gitignore
-
-### Random misc files
+.dockerignore
+Dockerfile
+docker-compose.yml
 README.md
-venv/
-__pycache__/
-*.log
 repo_pictures/
-.env
+docs/
 
-### Ignore auto generated files
-frontend/node_modules/
-frontend/src/data/*.json
-frontend/src/data/timestamps/*.
-logs/
-tests/
+### Secrets and local data
+**/.env
+**/.env.*
+**/data/
+**/*.db
+
+### Dependencies and build output, rebuilt inside the image
+**/node_modules/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.egg-info/
+**/build/
+frontend/dist/
+
+### Tooling caches and logs
+**/.ruff_cache/
+**/*.log

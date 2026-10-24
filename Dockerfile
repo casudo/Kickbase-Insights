@@ -1,36 +1,47 @@
-FROM ubuntu 
+### ---------------------------------------------------------------------------
+### Frontend: build the static single page app
+FROM node:22-alpine AS frontend
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/ ./
+RUN npm run build
 
-### Set working directory and copy files
-WORKDIR /code
-COPY . /code/
+### ---------------------------------------------------------------------------
+### Runtime: one Python process serves the API, the frontend and the scheduler
+FROM python:3.13-slim
 
-### Make script executable
-RUN chmod 770 /code/main.py
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    TZ=Europe/Berlin \
+    KBI_DATA_DIR=/data \
+    KBI_FRONTEND_DIR=/app/static
 
-### Install dependencies
-ARG DEBIAN_FRONTEND=noninteractive
-RUN apt update && apt upgrade -y \
-    && apt install -y python3 python3-pip curl tree nano tzdata
+### tzdata for local timestamps in the logs, the scheduler ships its own zone data
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
-### Installs Node.js and npm directly
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
+WORKDIR /app
+### The dependencies first, they change far less often than the code
+COPY backend/pyproject.toml ./
+RUN pip install . && rm -rf build *.egg-info
+COPY backend/ ./
 
-### Update pip and install dependencies
-RUN pip install --break-system-packages --upgrade -r requirements.txt
+COPY --from=frontend /frontend/dist ./static
 
-### Set environment variables / build arguments
-### Will later be read from frontend
-### Can be set with "docker build . -t ghcr.io/casudo/kickbase-insights:<version> --build-arg REACT_APP_VERSION=<version>"
-ARG REACT_APP_VERSION 
-ENV REACT_APP_VERSION=$REACT_APP_VERSION
+### Set with: docker build . -t ghcr.io/casudo/kickbase-insights:<version> --build-arg VERSION=<version>
+ARG VERSION
+ENV KBI_VERSION=$VERSION
 
-ENV WATCHPACK_POLLING=true
+RUN useradd --create-home --uid 1000 kbi && mkdir -p /data && chown kbi:kbi /data
+USER kbi
+VOLUME /data
+EXPOSE 8000
 
-### Set timezone
-ENV TZ=Europe/Berlin
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["python", "main.py", "healthcheck"]
 
 ### Set entrypoint
-### https://stackoverflow.com/a/29745541
-ENTRYPOINT ["python3", "-u", "/code/entrypoint.py"]
+CMD ["python", "main.py", "start"]

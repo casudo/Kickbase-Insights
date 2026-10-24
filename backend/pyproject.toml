@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kickbase-insights"
+version = "3.0.0"
+description = "Self-hosted insights for your Kickbase league."
+license = "MIT"
+authors = [{ name = "casudo" }]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.140",
+    "uvicorn[standard]>=0.50",
+    "httpx>=0.28",
+    "sqlmodel>=0.0.40",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings>=2.10",
+    "croniter>=6.0",
+    "tzdata>=2025.1",
+    "cryptography>=44",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.12"]
+
+### An application, not a library: installing it only pulls in the dependencies, the code runs
+### from this folder (python main.py)
+[tool.setuptools]
+packages = []
+py-modules = []
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "ASYNC"]
+ignore = ["B008"]
