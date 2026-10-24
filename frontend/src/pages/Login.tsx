@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, EyeOff, Lock, Mail, Moon, Sun } from "lucide-react"
+import { ArrowRight, Coffee, Eye, EyeOff, Lock, Mail, Moon, Sun } from "lucide-react"
 import { type FormEvent, useState } from "react"
 import { Navigate, useNavigate, useSearchParams } from "react-router"
 import { ApiError } from "@/api/client"
@@ -45,7 +45,7 @@ export default function Login() {
       <main className="relative flex flex-1 items-center justify-center px-5 py-10">
         <div className="w-full max-w-[25rem]">
           <div className="mb-7 flex flex-col items-center text-center">
-            <KickbaseMark className="size-12 shadow-lg shadow-accent/25" />
+            <KickbaseMark className="size-12 shadow-lg shadow-amber-400/30" />
             <h1 className="mt-4 text-xl font-semibold tracking-tight">Kickbase Insights</h1>
             <p className="mt-1 text-sm text-muted">Statistiken und Analysen für deine Ligen</p>
           </div>
@@ -125,7 +125,7 @@ export default function Login() {
           {/* Text below login form */}
           <p className="mt-5 flex gap-2.5 px-1 text-xs leading-relaxed text-muted">
             <Lock className="mt-0.5 size-3.5 shrink-0 text-accent" />
-            Deine Login-Daten werden an Kickbase übermittelt und werden nirgends gespeichert. Verschlüsselt gespeichert wird lediglich die Sitzung, die
+            Deine Login-Daten werden an Kickbase übermittelt und nicht gespeichert. Verschlüsselt gespeichert wird lediglich die Sitzung, die
             Kickbase zurückgibt.
           </p>
         </div>
@@ -172,17 +172,17 @@ function Backdrop() {
 // Footer
 function Footer() {
   const [theme, setTheme] = useTheme()
-  const link = "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 hover:bg-surface-2 hover:text-fg"
+  const link = "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 whitespace-nowrap hover:bg-surface-2 hover:text-fg"
   return (
     <footer className="pb-safe relative border-t border-line/70 bg-bg/60 backdrop-blur">
-      <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 px-5 py-4 text-xs text-muted sm:flex-row">
+      <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-3 px-5 py-4 text-xs text-muted sm:flex-row">
         <span>This is a hobby project and not affiliated with Kickbase in any way.</span>
-        <nav className="flex items-center gap-1">
-          {/* Buy Me a Coffee
+        <nav className="flex flex-wrap items-center justify-center gap-1">
+          {/* Buy Me a Coffee */}
           <a href={LINKS.buymeacoffee} target="_blank" rel="noreferrer" className={link}>
-            <BuyMeACoffee className="size-3.5" />
-            BuyMeACoffee
-          </a> */}
+            <Coffee className="size-3.5" />
+            Buy me a coffee
+          </a>
           {/* GitHub */}
           <a href={LINKS.github} target="_blank" rel="noreferrer" className={link}>
             <GitHubMark className="size-3.5" />
@@ -218,4 +218,3 @@ export function GitHubMark({ className }: { className?: string }) {
   )
 }
 
-// TODO: BuyMeACoffee Icon
