@@ -130,7 +130,6 @@ pip install ".[dev]"
 cp ../.env.example .env
 python main.py start
 python main.py sync
-pytest
 ruff check . && ruff format .
 ```
 
@@ -139,7 +138,6 @@ ruff check . && ruff format .
 cd frontend
 npm install
 npm run dev
-npm test
 npm run build
 ```
 

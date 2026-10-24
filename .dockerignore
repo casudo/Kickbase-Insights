@@ -23,8 +23,6 @@ docs/
 **/build/
 frontend/dist/
 
-### Tests and tooling
-backend/tests/
-**/.pytest_cache/
+### Tooling caches and logs
 **/.ruff_cache/
 **/*.log

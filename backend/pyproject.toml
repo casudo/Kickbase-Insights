@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3", "ruff>=0.12"]
+dev = ["ruff>=0.12"]
 
 ### An application, not a library: installing it only pulls in the dependencies, the code runs
 ### from this folder (python main.py)
@@ -37,7 +37,3 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "ASYNC"]
 ignore = ["B008"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-pythonpath = ["."]
