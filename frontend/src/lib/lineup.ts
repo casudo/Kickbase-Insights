@@ -1,5 +1,4 @@
-import { FORMATIONS, type Formation } from "./formations"
-import { status } from "./kickbase"
+import { FORMATIONS, type Formation, status } from "./kickbase"
 
 /** Goalkeeper, defenders, midfielders, forwards - Kickbase's position numbers */
 export const LINE_POSITIONS = [1, 2, 3, 4] as const

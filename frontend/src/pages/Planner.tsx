@@ -7,9 +7,8 @@ import { metricText, Pitch, type PitchMetric } from "@/components/Pitch"
 import { Badge, Button, Card, CardHeader, PageHeader, QueryState, Segmented, Select, Skeleton, Stat } from "@/components/ui"
 import { cn } from "@/lib/cn"
 import { compactMoney, money, number } from "@/lib/format"
-import { canField, countPositions, type Formation, FORMATIONS } from "@/lib/formations"
 import { useStoredState } from "@/lib/hooks"
-import { POSITIONS } from "@/lib/kickbase"
+import { canField, countPositions, type Formation, FORMATIONS, POSITIONS } from "@/lib/kickbase"
 import { arrange, assign, bestLineup, fieldedIds, fromKickbase, type LinePosition, type Lineup, rank, type Slot } from "@/lib/lineup"
 
 export default function Planner() {
