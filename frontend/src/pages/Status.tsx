@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { AlertTriangle, BookOpen, CheckCircle2, ExternalLink, GitBranch, RefreshCw, XCircle } from "lucide-react"
+import { AlertTriangle, BookOpen, CheckCircle2, Coffee, ExternalLink, GitBranch, RefreshCw, XCircle } from "lucide-react"
 import { type ReactNode, useState } from "react"
 import { useStatus, useSyncRuns, useTriggerSync } from "@/api/hooks"
 import type { SyncRun } from "@/api/types"
@@ -55,6 +55,16 @@ export default function Status() {
                   <Row label="Marktwerte vom">{data.league?.marketValuesUpdatedAt ? dateTime(data.league.marketValuesUpdatedAt) : "–"}</Row>
                 </dl>
                 <div className="mt-4 grid gap-2">
+                  {/* Its own colors instead of a Button, whose surface color would win over the yellow */}
+                  <a
+                    href={LINKS.buymeacoffee}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex h-10 items-center gap-2 rounded-xl bg-[#ffdd00] px-4 text-sm font-medium text-neutral-900 transition-colors hover:bg-[#ffd000]"
+                  >
+                    <Coffee className="size-4" /> Buy me a coffee
+                    <ExternalLink className="ml-auto size-3.5 opacity-60" />
+                  </a>
                   <a href={REPO} target="_blank" rel="noreferrer">
                     <Button className="w-full justify-start">
                       <GitBranch className="size-4" /> GitHub
