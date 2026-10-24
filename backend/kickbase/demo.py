@@ -319,9 +319,33 @@ class DemoLeague:
             item = {k: v for k, v in entry.items() if k != "_bid"}
             bid = entry.get("_bid")
             if bid and bid[0] == user_id:
-                item["ofs"] = [{"u": user_id, "uop": bid[1]}]
+                item["ofs"] = [{"i": self.offer_id(entry["i"]), "u": user_id, "uop": bid[1]}]
             result.append(item)
         return result
+
+    def offer_id(self, player_id: str) -> str:
+        return f"{self.id}{player_id}"
+
+    def offer(
+        self, method: str, user_id: str, player_id: str, offer_id: str | None, body: dict
+    ) -> httpx.Response:
+        """Places, changes or withdraws `user_id`'s offer, with Kickbase's rule that an offer for a
+        player sold by Kickbase is at least worth the market value."""
+        entry = next((item for item in self.market if item["i"] == player_id), None)
+        if entry is None:
+            return httpx.Response(404, json={"err": 1, "errMsg": "Der Spieler steht nicht auf dem Markt."})
+        if method == "DELETE":
+            bid = entry.get("_bid")
+            if not bid or bid[0] != user_id or offer_id != self.offer_id(player_id):
+                return httpx.Response(404, json={"err": 2, "errMsg": "Dieses Gebot gibt es nicht."})
+            del entry["_bid"]
+            return httpx.Response(200, json={})
+        price = int(body.get("price") or 0)
+        minimum = entry["mv"] if "u" not in entry else 1
+        if price < minimum:
+            return httpx.Response(400, json={"err": 3, "errMsg": "Das Gebot liegt unter dem Marktwert."})
+        entry["_bid"] = (user_id, price)
+        return httpx.Response(200, json={"offerId": self.offer_id(player_id)})
 
 
 @dataclass
@@ -499,6 +523,14 @@ class DemoWorld:
         if user_id not in USERS:
             return httpx.Response(401, json={"err": "unauthorized"})
 
+        offer = re.fullmatch(r"/v4/leagues/(\w+)/market/(\w+)/offers(?:/(\w+))?", path)
+        if offer and request.method in ("POST", "DELETE"):
+            league = self.leagues.get(offer.group(1))
+            if league is None or user_id not in dict(league.managers):
+                return httpx.Response(403, json={"err": "not a member"})
+            body = json.loads(request.content or b"{}") if request.method == "POST" else {}
+            return league.offer(request.method, user_id, offer.group(2), offer.group(3), body)
+
         for pattern, handler in self._routes():
             match = re.fullmatch(pattern, path)
             if match:
@@ -550,6 +582,7 @@ class DemoWorld:
             ),
             (r"/v4/competitions/(\d+)/teams/(\w+)/teamprofile", self._team_profile),
             (r"/v4/competitions/(\d+)/players/(\w+)/marketValue/(\d+)", self._history_response),
+            (r"/v4/competitions/(\d+)/players/(\w+)/performance", self._performance),
             (r"/v4/competitions/(\d+)/players/(\w+)", self._player),
             (r"/v4/competitions/(\d+)/playercenter/(\w+)", self._player_center),
             (
@@ -712,6 +745,43 @@ class DemoWorld:
         history = self.players[player_id].history[-int(days) :]
         return {"it": [{"dt": day, "mv": value} for day, value in history]}
 
+    def _performance(self, query, user_id, competition_id, player_id):
+        """The player's season, shaped like Kickbase's: every match of the club, played or not."""
+        player = self.players[player_id]
+        matches = []
+        for group in self.fixtures():
+            match = next((m for m in group["it"] if player.team_id in (m["t1"], m["t2"])), None)
+            if match is None:
+                continue
+            entry = {
+                "day": group["day"],
+                "md": match["dt"],
+                "t1": match["t1"],
+                "t2": match["t2"],
+                "pt": player.team_id,
+                "mdst": match["st"],
+                "cur": group["day"] == CURRENT_DAY,
+                "st": 0,
+            }
+            if match["st"]:
+                entry.update({"t1g": match["t1g"], "t2g": match["t2g"]})
+                if group["day"] == CURRENT_DAY:
+                    role, points = self.match_role(player_id), self.live_points(player_id)[0]
+                else:
+                    rng = random.Random(f"{self.seed}-day-{group['day']}-{player_id}")
+                    role = rng.choices([5, 3, 4], weights=[70, 12, 18])[0]
+                    average = player.average_points or 60
+                    points = max(-40, int(rng.gauss(average, average * 0.7))) if role != 4 else 0
+                played = {
+                    5: rng_minutes(player_id, group["day"], 75, 96),
+                    3: rng_minutes(player_id, group["day"], 5, 40),
+                }.get(role, 0)
+                entry.update({"st": role, "mp": f"{played}'"})
+                if points:
+                    entry["p"] = points
+            matches.append(entry)
+        return {"it": [{"ti": "2026/2027", "n": "Bundesliga", "ph": matches}]}
+
     def _player_center(self, query, user_id, competition_id, player_id):
         p = self.players[player_id]
         points, events, match = self.live_points(player_id)
@@ -737,6 +807,10 @@ class DemoWorld:
             "md": match["dt"] if match else None,
             "pim": p.image,
         }
+
+
+def rng_minutes(player_id: str, day: int, low: int, high: int) -> int:
+    return random.Random(f"minutes-{day}-{player_id}").randint(low, high)
 
 
 def _market_entry(player: DemoPlayer, price: int) -> dict:
