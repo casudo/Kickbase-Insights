@@ -99,6 +99,7 @@ All settings are environment variables with the `KBI_` prefix, nested settings u
 | `KBI_SYNC__LIVE_CACHE_SECONDS` | `45` | How long live points are reused before Kickbase is asked again. |
 | `KBI_API__PORT` | `8000` | Port of the web server. |
 | `KBI_API__FORWARDED_ALLOW_IPS` | `127.0.0.1` | Proxies whose `X-Forwarded-*` headers are trusted. Set to `*` behind Traefik or nginx in a Docker network, so login cookies are marked secure over HTTPS. |
+| `KBI_API__HIDE_HEALTH_CHECKS` | `false` | Leave the `GET /api/health` requests out of the container log. |
 | `KBI_DATABASE__HOST` | – | PostgreSQL host. Without it an SQLite database in `/data` is used. |
 | `KBI_DATABASE__PORT` / `__DATABASE` / `__USERNAME` / `__PASSWORD` | `5432` / `kickbase` / `kickbase` / – | PostgreSQL connection. |
 | `KBI_DATABASE__URL` | – | A full SQLAlchemy URL, wins over the fields above. |

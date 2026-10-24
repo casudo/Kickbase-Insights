@@ -52,6 +52,8 @@ class ApiSettings(BaseModel):
     ### Proxies whose X-Forwarded-* headers are trusted, e.g. "*" behind Traefik in a Docker network.
     ### Needed for secure cookies over HTTPS and per client rate limits
     forwarded_allow_ips: str = "127.0.0.1"
+    ### Leave the GET /api/health requests out of the logs
+    hide_health_checks: bool = False
     ### Only needed when the frontend is served from a different origin (e.g. `npm run dev` without proxy)
     cors_origins: list[str] = []
 

@@ -29,6 +29,12 @@ from sync.service import SyncService, mark_interrupted_runs
 log = logging.getLogger("kbi")
 
 
+def _not_a_health_check(record: logging.LogRecord) -> bool:
+    """False for uvicorn's access log line of GET /api/health, so it is left out."""
+    args = record.args
+    return not (isinstance(args, tuple) and len(args) >= 3 and str(args[2]).split("?")[0] == "/api/health")
+
+
 def configure_logging(debug: bool) -> None:
     logging.basicConfig(
         level=logging.DEBUG if debug else logging.INFO,
@@ -77,6 +83,8 @@ def create_app(
         log.info(
             "Kickbase Insights %s starting%s", settings.version, " in demo mode" if settings.demo else ""
         )
+        if settings.api.hide_health_checks:
+            logging.getLogger("uvicorn.access").addFilter(_not_a_health_check)
 
         engine = create_db_engine(database_url(settings))
         await asyncio.to_thread(init_db, engine)
