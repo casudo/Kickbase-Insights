@@ -10,6 +10,7 @@ const ManagerLineChartImpl = lazy(() => charts().then((m) => ({ default: m.Manag
 const ValueHistoryChartImpl = lazy(() => charts().then((m) => ({ default: m.ValueHistoryChart })))
 const DetailedValueChartImpl = lazy(() => charts().then((m) => ({ default: m.DetailedValueChart })))
 const DailyChangeChartImpl = lazy(() => charts().then((m) => ({ default: m.DailyChangeChart })))
+const MatchPointsChartImpl = lazy(() => charts().then((m) => ({ default: m.MatchPointsChart })))
 
 export function ManagerLineChart(props: ComponentProps<typeof ManagerLineChartImpl>) {
   return (
@@ -39,6 +40,14 @@ export function DailyChangeChart(props: ComponentProps<typeof DailyChangeChartIm
   return (
     <Suspense fallback={<Skeleton className="w-full" style={{ height: props.height ?? 140 }} />}>
       <DailyChangeChartImpl {...props} />
+    </Suspense>
+  )
+}
+
+export function MatchPointsChart(props: ComponentProps<typeof MatchPointsChartImpl>) {
+  return (
+    <Suspense fallback={<Skeleton className="w-full" style={{ height: props.height ?? 150 }} />}>
+      <MatchPointsChartImpl {...props} />
     </Suspense>
   )
 }

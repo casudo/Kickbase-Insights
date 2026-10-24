@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 from collections import Counter, defaultdict
 from datetime import UTC, datetime, timedelta
@@ -15,7 +16,16 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import Engine
 from sqlmodel import Session, select
 
-from api.schemas import LineupsOut, LiveEventOut, LiveManagerOut, LiveOut, LivePlayerOut, MatchOut
+from api.schemas import (
+    LineupsOut,
+    LiveEventOut,
+    LiveManagerOut,
+    LiveOut,
+    LivePlayerOut,
+    MatchOut,
+    PlayerMatchesOut,
+    PlayerMatchOut,
+)
 from core import analytics
 from core.config import Settings
 from db.models import League, Manager, Player
@@ -27,6 +37,8 @@ log = logging.getLogger(__name__)
 EVENT_TYPES_MAX_AGE = timedelta(hours=24)
 ### Lineups change rarely, and only through the managers themselves
 LINEUPS_MAX_AGE_SECONDS = 120
+### A player's matches change once per match
+MATCHES_MAX_AGE_SECONDS = 10 * 60
 
 
 class LiveService:
@@ -37,6 +49,7 @@ class LiveService:
         self._lineups: dict[str, tuple[float, LineupsOut]] = {}
         ### Players looked up by the search on the live page, by (league, player)
         self._players: dict[tuple[str, str], tuple[float, LivePlayerOut]] = {}
+        self._matches: dict[tuple[int, str], tuple[float, PlayerMatchesOut]] = {}
         ### Codes Kickbase sent that are not documented, each logged once so they can be looked into
         self._unknown_codes: set[tuple[str, int]] = set()
         self._lock = asyncio.Lock()
@@ -101,6 +114,23 @@ class LiveService:
                 team_states[match.team1_id] = team_states[match.team2_id] = match.state
         result = self._live_player(player_id, center, player, team_states)
         self._players[(league.id, player_id)] = (time.monotonic(), result)
+        return result
+
+    async def matches(self, league: League, client: KickbaseClient, player_id: str) -> PlayerMatchesOut:
+        """A player's matches of the current season: the played ones with result, minutes and points,
+        and the opponents still to come."""
+        key = (league.competition_id, player_id)
+        cached = self._matches.get(key)
+        if cached and time.monotonic() - cached[0] < MATCHES_MAX_AGE_SECONDS:
+            return cached[1]
+        performance = await client.player_performance(league.competition_id, player_id)
+        ### Oldest season first, the last one is the current
+        season = performance.seasons[-1] if performance.seasons else None
+        result = PlayerMatchesOut(
+            season=season.title if season else None,
+            matches=[_player_match(match) for match in season.matches] if season else [],
+        )
+        self._matches[key] = (time.monotonic(), result)
         return result
 
     def _load_player(self, player_id: str) -> Player | None:
@@ -273,3 +303,28 @@ class LiveService:
             red_cards=kinds["red"],
             events=events,
         )
+
+
+def _player_match(match: kb.PerformanceMatch) -> PlayerMatchOut:
+    """A match from the player's point of view: their club's goals first, the other club as opponent."""
+    home = match.team_id is None or match.team_id == match.team1_id
+    state = analytics.match_state(match.match_status)
+    role = analytics.player_role(match.status)
+    minutes = re.match(r"\d+", match.minutes or "")
+    points = match.points
+    if points is None and state != "upcoming" and role in ("start", "sub"):
+        ### Kickbase leaves the points out when they are zero
+        points = 0
+    return PlayerMatchOut(
+        day=match.day,
+        kickoff=match.kickoff,
+        opponent_id=match.team2_id if home else match.team1_id,
+        home=home,
+        goals=match.team1_goals if home else match.team2_goals,
+        opponent_goals=match.team2_goals if home else match.team1_goals,
+        points=points,
+        minutes=int(minutes.group()) if minutes else None,
+        role=role,
+        state=state,
+        current=match.current,
+    )

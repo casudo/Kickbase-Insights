@@ -28,9 +28,10 @@ BASE_URL = "https://api.kickbase.com"
 class KickbaseError(Exception):
     """A request against the Kickbase API failed."""
 
-    def __init__(self, message: str, status_code: int | None = None):
+    def __init__(self, message: str, status_code: int | None = None, reason: str | None = None):
         super().__init__(message)
         self.status_code = status_code
+        self.reason = reason
 
 
 class KickbaseAuthError(KickbaseError):
@@ -40,6 +41,18 @@ class KickbaseAuthError(KickbaseError):
 ### ==========================================================================================================
 ### HTTP Client
 ### ==========================================================================================================
+
+
+def _error_reason(response: httpx.Response) -> str | None:
+    """Kickbase's own explanation of a rejected request, if it sent one."""
+    try:
+        body = response.json()
+    except ValueError:
+        return response.text[:200] or None
+    if isinstance(body, dict):
+        reason = body.get("errMsg") or body.get("message") or body.get("err")
+        return str(reason)[:200] if reason is not None else None
+    return None
 
 
 class KickbaseHttp:
@@ -193,11 +206,12 @@ class KickbaseClient:
         params: dict | None = None,
         json: Any = None,
         headers: dict | None = None,
+        retries: int | None = None,
     ) -> Any:
         await self._ensure_token()
         relogged = False
         last_error: Exception | None = None
-        retries = self._http.retries
+        retries = self._http.retries if retries is None else retries
 
         for attempt in range(retries + 1):
             delay = 0.5 * 2**attempt + random.uniform(0, 0.25)
@@ -231,8 +245,10 @@ class KickbaseClient:
                     if retry_after and retry_after.isdigit():
                         delay = max(delay, min(float(retry_after), 30.0))
                 elif response.status_code >= 400:
+                    reason = _error_reason(response)
+                    message = f"{method} {path} returned HTTP {response.status_code}"
                     raise KickbaseError(
-                        f"{method} {path} returned HTTP {response.status_code}", response.status_code
+                        f"{message}: {reason}" if reason else message, response.status_code, reason
                     )
                 else:
                     return response.json() if response.content else {}
@@ -280,6 +296,17 @@ class KickbaseClient:
     async def market(self, league_id: str) -> models.Market:
         return await self._get(models.Market, f"/v4/leagues/{league_id}/market")
 
+    ### Offers change the user's account, so a failed attempt is never sent a second time
+    async def place_offer(self, league_id: str, player_id: str, price: int) -> dict:
+        return await self.request(
+            "POST", f"/v4/leagues/{league_id}/market/{player_id}/offers", json={"price": price}, retries=0
+        )
+
+    async def withdraw_offer(self, league_id: str, player_id: str, offer_id: str) -> dict:
+        return await self.request(
+            "DELETE", f"/v4/leagues/{league_id}/market/{player_id}/offers/{offer_id}", retries=0
+        )
+
     async def feed_page(self, league_id: str, start: int, size: int = 50) -> list[models.FeedItem]:
         page = await self._get(
             models.FeedPage, f"/v4/leagues/{league_id}/activitiesFeed", {"start": start, "max": size}
@@ -321,6 +348,11 @@ class KickbaseClient:
 
     async def player(self, competition_id: int, player_id: str) -> models.PlayerDetails:
         return await self._get(models.PlayerDetails, f"/v4/competitions/{competition_id}/players/{player_id}")
+
+    async def player_performance(self, competition_id: int, player_id: str) -> models.PlayerPerformance:
+        return await self._get(
+            models.PlayerPerformance, f"/v4/competitions/{competition_id}/players/{player_id}/performance"
+        )
 
     async def market_value_history(
         self, competition_id: int, player_id: str, days: int = 365

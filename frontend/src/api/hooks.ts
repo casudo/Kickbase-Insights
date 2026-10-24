@@ -3,6 +3,7 @@ import { useMemo } from "react"
 import { useLeagueId } from "@/lib/league"
 import { api } from "./client"
 import type {
+  BidResult,
   Battle,
   Fixtures,
   Lineups,
@@ -14,6 +15,7 @@ import type {
   Me,
   Player,
   PlayerDetail,
+  PlayerMatches,
   RevenueChart,
   Status,
   SyncRun,
@@ -110,6 +112,41 @@ export const useFixtures = (day?: number) =>
 export const useLineups = () => useLeagueQuery<Lineups>(["lineups"], "/lineups", { staleTime: 120_000 })
 export const useLive = (autoRefresh: boolean) =>
   useLeagueQuery<Live>(["live"], "/live", { refetchInterval: autoRefresh ? 60_000 : false, staleTime: 30_000 })
+
+/** A player's matches of the current season, fetched from Kickbase when the player screen opens */
+export function usePlayerMatches(id: string | null) {
+  const leagueId = useLeagueId()
+  return useQuery({
+    queryKey: ["player-matches", id, leagueId],
+    queryFn: () => api<PlayerMatches>(withLeague(`/players/${id}/matches`, leagueId)),
+    enabled: id !== null && leagueId !== null,
+    staleTime: 5 * 60_000,
+  })
+}
+
+/** Places, changes and withdraws offers at Kickbase, in the name of whoever is logged in */
+export function useBid() {
+  const client = useQueryClient()
+  const leagueId = useLeagueId()
+  // The new offer shows on the market and in the budget figures right away
+  const refresh = () =>
+    Promise.all(["market", "managers"].map((key) => client.invalidateQueries({ queryKey: [key] })))
+  const place = useMutation({
+    mutationFn: ({ playerId, price }: { playerId: string; price: number }) =>
+      api<BidResult>(withLeague(`/market/${playerId}/bid`, leagueId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ price }),
+      }),
+    onSuccess: refresh,
+  })
+  const withdraw = useMutation({
+    mutationFn: (playerId: string) =>
+      api<BidResult>(withLeague(`/market/${playerId}/bid`, leagueId), { method: "DELETE" }),
+    onSuccess: refresh,
+  })
+  return { place, withdraw }
+}
 
 /** Live points of any player of the matchday, for the search on the live page */
 export function useLivePlayer(id: string | null) {

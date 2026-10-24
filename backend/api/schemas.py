@@ -295,6 +295,33 @@ class LiveOut(Schema):
     managers: list[LiveManagerOut]
 
 
+class PlayerMatchOut(Schema):
+    day: int | None = None
+    kickoff: datetime | None = None
+    opponent_id: str | None = None
+    home: bool = True
+    goals: int | None = None # Of the player's club
+    opponent_goals: int | None = None
+    points: int | None = None # None when the player did not play or the match is still to come
+    minutes: int | None = None
+    role: PlayerRole | None = None
+    state: MatchState = "upcoming"
+    current: bool = False # The current matchday
+
+
+class PlayerMatchesOut(Schema):
+    season: str | None = None
+    matches: list[PlayerMatchOut] = []
+
+
+class BidIn(Schema):
+    price: int = Field(gt=0)
+
+
+class BidOut(Schema):
+    own_bid: int | None = None
+
+
 class LineupsOut(Schema):
     day: int | None
     lineups: dict[str, list[str]] # Manager id -> the player ids of their current starting eleven

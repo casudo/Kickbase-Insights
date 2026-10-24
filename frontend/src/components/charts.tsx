@@ -407,3 +407,46 @@ export function DailyChangeChart({ points, height = 140 }: { points: HistoryPoin
     </div>
   )
 }
+
+/** Points of every matchday the player played, green and red bars like the daily changes */
+export function MatchPointsChart({
+  matches,
+  height = 150,
+}: {
+  matches: { day: number | null; points: number | null; opponent: string; home: boolean }[]
+  height?: number
+}) {
+  const data = matches.filter((match) => match.day != null && match.points != null)
+  if (data.length === 0) return null
+  return (
+    <div className="text-muted" style={{ height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+          <CartesianGrid stroke="currentColor" strokeOpacity={0.12} vertical={false} />
+          <XAxis dataKey="day" tick={{ fill: "currentColor", fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+          <YAxis tick={{ fill: "currentColor", fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
+          <ReferenceLine y={0} stroke="currentColor" strokeOpacity={0.35} />
+          <Tooltip
+            content={({ active, payload }) => {
+              const match = active && payload?.length ? (payload[0].payload as (typeof data)[number]) : null
+              return match ? (
+                <div className="rounded-xl border border-line bg-surface/95 px-3 py-2 text-xs shadow-lg backdrop-blur">
+                  <div className="text-muted">
+                    {match.day}. Spieltag · {match.home ? "gegen" : "bei"} {match.opponent}
+                  </div>
+                  <div className="font-semibold text-fg tabular-nums">{number(match.points)} Punkte</div>
+                </div>
+              ) : null
+            }}
+            cursor={{ fill: "currentColor", fillOpacity: 0.06 }}
+          />
+          <Bar dataKey="points" isAnimationActive={false} radius={[2, 2, 0, 0]}>
+            {data.map((match) => (
+              <Cell key={match.day} fill={(match.points ?? 0) >= 0 ? "var(--up)" : "var(--down)"} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}

@@ -1,8 +1,9 @@
 import type { ColumnDef } from "@tanstack/react-table"
-import { Clock } from "lucide-react"
+import { Clock, Gavel } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useManagerMap, useMarket } from "@/api/hooks"
 import type { MarketPlayer } from "@/api/types"
+import { BidDialog } from "@/components/BidDialog"
 import { DataTable, numberColumn } from "@/components/DataTable"
 import { Avatar, Delta, Money, PercentDelta, PlayerCell, TrendIcon } from "@/components/kickbase"
 import { usePlayerSheet } from "@/components/PlayerSheet"
@@ -36,6 +37,10 @@ function MarketView({ players }: { players: MarketPlayer[] }) {
   const [filter, setFilter] = useState<Filter>("all")
   const [positions, setPositions] = useState<number[]>([])
   const [search, setSearch] = useState("")
+  const [bidding, setBidding] = useState<MarketPlayer | null>(null)
+  // Nobody bids on the players they listed themselves
+  const selfId = useMemo(() => [...managers.values()].find((manager) => manager.isSelf)?.id, [managers])
+  const canBid = (player: MarketPlayer) => player.sellerId == null || player.sellerId !== selfId
 
   const counts = useMemo(
     () => ({
@@ -88,18 +93,19 @@ function MarketView({ players }: { players: MarketPlayer[] }) {
           )}
         </div>
       )),
-      numberColumn<MarketPlayer>("ownBid", "Dein Gebot", (p) => p.ownBid, (value, p) =>
-        value == null ? (
-          <span className="text-muted">–</span>
-        ) : (
-          <div>
-            <Money value={value} className="font-medium" />
-            {p.marketValue > 0 && (
-              <div className="text-xs text-muted">{percent(value / p.marketValue - 1)}</div>
-            )}
-          </div>
-        ),
-      ),
+      numberColumn<MarketPlayer>("ownBid", "Dein Gebot", (p) => p.ownBid, (value, p) => (
+        <div className="flex items-center justify-end gap-2">
+          {value == null ? (
+            <span className="text-muted">–</span>
+          ) : (
+            <div>
+              <Money value={value} className="font-medium" />
+              {p.marketValue > 0 && <div className="text-xs text-muted">{percent(value / p.marketValue - 1)}</div>}
+            </div>
+          )}
+          {canBid(p) && <BidButton hasBid={value != null} onClick={() => setBidding(p)} compact />}
+        </div>
+      )),
       numberColumn<MarketPlayer>("today", "Heute", (p) => p.today, (v) => <Delta value={v} compact />, { hideBelow: "md" }),
       numberColumn<MarketPlayer>("yesterday", "Gestern", (p) => p.yesterday, (v) => <Delta value={v} compact />, {
         hideBelow: "2xl",
@@ -133,7 +139,7 @@ function MarketView({ players }: { players: MarketPlayer[] }) {
         sortDescFirst: false,
       },
     ],
-    [managers, now],
+    [managers, now, selfId],
   )
 
   return (
@@ -173,10 +179,32 @@ function MarketView({ players }: { players: MarketPlayer[] }) {
           getRowId={(p) => p.id}
           onRowClick={(p) => open(p.id)}
           rowClassName={(p) => p.ownBid != null && "bg-accent-soft/40"}
-          mobileCard={(p) => <MarketCard player={p} now={now} />}
+          mobileCard={(p) => <MarketCard player={p} now={now} onBid={canBid(p) ? () => setBidding(p) : undefined} />}
         />
       </Card>
+      <BidDialog player={bidding} onClose={() => setBidding(null)} />
     </div>
+  )
+}
+
+function BidButton({ hasBid, onClick, compact }: { hasBid: boolean; onClick: () => void; compact?: boolean }) {
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        // The row itself opens the player screen
+        event.stopPropagation()
+        onClick()
+      }}
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border font-medium transition-colors",
+        hasBid ? "border-line bg-surface hover:bg-surface-2" : "border-accent/40 bg-accent-soft hover:border-accent",
+        compact ? "h-7 px-2 text-xs" : "h-8 px-3 text-sm",
+      )}
+    >
+      <Gavel className="size-3.5" />
+      {hasBid ? "Ändern" : "Bieten"}
+    </button>
   )
 }
 
@@ -206,7 +234,7 @@ function Expiry({ expiresAt, now }: { expiresAt: string | null; now: number }) {
   )
 }
 
-function MarketCard({ player, now }: { player: MarketPlayer; now: number }) {
+function MarketCard({ player, now, onBid }: { player: MarketPlayer; now: number; onBid?: () => void }) {
   return (
     <div className="space-y-2">
       <div className="flex items-start justify-between gap-3">
@@ -229,9 +257,16 @@ function MarketCard({ player, now }: { player: MarketPlayer; now: number }) {
         </span>
         <Expiry expiresAt={player.expiresAt} now={now} />
       </div>
-      {player.ownBid != null && (
-        <div className="rounded-lg bg-accent-soft px-2.5 py-1.5 text-xs">
-          Dein Gebot: <span className="font-semibold tabular-nums">{compactMoney(player.ownBid)}</span>
+      {(player.ownBid != null || onBid) && (
+        <div className="flex items-center justify-between gap-3">
+          {player.ownBid != null ? (
+            <div className="rounded-lg bg-accent-soft px-2.5 py-1.5 text-xs">
+              Dein Gebot: <span className="font-semibold tabular-nums">{compactMoney(player.ownBid)}</span>
+            </div>
+          ) : (
+            <span />
+          )}
+          {onBid && <BidButton hasBid={player.ownBid != null} onClick={onBid} />}
         </div>
       )}
     </div>

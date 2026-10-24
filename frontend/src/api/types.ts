@@ -256,3 +256,25 @@ export type SyncTrigger = { started: boolean; reason: string | null }
 
 /** Every manager's starting eleven of the current matchday, by manager id */
 export type Lineups = { day: number | null; lineups: Record<string, string[]> }
+
+/** A match of a player, from their club's point of view */
+export type PlayerMatch = {
+  day: number | null
+  kickoff: string | null
+  opponentId: string | null
+  home: boolean
+  /** Goals of the player's club */
+  goals: number | null
+  opponentGoals: number | null
+  /** Null when the player did not play or the match is still to come */
+  points: number | null
+  minutes: number | null
+  role: "start" | "sub" | "bench" | null
+  state: MatchState
+  /** The current matchday */
+  current: boolean
+}
+
+export type PlayerMatches = { season: string | null; matches: PlayerMatch[] }
+
+export type BidResult = { ownBid: number | null }

@@ -5,16 +5,16 @@
 import { ArrowRight, Store } from "lucide-react"
 import { type ReactNode, useCallback, useMemo, useState } from "react"
 import { useSearchParams } from "react-router"
-import { useManagerMap, usePlayer, useTeamMap } from "@/api/hooks"
-import type { Manager, PlayerDetail } from "@/api/types"
+import { useManagerMap, usePlayer, usePlayerMatches, useTeamMap } from "@/api/hooks"
+import type { Manager, PlayerDetail, PlayerMatch } from "@/api/types"
 import { cn } from "@/lib/cn"
-import { compactMoney, dateLong, dateShort, money, number, share } from "@/lib/format"
+import { compactMoney, dateLong, dateShort, money, number, share, weekdayTime } from "@/lib/format"
 import { useMediaQuery } from "@/lib/hooks"
 import { playerName, position, status } from "@/lib/kickbase"
 import { dailyChanges, type HistoryPoint, valueStats, type ValueStats } from "@/lib/valueStats"
 import { Dialog } from "./Dialog"
 import { Avatar, Delta, PercentDelta, PlayerAvatar, PositionBadge, StatusIcon, TeamLogo, TrendIcon } from "./kickbase"
-import { DailyChangeChart, DetailedValueChart, ValueHistoryChart } from "./LazyCharts"
+import { DailyChangeChart, DetailedValueChart, MatchPointsChart, ValueHistoryChart } from "./LazyCharts"
 import { Sheet } from "./Sheet"
 import { Badge, ErrorState, Segmented, Skeleton } from "./ui"
 
@@ -413,6 +413,8 @@ function PlayerScreen({ player }: { player: PlayerDetail }) {
         <Panel title="Transfers in der Liga">
           <TransferList player={player} />
         </Panel>
+
+        <MatchesPanel player={player} wide className="col-span-3" />
       </div>
     </div>
   )
@@ -510,7 +512,132 @@ function PlayerDetails({ player }: { player: PlayerDetail }) {
         <h3 className="mb-1 text-sm font-semibold">Transfers in der Liga</h3>
         <TransferList player={player} />
       </div>
+
+      <MatchesPanel player={player} bare />
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Matches
+// ---------------------------------------------------------------------------
+
+/** A panel on desktop, a plain section like the others in the phone sheet */
+function Block({ title, action, bare, className, children }: { title: string; action?: ReactNode; bare?: boolean; className?: string; children: ReactNode }) {
+  if (!bare) {
+    return (
+      <Panel title={title} action={action} className={className}>
+        {children}
+      </Panel>
+    )
+  }
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        {action}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+/** The points of every matchday, the last matches with result and points, and the next opponents */
+function MatchesPanel({ player, wide, bare, className }: { player: PlayerDetail; wide?: boolean; bare?: boolean; className?: string }) {
+  const query = usePlayerMatches(player.id)
+  const teams = useTeamMap()
+  const matches = query.data?.matches ?? []
+  const played = matches.filter((match) => match.state !== "upcoming")
+  const last = [...played].reverse().slice(0, 5)
+  const next = matches.filter((match) => match.state === "upcoming").slice(0, 3)
+  const opponent = (match: PlayerMatch) => teams.get(match.opponentId ?? "")?.name ?? "?"
+
+  return (
+    <Block title={`Spiele${query.data?.season ? ` · Saison ${query.data.season}` : ""}`} bare={bare} className={className}>
+      {query.data ? (
+        <div className={cn("grid gap-x-6 gap-y-4", wide && "grid-cols-2")}>
+          {played.length > 0 && (
+            <div className={cn(wide && "col-span-2")}>
+              <h4 className="mb-1 text-xs font-medium text-muted">Punkte pro Spieltag</h4>
+              <MatchPointsChart
+                matches={played.map((match) => ({ day: match.day, points: match.points, opponent: opponent(match), home: match.home }))}
+                height={wide ? 140 : 120}
+              />
+            </div>
+          )}
+          <div>
+            <h4 className="text-xs font-medium text-muted">Letzte Spiele</h4>
+            {last.length > 0 ? (
+              <ul className="divide-y divide-line">
+                {last.map((match) => (
+                  <MatchLine key={match.day} match={match} opponent={opponent(match)} />
+                ))}
+              </ul>
+            ) : (
+              <p className="py-2 text-sm text-muted">Noch kein Spiel in dieser Saison.</p>
+            )}
+          </div>
+          <div>
+            <h4 className="text-xs font-medium text-muted">Nächste Gegner</h4>
+            {next.length > 0 ? (
+              <ul className="divide-y divide-line">
+                {next.map((match) => (
+                  <MatchLine key={match.day} match={match} opponent={opponent(match)} />
+                ))}
+              </ul>
+            ) : (
+              <p className="py-2 text-sm text-muted">Keine weiteren Spiele in dieser Saison.</p>
+            )}
+          </div>
+        </div>
+      ) : query.error ? (
+        <p className="text-sm text-muted">Die Spiele konnten gerade nicht von Kickbase geladen werden.</p>
+      ) : (
+        <Skeleton className="h-40" />
+      )}
+    </Block>
+  )
+}
+
+function MatchLine({ match, opponent }: { match: PlayerMatch; opponent: string }) {
+  const played = match.state !== "upcoming"
+  const outcome =
+    played && match.goals != null && match.opponentGoals != null ? Math.sign(match.goals - match.opponentGoals) : null
+  return (
+    <li className="flex items-center gap-2.5 py-2 text-sm">
+      <span className="w-7 shrink-0 text-xs text-muted tabular-nums" title={`${match.day}. Spieltag`}>
+        {match.day}.
+      </span>
+      <TeamLogo teamId={match.opponentId} size={20} />
+      <span className="min-w-0 flex-1 truncate">{opponent}</span>
+      <Badge title={match.home ? "Heimspiel" : "Auswärtsspiel"}>{match.home ? "H" : "A"}</Badge>
+      {played ? (
+        <>
+          <span
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums",
+              outcome === 1 ? "bg-up/15 text-up" : outcome === -1 ? "bg-down/15 text-down" : "bg-surface-2 text-muted",
+            )}
+          >
+            {match.goals ?? "–"}:{match.opponentGoals ?? "–"}
+          </span>
+          <span className="w-12 text-right text-xs text-muted tabular-nums">
+            {match.state === "running" ? "läuft" : match.role === "bench" ? "Bank" : match.minutes != null ? `${match.minutes}'` : ""}
+          </span>
+          <span
+            className={cn(
+              "w-10 text-right font-semibold tabular-nums",
+              (match.points ?? 0) < 0 && "text-down",
+              match.points == null && "font-normal text-muted",
+            )}
+          >
+            {match.points == null ? "–" : number(match.points)}
+          </span>
+        </>
+      ) : (
+        <span className="text-xs text-muted">{match.kickoff ? weekdayTime(match.kickoff) : "–"}</span>
+      )}
+    </li>
   )
 }
 

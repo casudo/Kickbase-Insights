@@ -228,6 +228,14 @@ class MarketPlayer(KBModel):
             return self.own_offer_price
         return None
 
+    def own_offer_id(self, own_user_id: str) -> str | None:
+        """The id of the logged in user's offer, needed to withdraw it."""
+        for offer in self.offers:
+            bidder = offer.user_id or offer.owner_id
+            if bidder is not None and bidder == own_user_id:
+                return offer.id
+        return None
+
 
 class Market(KBModel):
     """`/v4/leagues/{leagueId}/market`"""
@@ -388,3 +396,31 @@ class EventType(KBModel):
 class EventTypes(KBModel):
     """`/v4/live/eventtypes`"""
     types: list[EventType] = Field(default_factory=list, alias="it")
+
+
+class PerformanceMatch(KBModel):
+    """One match of a player, played or still to come."""
+    day: int | None = Field(None, alias="day")
+    points: int | None = Field(None, alias="p") # Left out when the player scored nothing
+    minutes: str | None = Field(None, alias="mp") # Minutes played, e.g. "92'"
+    kickoff: Timestamp = Field(None, alias="md")
+    team1_id: Id | None = Field(None, alias="t1")
+    team2_id: Id | None = Field(None, alias="t2")
+    team1_goals: int | None = Field(None, alias="t1g")
+    team2_goals: int | None = Field(None, alias="t2g")
+    team_id: Id | None = Field(None, alias="pt") # The player's club at the time
+    status: int | None = Field(None, alias="st") # The player's part, see analytics.PLAYER_ROLES
+    match_status: int | None = Field(None, alias="mdst")
+    current: bool = Field(False, alias="cur")
+
+
+class PerformanceSeason(KBModel):
+    title: str | None = Field(None, alias="ti")
+    competition: str | None = Field(None, alias="n")
+    matches: list[PerformanceMatch] = Field(default_factory=list, alias="ph")
+
+
+class PlayerPerformance(KBModel):
+    """`/v4/competitions/{competitionId}/players/{playerId}/performance`, oldest season first"""
+    seasons: list[PerformanceSeason] = Field(default_factory=list, alias="it")
+

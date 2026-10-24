@@ -20,6 +20,8 @@ from api.insights import Insights
 from api.live import LiveService
 from api.schemas import (
     BattleOut,
+    BidIn,
+    BidOut,
     ChartOut,
     FixturesOut,
     LeagueOut,
@@ -32,6 +34,7 @@ from api.schemas import (
     MatchdayChartsOut,
     MeOut,
     PlayerDetailOut,
+    PlayerMatchesOut,
     PlayerOut,
     StatusOut,
     SyncRunOut,
@@ -50,6 +53,7 @@ from sync.scheduler import Scheduler
 from sync.service import SyncService
 
 COOKIE = "kbi_session"
+PlayerIdPath = Annotated[str, Path(pattern=r"^\d+$")]
 ### Kick-off to final whistle including half time and stoppage time
 MATCH_LENGTH = timedelta(minutes=115)
 
@@ -403,7 +407,15 @@ async def ask_kickbase[T](
         await asyncio.to_thread(state.accounts.forget_client, client)
         raise HTTPException(401, "Deine Kickbase-Sitzung ist abgelaufen. Bitte melde dich erneut an.") from e
     except KickbaseError as e:
+        if e.status_code and 400 <= e.status_code < 500:
+            raise HTTPException(400, f"Error: {e.reason or e}") from e
         raise HTTPException(502, f"Kickbase ist gerade nicht erreichbar: {e}") from e
+
+
+def forget_private(state: AppState, league_id: str, viewer: Viewer) -> None:
+    """Drops the cached answers with the viewer's private data, e.g. after they placed a bid."""
+    for key in [key for key in state.cache if key[-1] == viewer.user_id and key[-3] == league_id]:
+        del state.cache[key]
 
 
 @router.get("/lineups", response_model=LineupsOut)
@@ -416,12 +428,57 @@ async def live(state: StateDep, league: LeagueDep, viewer: ViewerDep) -> LiveOut
     return await ask_kickbase(state, viewer, lambda client: state.live.get(league, client, viewer.user_id))
 
 
+@router.get("/players/{player_id}/matches", response_model=PlayerMatchesOut)
+async def player_matches(
+    state: StateDep, league: LeagueDep, viewer: ViewerDep, player_id: PlayerIdPath
+) -> PlayerMatchesOut:
+    """The player's matches of the current season, played and still to come."""
+    return await ask_kickbase(state, viewer, lambda client: state.live.matches(league, client, player_id))
+
+
+@router.post("/market/{player_id}/bid", response_model=BidOut)
+async def place_bid(
+    state: StateDep, league_id: LeagueIdDep, viewer: ViewerDep, player_id: PlayerIdPath, body: BidIn
+) -> BidOut:
+    """Places or changes the viewer's offer for a player on the market, in their name at Kickbase."""
+
+    async def call(client: KickbaseClient) -> None:
+        await client.place_offer(league_id, player_id, body.price)
+        ### The market and the budget show the new offer right away, not only after the next sync
+        await state.sync.refresh_personal(league_id, client)
+
+    await ask_kickbase(state, viewer, call)
+    forget_private(state, league_id, viewer)
+    return BidOut(own_bid=body.price)
+
+
+@router.delete("/market/{player_id}/bid", response_model=BidOut)
+async def withdraw_bid(
+    state: StateDep, league_id: LeagueIdDep, viewer: ViewerDep, player_id: PlayerIdPath
+) -> BidOut:
+    """Withdraws the viewer's offer for a player."""
+
+    async def call(client: KickbaseClient) -> None:
+        user = await client.ensure_login()
+        market = await client.market(league_id)
+        entry = next((player for player in market.players if player.id == player_id), None)
+        offer_id = entry.own_offer_id(user.id) if entry else None
+        if offer_id is None:
+            raise HTTPException(404, "Für diesen Spieler hast du kein Gebot abgegeben.")
+        await client.withdraw_offer(league_id, player_id, offer_id)
+        await state.sync.refresh_personal(league_id, client)
+
+    await ask_kickbase(state, viewer, call)
+    forget_private(state, league_id, viewer)
+    return BidOut(own_bid=None)
+
+
 @router.get("/live/players/{player_id}", response_model=LivePlayerOut)
 async def live_player(
     state: StateDep,
     league: LeagueDep,
     viewer: ViewerDep,
-    player_id: Annotated[str, Path(pattern=r"^\d+$")],
+    player_id: PlayerIdPath,
 ) -> LivePlayerOut:
     """Live points and events of any player of the current matchday, for the search on the live page."""
     return await ask_kickbase(state, viewer, lambda client: state.live.player(league, client, player_id))
