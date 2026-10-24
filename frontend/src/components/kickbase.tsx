@@ -287,13 +287,8 @@ export function PlayerCell({
   )
 }
 
-export function KickbaseMark({ className }: { className?: string }) {
-  return (
-    <span className={cn("grid size-8 place-items-center rounded-xl bg-accent text-accent-fg", className)}>
-      <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <path d="M4 19V5M4 12l7-7M4 12l7 7M15 7v10M19 10v7" />
-      </svg>
-    </span>
-  )
+/** App Logo */
+export function KickbaseMark({ className = "size-8" }: { className?: string }) {
+  return <img src="/favicon.png" alt="" width={48} height={48} className={cn("shrink-0 rounded-xl", className)} />
 }
 
