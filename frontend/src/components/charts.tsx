@@ -23,7 +23,7 @@ import {
 import type { ChartManager, ChartRow } from "@/api/types"
 import { cn } from "@/lib/cn"
 import { compactMoney, dateLong, dateShort, money, number } from "@/lib/format"
-import { SERIES_COLORS } from "@/lib/kickbase"
+import { pointsGrade, SERIES_COLORS } from "@/lib/kickbase"
 import { dailyChanges, type HistoryPoint } from "@/lib/valueStats"
 
 export type ValueKind = "money" | "number" | "rank"
@@ -442,7 +442,7 @@ export function MatchPointsChart({
           />
           <Bar dataKey="points" isAnimationActive={false} radius={[2, 2, 0, 0]}>
             {data.map((match) => (
-              <Cell key={match.day} fill={(match.points ?? 0) >= 0 ? "var(--up)" : "var(--down)"} />
+              <Cell key={match.day} fill={pointsGrade(match.points ?? 0).fill} />
             ))}
           </Bar>
         </BarChart>

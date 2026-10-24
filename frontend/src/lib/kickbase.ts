@@ -74,6 +74,25 @@ export function playerName(player: { firstName?: string | null; lastName?: strin
   return short ? `${player.firstName[0]}. ${last}` : `${player.firstName} ${last}`
 }
 
+/** Kickbase colors for the points of a match */
+export const POINT_GRADES = [
+  { label: "unter 0", fill: "#e5484d", text: "#ffffff" },
+  { label: "0", fill: "#9ca3af", text: "#ffffff" },
+  { label: "unter 100", fill: "#f97316", text: "#ffffff" },
+  { label: "100–199", fill: "#84cc16", text: "#1a2e05" },
+  { label: "200–399", fill: "#15803d", text: "#ffffff" },
+  { label: "400+", fill: "#d4a72c", text: "#2b1d00" },
+] as const
+
+export function pointsGrade(points: number) {
+  if (points < 0) return POINT_GRADES[0]
+  if (points === 0) return POINT_GRADES[1]
+  if (points < 100) return POINT_GRADES[2]
+  if (points < 200) return POINT_GRADES[3]
+  if (points < 400) return POINT_GRADES[4]
+  return POINT_GRADES[5]
+}
+
 /** Distinct, theme independent series colors. A manager keeps their color across all charts. */
 export const SERIES_COLORS = [
   "#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4",

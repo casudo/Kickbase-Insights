@@ -10,7 +10,7 @@ import type { Manager, PlayerDetail, PlayerMatch } from "@/api/types"
 import { cn } from "@/lib/cn"
 import { compactMoney, dateLong, dateShort, money, number, share, weekdayTime } from "@/lib/format"
 import { useMediaQuery } from "@/lib/hooks"
-import { playerName, position, status } from "@/lib/kickbase"
+import { playerName, POINT_GRADES, pointsGrade, position, status } from "@/lib/kickbase"
 import { dailyChanges, type HistoryPoint, valueStats, type ValueStats } from "@/lib/valueStats"
 import { Dialog } from "./Dialog"
 import { Avatar, Delta, PercentDelta, PlayerAvatar, PositionBadge, StatusIcon, TeamLogo, TrendIcon } from "./kickbase"
@@ -558,7 +558,10 @@ function MatchesPanel({ player, wide, bare, className }: { player: PlayerDetail;
         <div className={cn("grid gap-x-6 gap-y-4", wide && "grid-cols-2")}>
           {played.length > 0 && (
             <div className={cn(wide && "col-span-2")}>
-              <h4 className="mb-1 text-xs font-medium text-muted">Punkte pro Spieltag</h4>
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                <h4 className="text-xs font-medium text-muted">Punkte pro Spieltag</h4>
+                <PointsLegend />
+              </div>
               <MatchPointsChart
                 matches={played.map((match) => ({ day: match.day, points: match.points, opponent: opponent(match), home: match.home }))}
                 height={wide ? 140 : 120}
@@ -599,6 +602,20 @@ function MatchesPanel({ player, wide, bare, className }: { player: PlayerDetail;
   )
 }
 
+/** What the colors of the points mean, the same grades as in the Kickbase app */
+function PointsLegend() {
+  return (
+    <ul className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted">
+      {POINT_GRADES.map((grade) => (
+        <li key={grade.label} className="flex items-center gap-1">
+          <span className="size-2 rounded-sm" style={{ background: grade.fill }} />
+          {grade.label}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function MatchLine({ match, opponent }: { match: PlayerMatch; opponent: string }) {
   const played = match.state !== "upcoming"
   const outcome =
@@ -624,15 +641,16 @@ function MatchLine({ match, opponent }: { match: PlayerMatch; opponent: string }
           <span className="w-12 text-right text-xs text-muted tabular-nums">
             {match.state === "running" ? "läuft" : match.role === "bench" ? "Bank" : match.minutes != null ? `${match.minutes}'` : ""}
           </span>
-          <span
-            className={cn(
-              "w-10 text-right font-semibold tabular-nums",
-              (match.points ?? 0) < 0 && "text-down",
-              match.points == null && "font-normal text-muted",
-            )}
-          >
-            {match.points == null ? "–" : number(match.points)}
-          </span>
+          {match.points == null ? (
+            <span className="w-11 text-center text-muted">–</span>
+          ) : (
+            <span
+              className="w-11 rounded-md py-0.5 text-center text-xs font-semibold tabular-nums"
+              style={{ background: pointsGrade(match.points).fill, color: pointsGrade(match.points).text }}
+            >
+              {number(match.points)}
+            </span>
+          )}
         </>
       ) : (
         <span className="text-xs text-muted">{match.kickoff ? weekdayTime(match.kickoff) : "–"}</span>
