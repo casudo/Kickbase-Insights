@@ -45,7 +45,22 @@
 
 ## Screenshots
 
-soonTM
+> [!TIP]
+> Shown with the built-in demo data (`KBI_DEMO=true`).
+
+![Dashboard](repo_pictures/v3-dashboard.png)
+![Login](repo_pictures/v3-login.png)
+
+<p align="center">
+  <img src="repo_pictures/v3-mobile-dashboard.png" width="30%" alt="Dashboard on a phone">
+  <img src="repo_pictures/v3-mobile-market.png" width="30%" alt="Transfer market on a phone">
+  <img src="repo_pictures/v3-mobile-live.png" width="30%" alt="Live points on a phone">
+</p>
+
+![Transfer market](repo_pictures/v3-market.png)
+![Player details](repo_pictures/v3-player.png)
+![Aufstellungsplaner](repo_pictures/v3-planner.png)
+![Charts](repo_pictures/v3-charts.png)
 
 ## Quick start
 
