@@ -3,9 +3,9 @@
 Used by the tests and by `KBI_DEMO=true`, which runs the whole app without a Kickbase account.
 
 One competition with all players is shared by two leagues, each with its own managers, squads,
-transfers, market and rankings. Logging in with any password picks the user from the e-mail address:
-`anna@…` is "Abseitsfalle Anna", everything else is "Du", who is in both leagues. Budgets and bids are
-private: the API only reveals them to their owner, exactly like Kickbase does.
+transfers, market and rankings. The only login is `demo@demo.de` with the password `demo`, as "Du", who
+is in both leagues. Budgets and bids are private: the API only reveals them to their owner, exactly
+like Kickbase does.
 """
 
 from __future__ import annotations
@@ -128,13 +128,9 @@ NUMBER_OF_DAYS = 34
 MATCH_OFFSETS = [timedelta(hours=h) for h in (0, 21, 21, 21, 21, 24, 45, 47, 48)]
 
 
-def user_for_email(email: str) -> str:
-    """`anna@…` logs in as Abseitsfalle Anna, anything unknown as "Du"."""
-    local = email.split("@", 1)[0].strip().casefold()
-    for user_id, name in USERS.items():
-        if local and local == name.split()[-1].casefold():
-            return user_id
-    return OWN_ID
+### The one login of the demo
+DEMO_EMAIL = "demo@demo.de"
+DEMO_PASSWORD = "demo"
 
 
 @dataclass
@@ -453,10 +449,18 @@ class DemoWorld:
                 return match
         return None
 
+    def match_role(self, player_id: str) -> int:
+        """The player's part in the current match, coded like Kickbase: 5 in the starting eleven,
+        3 came on, 4 did not play, 0 before the kick-off."""
+        match = self.match_of(self.players[player_id].team_id)
+        if not match or match["st"] == 0:
+            return 0
+        return random.Random(f"{self.seed}-role-{player_id}").choices([5, 3, 4], weights=[70, 12, 18])[0]
+
     def live_points(self, player_id: str) -> tuple[int, list[dict], dict | None]:
         player = self.players[player_id]
         match = self.match_of(player.team_id)
-        if not match or match["st"] == 0:
+        if not match or self.match_role(player_id) in (0, 4):
             return 0, [], match
         rng = random.Random(f"{self.seed}-{player_id}")
         events = []
@@ -512,18 +516,17 @@ class DemoWorld:
 
     def _login(self, request: httpx.Request) -> httpx.Response:
         try:
-            email = json.loads(request.content or b"{}").get("em", "")
+            body = json.loads(request.content or b"{}")
         except ValueError:
-            email = ""
-        if "wrong" in email:
-            ### Lets the tests exercise a rejected login
+            body = {}
+        email = str(body.get("em", "")).strip().casefold()
+        if email != DEMO_EMAIL or body.get("pass") != DEMO_PASSWORD:
             return httpx.Response(401, json={"err": "wrong credentials"})
-        user_id = user_for_email(email)
         return httpx.Response(
             200,
             json={
-                "u": {"id": user_id, "name": USERS[user_id], "email": email},
-                "tkn": f"demo-{user_id}",
+                "u": {"id": OWN_ID, "name": USERS[OWN_ID], "email": DEMO_EMAIL},
+                "tkn": f"demo-{OWN_ID}",
                 "tknex": _iso(self.now + timedelta(days=7)),
             },
         )
@@ -712,6 +715,11 @@ class DemoWorld:
     def _player_center(self, query, user_id, competition_id, player_id):
         p = self.players[player_id]
         points, events, match = self.live_points(player_id)
+        role = self.match_role(player_id)
+        clock = int(match["mtd"]) if match and match["mtd"] else 0
+        ### Minutes played: the whole match so far, from the substitution on, or none
+        came_on = random.Random(f"{self.seed}-sub-{player_id}").randint(5, 40)
+        played = {5: clock, 3: max(1, clock - came_on), 4: 0}
         return {
             "i": p.id,
             "tid": p.team_id,
@@ -722,7 +730,9 @@ class DemoWorld:
             "t2": match["t2"] if match else None,
             "t1g": match["t1g"] if match else None,
             "t2g": match["t2g"] if match else None,
-            "mt": int(match["mtd"]) if match and match["mtd"] else None,
+            "st": role,
+            "mt": played.get(role),
+            "mtd": match["mtd"] if match else None,
             "mst": match["st"] if match else None,
             "md": match["dt"] if match else None,
             "pim": p.image,

@@ -108,7 +108,9 @@ class Accounts:
 
         kickbase = settings.kickbase
         if settings.demo:
-            self.service = KickbaseClient("demo@example.com", "demo", http=http)
+            from kickbase.demo import DEMO_EMAIL, DEMO_PASSWORD
+
+            self.service = KickbaseClient(DEMO_EMAIL, DEMO_PASSWORD, http=http)
         elif kickbase.has_credentials:
             assert kickbase.password is not None
             self.service = KickbaseClient(kickbase.email, kickbase.password.get_secret_value(), http=http)

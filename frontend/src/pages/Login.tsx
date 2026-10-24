@@ -104,10 +104,21 @@ export default function Login() {
 
             {/* Info text if KBI_DEMO=true */}
             {status.data?.demo && (
-              <p className="mt-5 rounded-xl bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
-                Demo-Modus: Beliebige Zugangsdaten funktionieren. Mit <b>anna@demo.de</b> meldest du dich als jemand
-                anderes an.
-              </p>
+              <div className="mt-5 flex items-center justify-between gap-3 rounded-xl bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+                <span>
+                  Demo-Modus: Melde dich mit <b>demo@demo.de</b> und dem Passwort <b>demo</b> an.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail("demo@demo.de")
+                    setPassword("demo")
+                  }}
+                  className="shrink-0 rounded-lg px-2 py-1 font-semibold underline-offset-2 hover:underline"
+                >
+                  Eintragen
+                </button>
+              </div>
             )}
           </div>
           
