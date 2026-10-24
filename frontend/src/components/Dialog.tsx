@@ -5,6 +5,7 @@
 import { X } from "lucide-react"
 import { type ReactNode, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
+import { cn } from "@/lib/cn"
 
 /** A large centered dialog for desktop screens. Scrolls as a whole when it is taller than the window. */
 export function Dialog({
@@ -12,11 +13,14 @@ export function Dialog({
   onClose,
   title,
   children,
+  size = "large",
 }: {
   open: boolean
   onClose: () => void
   title: string
   children: ReactNode
+  /** Large for the player screen, small and centered for a form */
+  size?: "large" | "small"
 }) {
   const panel = useRef<HTMLDivElement>(null)
 
@@ -40,7 +44,10 @@ export function Dialog({
   return createPortal(
     <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain">
       <div className="fixed inset-0 animate-fade-in bg-black/55 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex min-h-full items-start justify-center p-6 xl:p-10" onClick={onClose}>
+      <div
+        className={cn("relative flex min-h-full justify-center p-4 sm:p-6 xl:p-10", size === "small" ? "items-center" : "items-start")}
+        onClick={onClose}
+      >
         <div
           ref={panel}
           role="dialog"
@@ -48,7 +55,10 @@ export function Dialog({
           aria-label={title}
           tabIndex={-1}
           onClick={(event) => event.stopPropagation()}
-          className="relative w-full max-w-[1280px] animate-dialog-in 3xl:max-w-[1480px] rounded-3xl border border-line bg-bg shadow-2xl focus:outline-none"
+          className={cn(
+            "relative w-full animate-dialog-in rounded-3xl border border-line bg-bg shadow-2xl focus:outline-none",
+            size === "small" ? "max-w-md" : "max-w-[1280px] 3xl:max-w-[1480px]",
+          )}
         >
           <button
             type="button"
