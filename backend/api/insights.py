@@ -305,7 +305,9 @@ class Insights:
         result.sort(key=lambda t: t.sell_date, reverse=True)
         return result
 
-    def managers(self) -> list[ManagerOut]:
+    def managers(self, balances: bool = True) -> list[ManagerOut]:
+        """Without `balances` the estimated balances and max bids of the others stay empty, the
+        viewer's own figures are always there."""
         managers = self._managers()
         events = analytics.transfer_events(self._transfer_records())
         turnovers = self._turnovers()
@@ -327,6 +329,7 @@ class Insights:
             is_self = manager.id == self.viewer_id
             budget = own_budget if is_self else None
             balance = budget if budget is not None else estimated
+            shown = balances or is_self
             profits = [t.profit for t in turnovers if t.manager == manager.name and t.profit is not None]
             result.append(
                 ManagerOut(
@@ -347,8 +350,8 @@ class Insights:
                     team_value=manager.team_value,
                     matchday_wins=manager.matchday_wins,
                     budget=budget,
-                    estimated_balance=estimated,
-                    max_bid=analytics.max_bid(balance, manager.team_value or 0),
+                    estimated_balance=estimated if shown else None,
+                    max_bid=analytics.max_bid(balance, manager.team_value or 0) if shown else None,
                     squad_size=squad_sizes.get(manager.id, 0),
                     transfers=len(own_events),
                     bought=sum(1 for e in own_events if e.kind == "buy"),

@@ -40,6 +40,7 @@ class UserOut(Schema):
 class MeOut(Schema):
     user: UserOut
     leagues: list[LeagueOut] # The viewer's leagues, the preferred one first
+    balances: bool = False # See the other managers estimated balances (KBI_ALLOW__BALANCES)
 
 
 class SyncRunOut(Schema):

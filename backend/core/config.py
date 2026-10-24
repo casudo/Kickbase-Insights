@@ -46,6 +46,19 @@ class AuthSettings(BaseModel):
         return league_id.casefold() in wanted or league_name.casefold() in wanted
 
 
+class AllowSettings(BaseModel):
+    ### The estimated balances and max bids of the other managers. Off unless enabled here
+    balances: bool = False
+    ### Kickbase user names or IDs who see them even when they are off, comma separated
+    balances_users: Annotated[list[str], NoDecode, BeforeValidator(_comma_separated)] = []
+
+    def shows_balances(self, user_id: str, user_name: str) -> bool:
+        if self.balances:
+            return True
+        wanted = {entry.casefold() for entry in self.balances_users}
+        return user_id.casefold() in wanted or user_name.casefold() in wanted
+
+
 class ApiSettings(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
@@ -150,6 +163,8 @@ class Settings(BaseSettings):
 
     api: ApiSettings = ApiSettings()
     auth: AuthSettings = AuthSettings()
+    ### KBI_ALLOW__...: what is only shown when allowed (used for certain custom rules)
+    allow: AllowSettings = AllowSettings()
     database: DatabaseSettings = DatabaseSettings()
     kickbase: KickbaseSettings = KickbaseSettings()
     sync: SyncSettings = SyncSettings()

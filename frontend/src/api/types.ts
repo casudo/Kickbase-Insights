@@ -21,6 +21,8 @@ export type Me = {
   user: User
   /** The viewer's leagues, the preferred one first */
   leagues: League[]
+  /** See the other managers estimated balances, see KBI_ALLOW__BALANCES */
+  balances: boolean
 }
 
 export type SyncRun = {

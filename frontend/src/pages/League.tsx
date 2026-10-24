@@ -2,7 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { Info } from "lucide-react"
 import { useMemo } from "react"
 import { useSearchParams } from "react-router"
-import { useBattles, useManagers, useStatus, useTeams } from "@/api/hooks"
+import { useBattles, useManagers, useMe, useStatus, useTeams } from "@/api/hooks"
 import type { Battle, Manager, Team } from "@/api/types"
 import { DataTable, numberColumn } from "@/components/DataTable"
 import { Avatar, Delta, Money, TeamLogo } from "@/components/kickbase"
@@ -14,19 +14,25 @@ type Tab = "table" | "balances" | "battles" | "bundesliga"
 
 export default function League() {
   const [params, setParams] = useSearchParams()
-  const tab = (params.get("tab") as Tab | null) ?? "table"
+  const { data: me } = useMe()
+  // The estimated balances of the others are only there when the server allows them
+  const requested = (params.get("tab") as Tab | null) ?? "table"
+  const tab = requested === "balances" && !me?.balances ? "table" : requested
   const setTab = (next: Tab) => setParams(next === "table" ? {} : { tab: next }, { replace: true })
 
   return (
     <>
-      <PageHeader title="Liga" description="Tabelle, Kontostände und Battles der laufenden Saison." />
+      <PageHeader
+        title="Liga"
+        description={me?.balances ? "Tabelle, Kontostände und Battles der laufenden Saison." : "Tabelle und Battles der laufenden Saison."}
+      />
       <Segmented
         className="mb-4"
         value={tab}
         onChange={setTab}
         options={[
           { value: "table", label: "Tabelle" },
-          { value: "balances", label: "Kontostände" },
+          ...(me?.balances ? [{ value: "balances" as const, label: "Kontostände" }] : []),
           { value: "battles", label: "Battles" },
           { value: "bundesliga", label: "Bundesliga" },
         ]}

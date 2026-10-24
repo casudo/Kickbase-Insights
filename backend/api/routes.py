@@ -156,13 +156,18 @@ def insights(state: AppState, session: Session, league: League, viewer: Viewer |
 ### Accounts
 ### ===============================================================================
 
-def _me(session: Session, viewer: Viewer) -> MeOut:
+def shows_balances(settings: Settings, viewer: Viewer) -> bool:
+    return settings.allow.shows_balances(viewer.user_id, viewer.name)
+
+
+def _me(session: Session, viewer: Viewer, settings: Settings) -> MeOut:
     leagues = {
         league.id: league for league in session.exec(select(League).where(League.id.in_(viewer.league_ids)))
     }
     return MeOut(
         user=UserOut(id=viewer.user_id, name=viewer.name, image=viewer.image),
         leagues=[LeagueOut.model_validate(leagues[lid]) for lid in viewer.league_ids if lid in leagues],
+        balances=shows_balances(settings, viewer),
     )
 
 
@@ -190,7 +195,7 @@ async def login(body: LoginIn, request: Request, response: Response, state: Stat
 
     def me() -> MeOut:
         with Session(state.engine) as session:
-            return _me(session, viewer)
+            return _me(session, viewer, state.settings)
 
     return await asyncio.to_thread(me)
 
@@ -206,8 +211,8 @@ def logout(request: Request, state: StateDep) -> Response:
 
 
 @router.get("/auth/me", response_model=MeOut)
-def me(session: SessionDep, viewer: ViewerDep) -> MeOut:
-    return _me(session, viewer)
+def me(state: StateDep, session: SessionDep, viewer: ViewerDep) -> MeOut:
+    return _me(session, viewer, state.settings)
 
 
 ### ===============================================================================
@@ -323,8 +328,8 @@ async def trigger_sync(
 ### ===============================================================================
 
 @router.get("/leagues", response_model=list[LeagueOut])
-def leagues(session: SessionDep, viewer: ViewerDep) -> list[LeagueOut]:
-    return _me(session, viewer).leagues
+def leagues(state: StateDep, session: SessionDep, viewer: ViewerDep) -> list[LeagueOut]:
+    return _me(session, viewer, state.settings).leagues
 
 
 @router.get("/teams", response_model=list[TeamOut])
@@ -354,9 +359,10 @@ def market(state: StateDep, session: SessionDep, league: LeagueDep, viewer: View
 
 @router.get("/managers", response_model=list[ManagerOut])
 def managers(state: StateDep, session: SessionDep, league: LeagueDep, viewer: ViewerDep):
-    return cached(
-        state, league, ("managers",), lambda: insights(state, session, league, viewer).managers(), viewer
-    )
+    def build() -> list[ManagerOut]:
+        return insights(state, session, league, viewer).managers(shows_balances(state.settings, viewer))
+
+    return cached(state, league, ("managers",), build, viewer)
 
 
 @router.get("/battles", response_model=list[BattleOut])

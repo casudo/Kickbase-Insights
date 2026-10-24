@@ -36,7 +36,7 @@
 - **Transfermarkt** – every listing with price, markup, your own bid, market value changes (today, yesterday, 7 and 30 days) and a live countdown. Place, change or withdraw your bids right there.
 - **Spieler** – all players of the competition with market value trends, owner and gain since purchase. Tap a player anywhere for the player screen: on desktop a large view with a detailed market value chart (high, low and purchase price marked), the daily changes as bars, statistics for 7 days up to the whole history (best and worst day, rising and falling streaks, distance to the high, volatility), the last 14 days, the ownership, the league's transfers of that player, and the points of every matchday with the last results and the next opponents. On phones the same as a compact sheet.
 - **Live** – live points of the current matchday, counted for all players, with goals, assists, cards and the scoring events of every player.
-- **Liga** – table, estimated balances and max bids of every manager, battles and the Bundesliga table.
+- **Liga** – table, battles and the Bundesliga table. The estimated balances and max bids of the other managers ("Kontostände") are off unless enabled with `KBI_ALLOW__BALANCES`.
 - **Transfers** – profit of every sale, summed transfer revenue over time, team value, points and placement per matchday and the full transfer feed.
 - **Aufstellungsplaner** – your eleven on a pitch, like in the Kickbase app. It starts with the lineup saved in Kickbase; switch formations, swap players by tapping or with drag and drop, or let it pick the best eleven by average points. Mark players to sell and see the new balance and which formations you can still field.
 - **Player portraits** everywhere players show up, with the club badge in the corner. Where the Kickbase API only sends the club's placeholder, the portrait comes from Kickbase's picture pool on its CDN, for some players still from an earlier season.
@@ -100,6 +100,8 @@ All settings are environment variables with the `KBI_` prefix, nested settings u
 | `KBI_API__PORT` | `8000` | Port of the web server. |
 | `KBI_API__FORWARDED_ALLOW_IPS` | `127.0.0.1` | Proxies whose `X-Forwarded-*` headers are trusted. Set to `*` behind Traefik or nginx in a Docker network, so login cookies are marked secure over HTTPS. |
 | `KBI_API__HIDE_HEALTH_CHECKS` | `false` | Leave the `GET /api/health` requests out of the container log. |
+| `KBI_ALLOW__BALANCES` | `false` | Show everyone the estimated balances and max bids of the other managers. Your own balance is always shown. |
+| `KBI_ALLOW__BALANCES_USERS` | – | Comma separated Kickbase user names or IDs who see the "Kontostände" even when they are off. |
 | `KBI_DATABASE__HOST` | – | PostgreSQL host. Without it an SQLite database in `/data` is used. |
 | `KBI_DATABASE__PORT` / `__DATABASE` / `__USERNAME` / `__PASSWORD` | `5432` / `kickbase` / `kickbase` / – | PostgreSQL connection. |
 | `KBI_DATABASE__URL` | – | A full SQLAlchemy URL, wins over the fields above. |

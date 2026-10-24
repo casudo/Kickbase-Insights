@@ -208,7 +208,12 @@ function ManagerPlan({
         />
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-muted">
-            Kontostand {manager?.budget != null ? "(laut Kickbase)" : "(geschätzt, anpassbar)"}
+            Kontostand{" "}
+            {manager?.budget != null
+              ? "(laut Kickbase)"
+              : manager?.estimatedBalance != null
+                ? "(geschätzt, anpassbar)"
+                : "(nicht bekannt, manuell eintragen)"}
           </span>
           <div className="relative">
             <input
