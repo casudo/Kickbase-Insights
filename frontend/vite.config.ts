@@ -2,7 +2,7 @@ import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
-// `npm run dev` proxies the API to a locally running backend (python -m kbi)
+// `npm run dev` proxies the API to a locally running backend ('python main.py start' in backend/)
 const backend = process.env.KBI_BACKEND_URL ?? "http://localhost:8000"
 
 export default defineConfig({
