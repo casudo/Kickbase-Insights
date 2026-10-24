@@ -314,6 +314,46 @@ def max_bid(balance: int, team_value: int) -> int:
 
 
 ### ===============================================================================
+### Matches
+### ===============================================================================
+
+MatchState = Literal["upcoming", "running", "finished"]
+PlayerRole = Literal["start", "sub", "bench"]
+
+MATCH_UPCOMING, MATCH_FINISHED = 0, 2
+KNOWN_MATCH_CODES = {0, 1, 2}
+
+PLAYER_ROLES: dict[int, PlayerRole] = {5: "start", 3: "sub", 4: "bench"}
+KNOWN_PLAYER_CODES = {0, 3, 4, 5}
+_STATE_ORDER: dict[MatchState, int] = {"upcoming": 0, "running": 1, "finished": 2}
+
+
+def match_state(status: int | None, minute: str | int | None = None) -> MatchState:
+    if status == MATCH_FINISHED:
+        return "finished"
+    if status is not None and status != MATCH_UPCOMING:
+        return "running"
+    ### Without a telling code, a match clock still shows that the match runs
+    return "running" if str(minute or "").strip() not in ("", "0") else "upcoming"
+
+
+def later_state(*states: MatchState | None) -> MatchState:
+    """The furthest of several reports on the same match, as one source may lag behind the other."""
+    known = [state for state in states if state]
+    return max(known, key=_STATE_ORDER.__getitem__) if known else "upcoming"
+
+
+def player_role(status: int | None) -> PlayerRole | None:
+    return PLAYER_ROLES.get(status) if status is not None else None
+
+
+def on_field(state: MatchState, role: PlayerRole | None, sent_off: bool) -> bool:
+    """Whether a player is on the pitch right now. A starter who was substituted stays on it here,
+    Kickbase's live data does not tell that apart."""
+    return state == "running" and role in ("start", "sub") and not sent_off
+
+
+### ===============================================================================
 ### Live points
 ### ===============================================================================
 

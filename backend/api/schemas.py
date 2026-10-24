@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 from pydantic.alias_generators import to_camel
+
+from core import analytics
+from core.analytics import MatchState, PlayerRole
 
 
 class Schema(BaseModel):
@@ -250,8 +253,12 @@ class LivePlayerOut(Schema):
     team_id: str | None = None
     position: int = 0
     points: int = 0
-    match_status: int | None = None # 0 not started, 1 running, 2 over
+    match_status: int | None = None
+    match_state: MatchState = "upcoming"
+    match_minute: str | None = None
     minute: int | None = None
+    role: PlayerRole | None = None
+    on_field: bool = False
     goals: int = 0
     assists: int = 0
     own_goals: int = 0

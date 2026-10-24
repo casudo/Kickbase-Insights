@@ -14,8 +14,8 @@ export function TeamName({ teamId, className }: { teamId: string | null; classNa
 }
 
 function Score({ match }: { match: Match }) {
-  const running = match.status === 1
-  const finished = match.status === 2
+  const running = match.state === "running"
+  const finished = match.state === "finished"
   return (
     <span
       className={cn(
@@ -47,7 +47,7 @@ export function MatchRow({ match }: { match: Match }) {
 
 /** A compact fixture tile for the horizontal match strip on the live page */
 export function MatchTile({ match }: { match: Match }) {
-  const running = match.status === 1
+  const running = match.state === "running"
   return (
     <div
       className={cn(
@@ -61,7 +61,7 @@ export function MatchTile({ match }: { match: Match }) {
             <span className="size-1.5 animate-pulse rounded-full bg-down" />
             {match.minute ? `${match.minute}'` : "Live"}
           </span>
-        ) : match.status === 2 ? (
+        ) : match.state === "finished" ? (
           <span className="text-muted">Beendet</span>
         ) : (
           <span className="text-muted">{match.kickoff ? weekdayTime(match.kickoff) : "–"}</span>
@@ -76,7 +76,7 @@ export function MatchTile({ match }: { match: Match }) {
             <TeamLogo teamId={teamId as string | null} size={20} />
             <TeamName teamId={teamId as string | null} className="text-xs" />
           </span>
-          <span className="font-semibold tabular-nums">{match.status ? (goals ?? 0) : ""}</span>
+          <span className="font-semibold tabular-nums">{match.state !== "upcoming" ? (goals ?? 0) : ""}</span>
         </div>
       ))}
     </div>

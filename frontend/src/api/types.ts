@@ -192,10 +192,12 @@ export type Match = {
   team2Id: string | null
   team1Goals: number | null
   team2Goals: number | null
-  /** 0 upcoming, 1 running, 2 over */
   status: number | null
   minute: string | null
+  state: MatchState
 }
+
+export type MatchState = "upcoming" | "running" | "finished"
 
 export type Fixtures = {
   day: number | null
@@ -213,7 +215,7 @@ export type LivePlayer = {
   position: number
   points: number
   matchStatus: number | null
-  minute: number | null
+  matchState: MatchState
   goals: number
   assists: number
   ownGoals: number

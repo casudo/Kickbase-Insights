@@ -375,6 +375,7 @@ class PlayerCenter(KBModel):
     minute: int | None = Field(None, alias="mt")
     kickoff: Timestamp = Field(None, alias="md")
     match_status: int | None = Field(None, alias="mst")
+    match_minute: str | None = Field(None, alias="mtd")
     events: list[LiveEvent] = Field(default_factory=list)
     image: str | None = Field(None, alias="pim")
 
