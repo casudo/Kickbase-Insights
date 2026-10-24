@@ -110,9 +110,7 @@ def create_app(
         )
         app.state.kbi = state
 
-        if not state.configured:
-            log.warning("Login is disabled and no Kickbase account is configured, there is nothing to sync")
-        elif start_scheduler:
+        if start_scheduler:
             scheduler.start()
 
         try:

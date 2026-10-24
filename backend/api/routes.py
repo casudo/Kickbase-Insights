@@ -1,15 +1,13 @@
 """REST API consumed by the frontend.
 
-Every data endpoint needs a viewer: a logged in user (the `kbi_session` cookie), or with
-KBI_AUTH__REQUIRE_LOGIN=false the account from the environment. A viewer only gets to see the leagues
-their Kickbase account is in, chosen with the `league` query parameter.
+Every data endpoint needs a logged in user (the `kbi_session` cookie). A user only gets to see the
+leagues their Kickbase account is in, chosen with the `league` query parameter.
 """
 
 from __future__ import annotations
 
 import asyncio
-import secrets
-from collections.abc import Callable, Coroutine, Iterator
+from collections.abc import Awaitable, Callable, Coroutine, Iterator
 from dataclasses import dataclass, field
 from datetime import timedelta
 from typing import Annotated, Any
@@ -46,7 +44,7 @@ from api.schemas import (
 from auth.accounts import Accounts, LoginError, Viewer
 from core.config import Settings
 from db.models import Fixture, League, SyncRun, utcnow
-from kickbase import KickbaseAuthError, KickbaseError
+from kickbase import KickbaseAuthError, KickbaseClient, KickbaseError
 from sync.scheduler import Scheduler
 from sync.service import SyncService
 
@@ -66,11 +64,6 @@ class AppState:
     ### Computed responses, valid until the league is synced again
     cache: dict[tuple, Any] = field(default_factory=dict)
     tasks: set[asyncio.Task] = field(default_factory=set)
-
-    @property
-    def configured(self) -> bool:
-        """Something can be synced: users log in themselves, or there is an account to show."""
-        return self.settings.auth.require_login or self.accounts.service is not None
 
     def spawn(self, coro: Coroutine) -> None:
         task = asyncio.create_task(coro)
@@ -92,8 +85,6 @@ SessionDep = Annotated[Session, Depends(get_session)]
 
 
 def get_optional_viewer(request: Request, state: StateDep) -> Viewer | None:
-    if not state.settings.auth.require_login:
-        return state.accounts.public_viewer()
     cookie = request.cookies.get(COOKIE)
     return state.accounts.resolve(cookie) if cookie else None
 
@@ -101,12 +92,10 @@ def get_optional_viewer(request: Request, state: StateDep) -> Viewer | None:
 OptionalViewerDep = Annotated[Viewer | None, Depends(get_optional_viewer)]
 
 
-def get_viewer(state: StateDep, viewer: OptionalViewerDep) -> Viewer:
-    if viewer is not None:
-        return viewer
-    if not state.settings.auth.require_login:
-        raise HTTPException(503, "No data yet. The first sync has not finished.")
-    raise HTTPException(401, "Nicht angemeldet.")
+def get_viewer(viewer: OptionalViewerDep) -> Viewer:
+    if viewer is None:
+        raise HTTPException(401, "Nicht angemeldet.")
+    return viewer
 
 
 ViewerDep = Annotated[Viewer, Depends(get_viewer)]
@@ -162,21 +151,18 @@ def insights(state: AppState, session: Session, league: League, viewer: Viewer |
 ### Accounts
 ### ===============================================================================
 
-def _me(session: Session, viewer: Viewer, require_login: bool) -> MeOut:
+def _me(session: Session, viewer: Viewer) -> MeOut:
     leagues = {
         league.id: league for league in session.exec(select(League).where(League.id.in_(viewer.league_ids)))
     }
     return MeOut(
         user=UserOut(id=viewer.user_id, name=viewer.name, image=viewer.image),
         leagues=[LeagueOut.model_validate(leagues[lid]) for lid in viewer.league_ids if lid in leagues],
-        require_login=require_login,
     )
 
 
 @router.post("/auth/login", response_model=MeOut)
 async def login(body: LoginIn, request: Request, response: Response, state: StateDep) -> MeOut:
-    if not state.settings.auth.require_login:
-        raise HTTPException(400, "Anmelden ist auf diesem Server nicht nötig.")
     ip = request.client.host if request.client else "unknown"
     try:
         cookie, viewer = await state.accounts.login(body.email, body.password, ip)
@@ -199,7 +185,7 @@ async def login(body: LoginIn, request: Request, response: Response, state: Stat
 
     def me() -> MeOut:
         with Session(state.engine) as session:
-            return _me(session, viewer, True)
+            return _me(session, viewer)
 
     return await asyncio.to_thread(me)
 
@@ -215,8 +201,8 @@ def logout(request: Request, state: StateDep) -> Response:
 
 
 @router.get("/auth/me", response_model=MeOut)
-def me(state: StateDep, session: SessionDep, viewer: ViewerDep) -> MeOut:
-    return _me(session, viewer, state.settings.auth.require_login)
+def me(session: SessionDep, viewer: ViewerDep) -> MeOut:
+    return _me(session, viewer)
 
 
 ### ===============================================================================
@@ -254,10 +240,6 @@ def status(
         ).first()
 
     warnings = []
-    if not state.configured:
-        warnings.append(
-            "Keine Kickbase-Zugangsdaten konfiguriert (KBI_KICKBASE__EMAIL / KBI_KICKBASE__PASSWORD)."
-        )
     if viewer is not None and not settings.kickbase.start_date and not settings.demo:
         warnings.append(
             "KBI_KICKBASE__START_DATE ist nicht gesetzt. Der Saisonstart wird geschätzt, "
@@ -281,8 +263,6 @@ def status(
     return StatusOut(
         version=settings.version,
         demo=settings.demo,
-        configured=state.configured,
-        require_login=settings.auth.require_login,
         authenticated=viewer is not None,
         league=LeagueOut.model_validate(league_row) if league_row else None,
         own_manager_id=viewer.user_id if viewer else None,
@@ -315,15 +295,7 @@ async def trigger_sync(
     state: StateDep,
     viewer: ViewerDep,
     league_id: LeagueIdDep,
-    authorization: Annotated[str | None, Header()] = None,
 ) -> SyncTriggerOut:
-    token = state.settings.api.sync_token
-    if not state.settings.auth.require_login and token is not None:
-        ### Without logins everyone is a viewer, so the token is what protects the button
-        expected = f"Bearer {token.get_secret_value()}"
-        if not authorization or not secrets.compare_digest(authorization, expected):
-            raise HTTPException(401, "A valid sync token is required.")
-
     client = state.accounts.client_for_viewer(viewer)
     if client is None:
         raise HTTPException(401, "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.")
@@ -337,8 +309,7 @@ async def trigger_sync(
         return SyncTriggerOut(started=False, reason=f"Bitte warte noch {wait} Sekunden.")
 
     state.sync.last_manual_trigger[league_id] = utcnow()
-    triggered_by = viewer.name if viewer.session_id else None
-    state.spawn(state.sync.run(league_id, client, "manual", triggered_by))
+    state.spawn(state.sync.run(league_id, client, "manual", viewer.name))
     return SyncTriggerOut(started=True)
 
 
@@ -347,8 +318,8 @@ async def trigger_sync(
 ### ===============================================================================
 
 @router.get("/leagues", response_model=list[LeagueOut])
-def leagues(state: StateDep, session: SessionDep, viewer: ViewerDep) -> list[LeagueOut]:
-    return _me(session, viewer, state.settings.auth.require_login).leagues
+def leagues(session: SessionDep, viewer: ViewerDep) -> list[LeagueOut]:
+    return _me(session, viewer).leagues
 
 
 @router.get("/teams", response_model=list[TeamOut])
@@ -418,29 +389,29 @@ def fixtures(
     return cached(state, league, ("fixtures", day), lambda: insights(state, session, league).fixtures(day))
 
 
-@router.get("/lineups", response_model=LineupsOut)
-async def lineups(state: StateDep, league: LeagueDep, viewer: ViewerDep) -> LineupsOut:
+async def ask_kickbase[T](
+    state: AppState, viewer: Viewer, call: Callable[[KickbaseClient], Awaitable[T]]
+) -> T:
+    """Runs a request with the viewer's own Kickbase session, its failures become HTTP errors."""
     client = state.accounts.client_for_viewer(viewer)
     if client is None:
         raise HTTPException(401, "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.")
     try:
-        return await state.live.lineups(league, client)
+        return await call(client)
     except KickbaseAuthError as e:
         await asyncio.to_thread(state.accounts.forget_client, client)
         raise HTTPException(401, "Deine Kickbase-Sitzung ist abgelaufen. Bitte melde dich erneut an.") from e
     except KickbaseError as e:
         raise HTTPException(502, f"Kickbase ist gerade nicht erreichbar: {e}") from e
+
+
+@router.get("/lineups", response_model=LineupsOut)
+async def lineups(state: StateDep, league: LeagueDep, viewer: ViewerDep) -> LineupsOut:
+    return await ask_kickbase(state, viewer, lambda client: state.live.lineups(league, client))
 
 
 @router.get("/live", response_model=LiveOut)
 async def live(state: StateDep, league: LeagueDep, viewer: ViewerDep) -> LiveOut:
-    client = state.accounts.client_for_viewer(viewer)
-    if client is None:
-        raise HTTPException(401, "Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.")
-    try:
-        return await state.live.get(league, client, viewer.user_id)
-    except KickbaseAuthError as e:
-        await asyncio.to_thread(state.accounts.forget_client, client)
-        raise HTTPException(401, "Deine Kickbase-Sitzung ist abgelaufen. Bitte melde dich erneut an.") from e
-    except KickbaseError as e:
-        raise HTTPException(502, f"Kickbase ist gerade nicht erreichbar: {e}") from e
+    return await ask_kickbase(state, viewer, lambda client: state.live.get(league, client, viewer.user_id))
+
+

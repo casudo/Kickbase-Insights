@@ -21,7 +21,6 @@ export type Me = {
   user: User
   /** The viewer's leagues, the preferred one first */
   leagues: League[]
-  requireLogin: boolean
 }
 
 export type SyncRun = {
@@ -41,8 +40,6 @@ export type SyncRun = {
 export type Status = {
   version: string
   demo: boolean
-  configured: boolean
-  requireLogin: boolean
   authenticated: boolean
   league: League | null
   ownManagerId: string | null

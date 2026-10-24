@@ -251,17 +251,15 @@ function UserRow() {
     <div className="flex items-center gap-2.5">
       <Avatar name={me.user.name} image={me.user.image} size={30} />
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{me.user.name}</span>
-      {me.requireLogin && (
-        <button
-          type="button"
-          onClick={() => logout.mutate(undefined, { onSettled: () => navigate("/login", { replace: true }) })}
-          title="Abmelden"
-          aria-label="Abmelden"
-          className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg"
-        >
-          <LogOut className="size-4" />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => logout.mutate(undefined, { onSettled: () => navigate("/login", { replace: true }) })}
+        title="Abmelden"
+        aria-label="Abmelden"
+        className="grid size-8 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-fg"
+      >
+        <LogOut className="size-4" />
+      </button>
     </div>
   )
 }

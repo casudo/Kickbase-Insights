@@ -37,7 +37,6 @@ class UserOut(Schema):
 class MeOut(Schema):
     user: UserOut
     leagues: list[LeagueOut] # The viewer's leagues, the preferred one first
-    require_login: bool
 
 
 class SyncRunOut(Schema):
@@ -63,8 +62,6 @@ class SyncStatus(Schema):
 class StatusOut(Schema):
     version: str
     demo: bool
-    configured: bool
-    require_login: bool
     authenticated: bool
     league: LeagueOut | None = None
     own_manager_id: str | None = None # The manager id of whoever is looking

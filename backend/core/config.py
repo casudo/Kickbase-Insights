@@ -30,8 +30,6 @@ def _comma_separated(value: Any) -> Any:
 
 
 class AuthSettings(BaseModel):
-    ### Every visitor logs in with their own Kickbase account. When off, everyone sees the data of the account from KBI_KICKBASE__EMAIL without logging in
-    require_login: bool = True
     ### League names or IDs this server is for, comma separated. Empty allows every league of whoever logs in
     allowed_leagues: Annotated[list[str], NoDecode, BeforeValidator(_comma_separated)] = []
     ### How long a login lasts at most. Kickbase may end it earlier when its token expires.
@@ -51,8 +49,6 @@ class AuthSettings(BaseModel):
 class ApiSettings(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
-    ### Only used when login is not required: then POST /api/sync needs `Authorization: Bearer <token>`
-    sync_token: SecretStr | None = None
     ### Proxies whose X-Forwarded-* headers are trusted, e.g. "*" behind Traefik in a Docker network.
     ### Needed for secure cookies over HTTPS and per client rate limits
     forwarded_allow_ips: str = "127.0.0.1"

@@ -68,13 +68,12 @@ All settings are environment variables with the `KBI_` prefix, nested settings u
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `KBI_AUTH__REQUIRE_LOGIN` | `true` | Everyone logs in with their own Kickbase account. Set to `false` to show the data of the account below to everyone without a login. |
 | `KBI_AUTH__ALLOWED_LEAGUES` | all | Comma separated league names or IDs this server is for. Only these leagues are synced and shown, people in none of them cannot log in. Recommended for public servers. |
 | `KBI_AUTH__SESSION_DAYS` | `30` | How long a login lasts at most. It ends earlier when Kickbase expires its token. |
 | `KBI_AUTH__SECRET_KEY` | generated | Encrypts the stored Kickbase session tokens. Without it a key is generated once and kept in `/data/secret.key`. |
-| `KBI_KICKBASE__EMAIL` | – | Optional. An account that keeps your leagues synced while nobody is logged in, and collects its daily bonus. Required when login is turned off. |
+| `KBI_KICKBASE__EMAIL` | – | An account that keeps your leagues synced while nobody is logged in, and collects its daily bonus. |
 | `KBI_KICKBASE__PASSWORD` | – | Password of that account. |
-| `KBI_KICKBASE__LEAGUE` | all its leagues | Name or ID of the league that account keeps synced. It is listed first for everyone and is the only one shown when login is turned off. Its owner still sees all their leagues after logging in. |
+| `KBI_KICKBASE__LEAGUE` | all its leagues | Name or ID of the league that account keeps synced. It is listed first for everyone. Its owner still sees all their leagues after logging in. |
 | `KBI_KICKBASE__START_DATE` | estimated | The instant the season started or your league was reset, ISO 8601 with UTC offset, e.g. `2026-08-01T18:00:00Z`. Feed events before it are ignored and players assigned at the start are valued at their market value back then. |
 | `KBI_KICKBASE__START_MONEY` | `50000000` | Starting money, `200000000` for "Ohne Team". Used to estimate the other managers' balances. |
 | `KBI_KICKBASE__COLLECT_BONUS` | `true` | Collect the daily login bonus on every sync. |
@@ -85,7 +84,6 @@ All settings are environment variables with the `KBI_` prefix, nested settings u
 | `KBI_SYNC__LIVE_CACHE_SECONDS` | `45` | How long live points are reused before Kickbase is asked again. |
 | `KBI_API__PORT` | `8000` | Port of the web server. |
 | `KBI_API__FORWARDED_ALLOW_IPS` | `127.0.0.1` | Proxies whose `X-Forwarded-*` headers are trusted. Set to `*` behind Traefik or nginx in a Docker network, so login cookies are marked secure over HTTPS. |
-| `KBI_API__SYNC_TOKEN` | – | Only without login: manually triggered syncs then require `Authorization: Bearer <token>`. The status page asks for it. |
 | `KBI_DATABASE__HOST` | – | PostgreSQL host. Without it an SQLite database in `/data` is used. |
 | `KBI_DATABASE__PORT` / `__DATABASE` / `__USERNAME` / `__PASSWORD` | `5432` / `kickbase` / `kickbase` / – | PostgreSQL connection. |
 | `KBI_DATABASE__URL` | – | A full SQLAlchemy URL, wins over the fields above. |
@@ -99,8 +97,6 @@ v3 is a complete rewrite and a clean start, not an update: it reads nothing of v
 1. Stop and remove the v2 container. Its JSON data is not used anymore and can be deleted.
 2. Write a new `.env` from [`.env.example`](.env.example). The v2 variables (`KB_MAIL`, `KB_PASSWORD`, `KB_LIGA`, `DISCORD_WEBHOOK`, `START_DATE`, `START_MONEY`, `RUN_SCHEDULE`) are ignored, every setting has a `KBI_` name now, see [Configuration](#configuration).
 3. Start v3 as in the [Quick start](#quick-start). Everything runs on port `8000`, the ports `3000` and `5000` are gone. The first sync builds the database from Kickbase.
-
-Everyone logs in with their own Kickbase account now. For a dashboard without login, set `KBI_AUTH__REQUIRE_LOGIN=false` together with `KBI_KICKBASE__EMAIL` and `KBI_KICKBASE__PASSWORD`.
 
 ## Reverse proxy
 

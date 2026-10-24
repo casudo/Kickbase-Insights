@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
 import { AlertTriangle, BookOpen, CheckCircle2, ExternalLink, GitBranch, RefreshCw, XCircle } from "lucide-react"
 import { type ReactNode, useState } from "react"
-import { ApiError } from "@/api/client"
 import { useStatus, useSyncRuns, useTriggerSync } from "@/api/hooks"
 import type { SyncRun } from "@/api/types"
 import { Badge, Button, Card, CardHeader, PageHeader, QueryState, Skeleton } from "@/components/ui"
 import { cn } from "@/lib/cn"
 import { compactMoney, dateLong, dateTime, duration, number, relativeTime } from "@/lib/format"
-import { useNow, useStoredState } from "@/lib/hooks"
+import { useNow } from "@/lib/hooks"
 import { LINKS } from "@/lib/links"
 
 const REPO = LINKS.repository
@@ -95,25 +94,17 @@ function SyncCard() {
   const { data: status } = useStatus()
   const trigger = useTriggerSync()
   const now = useNow()
-  const [token, setToken] = useStoredState<string>("kbi-sync-token", "")
   const [message, setMessage] = useState<string | null>(null)
-  const [needsToken, setNeedsToken] = useState(false)
   if (!status) return null
 
   const run = status.sync.lastRun
   const start = async () => {
     setMessage(null)
     try {
-      const result = await trigger.mutateAsync(token || undefined)
-      setNeedsToken(false)
+      const result = await trigger.mutateAsync()
       setMessage(result.started ? "Sync gestartet." : result.reason)
     } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        setNeedsToken(true)
-        setMessage("Für einen manuellen Sync wird der Sync-Token benötigt.")
-      } else {
-        setMessage(error instanceof Error ? error.message : String(error))
-      }
+      setMessage(error instanceof Error ? error.message : String(error))
     }
   }
 
@@ -125,7 +116,7 @@ function SyncCard() {
           status.sync.nextRun ? `Nächster geplanter Sync ${relativeTime(status.sync.nextRun, now)} (${dateTime(status.sync.nextRun)})` : undefined
         }
         action={
-          <Button variant="primary" onClick={start} loading={trigger.isPending || status.sync.running} disabled={!status.configured}>
+          <Button variant="primary" onClick={start} loading={trigger.isPending || status.sync.running}>
             {!(trigger.isPending || status.sync.running) && <RefreshCw className="size-4" />}
             {status.sync.running ? "Läuft …" : "Jetzt synchronisieren"}
           </Button>
@@ -137,18 +128,9 @@ function SyncCard() {
         <Fact label="Anfragen" value={number(run?.requests)} />
         <Fact label="Status" value={run ? <RunStatus run={run} /> : "–"} />
       </div>
-      {(needsToken || message) && (
-        <div className="space-y-2 border-t border-line p-4 text-sm sm:px-5">
-          {message && <p className="text-muted">{message}</p>}
-          {needsToken && (
-            <input
-              type="password"
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-              placeholder="Sync-Token (KBI_API__SYNC_TOKEN)"
-              className="h-10 w-full rounded-xl border border-line bg-surface px-3 text-sm focus:border-accent focus:outline-none sm:max-w-sm"
-            />
-          )}
+      {message && (
+        <div className="border-t border-line p-4 text-sm text-muted sm:px-5">
+          <p>{message}</p>
         </div>
       )}
     </Card>

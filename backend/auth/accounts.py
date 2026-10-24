@@ -38,8 +38,8 @@ class Viewer:
     image: str | None
     ### The leagues this viewer may see, the preferred one first
     league_ids: tuple[str, ...]
-    ### The session behind it, None for the account from the environment in public mode
-    session_id: str | None = None
+    ### The login session behind it
+    session_id: str
 
 
 class LoginError(Exception):
@@ -236,16 +236,7 @@ class Accounts:
                 session.commit()
             return self._viewer(session, row.user_id, session_id)
 
-    def public_viewer(self) -> Viewer | None:
-        """Without login everyone sees what the account from the environment sees."""
-        if self.service_user_id is None:
-            return None
-        with Session(self.engine) as session:
-            return self._viewer(session, self.service_user_id, None, only=self.service_league_ids)
-
-    def _viewer(
-        self, session: Session, user_id: str, session_id: str | None, only: set[str] | None = None
-    ) -> Viewer | None:
+    def _viewer(self, session: Session, user_id: str, session_id: str) -> Viewer | None:
         user = session.get(User, user_id)
         if user is None:
             return None
@@ -254,11 +245,7 @@ class Accounts:
             .join(UserLeague, UserLeague.league_id == League.id)
             .where(UserLeague.user_id == user_id)
         ).all()
-        visible = [
-            (lid, name)
-            for lid, name in rows
-            if self.settings.auth.allows(lid, name) and (only is None or lid in only)
-        ]
+        visible = [(lid, name) for lid, name in rows if self.settings.auth.allows(lid, name)]
         preferred = (self.settings.kickbase.league or "").casefold()
         visible.sort(
             key=lambda row: (preferred not in (row[0].casefold(), row[1].casefold()), row[1].casefold())
@@ -331,8 +318,6 @@ class Accounts:
         return client
 
     def client_for_viewer(self, viewer: Viewer) -> KickbaseClient | None:
-        if viewer.session_id is None:
-            return self.service
         return self.client_for_session(viewer.session_id)
 
     def _service_leagues(self, session: Session) -> set[str]:

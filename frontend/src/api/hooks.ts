@@ -38,9 +38,6 @@ export const useMe = () =>
     queryFn: () => api<Me>("/auth/me"),
     retry: false,
     staleTime: 5 * 60_000,
-    // Without login the configured account may still be logging in, the server answers 503 until then
-    refetchInterval: (query) =>
-      query.state.error instanceof ApiError && query.state.error.status === 503 ? 5_000 : false,
   })
 
 export function useLogin() {
@@ -126,11 +123,7 @@ export function useTriggerSync() {
   const client = useQueryClient()
   const leagueId = useLeagueId()
   return useMutation({
-    mutationFn: (token?: string) =>
-      api<SyncTrigger>(withLeague("/sync", leagueId), {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      }),
+    mutationFn: () => api<SyncTrigger>(withLeague("/sync", leagueId), { method: "POST" }),
     onSuccess: () => client.invalidateQueries({ queryKey: ["status"] }),
   })
 }

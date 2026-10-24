@@ -22,7 +22,7 @@ export default function Login() {
   const next = params.get("next")
   const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/"
 
-  if (me.data || status.data?.requireLogin === false) return <Navigate to={target} replace />
+  if (me.data) return <Navigate to={target} replace />
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
