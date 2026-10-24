@@ -1,4 +1,4 @@
-"""Database access."""
+"""Module for DB access."""
 
 from __future__ import annotations
 

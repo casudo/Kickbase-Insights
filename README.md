@@ -2,18 +2,17 @@
   <a href="https://de.kickbase.com/"><img width="400" alt="Logo" src="repo_pictures/kickbase.jpg"></a>
   <br>
   <h1>Kickbase Insights</h1>
-  This project is a used to gather data from <a href="https://www.kickbase.com/">Kickbase</a> API endpoint and visualize it in a web interface, acting as alternative for the pro/member membership.
+  Self-hosted statistics and analysis for your <a href="https://www.kickbase.com/">Kickbase</a> league, as an alternative to the Pro/Member abonnement.
 
   ---
 
   <!-- Placeholder for badges -->
   ![GitHub License](https://img.shields.io/github/license/casudo/kickbase-insights) ![GitHub release (with filter)](https://img.shields.io/github/v/release/casudo/kickbase-insights)
 
-
 </div>
 
 > [!NOTE]
-This is a hobby project to test stuff with JSON and the cores of Python. Feel free to create issues and contribute.  
+> This is a hobby project and not affiliated with Kickbase in any way. Feel free to create issues and contribute.
 
 ##### Table of Contents
 - [Screenshots](#screenshots)
@@ -208,9 +207,9 @@ You'll also need to manually run `npm start` in the `frontend` folder as well as
 ---
 
 ### Thanks to
-- [@roman-la](https://github.com/roman-la) for the base of the frontend  
 
----
+- [@kevinskyba](https://github.com/kevinskyba) for the Kickbase API v4 documentation
 
 ### License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
