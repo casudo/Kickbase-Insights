@@ -15,10 +15,13 @@
 > This is a hobby project and not affiliated with Kickbase in any way. Feel free to create issues and contribute.
 
 ##### Table of Contents
+- [Features](#features)
 - [Screenshots](#screenshots)
-- [Docker](#docker)
-  - [docker run](#docker-run)
-  - [Docker Compose](#docker-compose)
+- [Quick start](#quick-start)
+  - [Docker](#docker)
+- [Configuration](#configuration)
+- [Coming from v2.x](#coming-from-v2x)
+- [Reverse proxy](#reverse-proxy)
 - [Development](#development)
 - [Planned for the future](#planned-for-the-future)
   - [Thanks to](#thanks-to)
@@ -26,183 +29,131 @@
 
 ---
 
+## Features
+
+- **Your own login** – everyone signs in with their own Kickbase account and sees their own leagues, with a switcher when they are in more than one. Budgets and bids stay private, exactly as in Kickbase.
+- **Übersicht** – your placement, team value, real budget and max bid, today's biggest market value movers, listings about to expire, the league table and the current matchday at a glance.
+- **Transfermarkt** – every listing with price, markup, your own bid, market value changes (today, yesterday, 7 and 30 days) and a live countdown.
+- **Spieler** – all players of the competition with market value trends, owner and gain since purchase. Tap a player anywhere for the player screen: on desktop a large view with a detailed market value chart (high, low and purchase price marked), the daily changes as bars, statistics for 7 days up to the whole history (best and worst day, rising and falling streaks, distance to the high, volatility), the last 14 days, the ownership and the league's transfers of that player. On phones the same as a compact sheet.
+- **Live** – live points of the current matchday, counted only for the starting eleven, with goals, assists, cards and the scoring events of every player.
+- **Liga** – table, estimated balances and max bids of every manager, battles and the Bundesliga table.
+- **Transfers** – profit of every sale, summed transfer revenue over time, team value, points and placement per matchday and the full transfer feed.
+- **Aufstellungsplaner** – your eleven on a pitch, like in the Kickbase app. It starts with the lineup saved in Kickbase; switch formations, swap players by tapping or with drag and drop, or let it pick the best eleven by average points. Mark players to sell and see the new balance and which formations you can still field.
+- **Player portraits** everywhere players show up, with the club badge in the corner. Where the Kickbase API only sends the club's placeholder, the portrait comes from Kickbase's picture pool on its CDN, for some players still from an earlier season.
+- **Mobile first, wide screen ready** – bottom navigation on phones, sidebar on desktop, up to three columns and every table column on large screens, light and dark mode (following the system until you pick one).
+- Optional Discord notifications for failed syncs and collected login bonuses.
+
 ## Screenshots
 
-You can find some screenshots of the frontend below, not all features are shown.  
+soonTM
 
-> [!WARNING]
-As of v2.5.0  
+## Quick start
 
-![Transfers](repo_pictures/transfers.png)  
-![MarketValue](repo_pictures/marketvalue.png)  
-![Revenue](repo_pictures/revenue.png)  
+Everything (web interface, API and the scheduled sync) runs in one container on one port.
 
-## Docker
-If you want to run this in a Docker container, you'll first need to set some mandatory environment variables:  
+### Docker
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `KB_MAIL` | **Yes** | Your Kickbase E-Mail. |
-| `KB_PASSWORD` | **Yes** | Your Kickbase password. |
-| `KB_LIGA` | No | The name of the league you want to see data for in the GUI. If not set, defaults to the first league you're in. |
-| `DISCORD_WEBHOOK` | **Yes** | The Discord webhook URL to send notifications to. |
-| `RUN_SCHEDULE` | No | The cron expression when the script should fetch new information from the API. If not set, defaults to `10 2,6,10,14,18,22 * * *`. |
-| `START_DATE` | **Yes** | The instant the season started or your league was reset, as an ISO 8601 timestamp with an explicit UTC offset, e.g. `2026-08-01T18:00:00Z`. Events in the Kickbase activity feed from before this instant are excluded from the transfer and revenue calculations. |
-| `START_MONEY` | No | The amount of money you started with. If not set, defaults to 50.000.000€ |
-| `TZ` | No | The timezone to use. Defaults to `Europe/Berlin` |
-
-> [!IMPORTANT]
-> The format of `START_DATE` changed: the old `dd.mm.yyyy` format is no longer accepted and now causes a hard error on startup.
-> If you are upgrading, migrate your value to an ISO 8601 timestamp with an explicit UTC offset (e.g. `2026-08-01T18:00:00Z`) and use the actual time of day the season started or your league was reset - the container will refuse to start otherwise.
-
-> [!IMPORTANT]
-> The live points feature is currently on-hold and not present as of v2.4.0!
-> To handle the re-implementation of the live points with more ease, the ports for the backend are not commented out.
-
-### docker run
 ```bash
-docker run -d \
-    --name=kickbase_insights \
-    --restart=unless-stopped \
-    -p <frontend_port>:3000 -p <backend_port>:5000 \
-    -e KB_MAIL=<kickbase_email> \
-    -e KB_PASSWORD=<kickbase_password> \
-    -e DISCORD_WEBHOOK=<discord_webhook> \
-    -e START_DATE=<start_timestamp> \
-    ghcr.io/casudo/kickbase-insights:latest
+curl -O https://raw.githubusercontent.com/casudo/Kickbase-Insights/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/casudo/Kickbase-Insights/main/.env.example
+### edit .env to configure your settings
+docker compose up -d
 ```
 
-`<start_timestamp>` is an ISO 8601 timestamp in UTC, e.g. `2026-08-01T18:00:00Z`.  
+Open `http://<host>:8000` and log in with your Kickbase account. Your leagues are synced right after the first login, which takes a minute or two.
 
-### Docker Compose
-```yaml
-version: "3.8"
+## Configuration
 
-services:
-  kickbase-insights:
-    image: ghcr.io/casudo/kickbase-insights:latest
-    container_name: kickbase_insights
-    restart: unless-stopped
-    ports:
-      - <frontend_port>:3000 # Web GUI
-      - <backend_port>:5000 # Backend API (../api/livepoints)  
-    environment:
-      - KB_MAIL=<kickbase_email>
-      - KB_PASSWORD=<kickbase_password>
-      - DISCORD_WEBHOOK=<discord_webhook>
-      - START_DATE=<start_timestamp> # ISO 8601 in UTC, e.g. 2026-08-01T18:00:00Z
-```  
+All settings are environment variables with the `KBI_` prefix, nested settings use a double underscore. See [`.env.example`](.env.example) for a commented template.
 
----
+| Variable | Default | Description |
+| --- | --- | --- |
+| `KBI_AUTH__REQUIRE_LOGIN` | `true` | Everyone logs in with their own Kickbase account. Set to `false` to show the data of the account below to everyone without a login. |
+| `KBI_AUTH__ALLOWED_LEAGUES` | all | Comma separated league names or IDs this server is for. Only these leagues are synced and shown, people in none of them cannot log in. Recommended for public servers. |
+| `KBI_AUTH__SESSION_DAYS` | `30` | How long a login lasts at most. It ends earlier when Kickbase expires its token. |
+| `KBI_AUTH__SECRET_KEY` | generated | Encrypts the stored Kickbase session tokens. Without it a key is generated once and kept in `/data/secret.key`. |
+| `KBI_KICKBASE__EMAIL` | – | Optional. An account that keeps your leagues synced while nobody is logged in, and collects its daily bonus. Required when login is turned off. |
+| `KBI_KICKBASE__PASSWORD` | – | Password of that account. |
+| `KBI_KICKBASE__LEAGUE` | all its leagues | Name or ID of the league that account keeps synced. It is listed first for everyone and is the only one shown when login is turned off. Its owner still sees all their leagues after logging in. |
+| `KBI_KICKBASE__START_DATE` | estimated | The instant the season started or your league was reset, ISO 8601 with UTC offset, e.g. `2026-08-01T18:00:00Z`. Feed events before it are ignored and players assigned at the start are valued at their market value back then. |
+| `KBI_KICKBASE__START_MONEY` | `50000000` | Starting money, `200000000` for "Ohne Team". Used to estimate the other managers' balances. |
+| `KBI_KICKBASE__COLLECT_BONUS` | `true` | Collect the daily login bonus on every sync. |
+| `KBI_KICKBASE__DISCORD_WEBHOOK` | – | Discord webhook for failed syncs and collected bonuses. |
+| `KBI_KICKBASE__COMPETITION_ID` | `1` | `1` is the Bundesliga. |
+| `KBI_SYNC__SCHEDULE` | `10 2,6,10,14,18,22 * * *` | Cron expression for the sync. |
+| `KBI_SYNC__TIMEZONE` | `TZ` or `Europe/Berlin` | Timezone the schedule is evaluated in. |
+| `KBI_SYNC__LIVE_CACHE_SECONDS` | `45` | How long live points are reused before Kickbase is asked again. |
+| `KBI_API__PORT` | `8000` | Port of the web server. |
+| `KBI_API__FORWARDED_ALLOW_IPS` | `127.0.0.1` | Proxies whose `X-Forwarded-*` headers are trusted. Set to `*` behind Traefik or nginx in a Docker network, so login cookies are marked secure over HTTPS. |
+| `KBI_API__SYNC_TOKEN` | – | Only without login: manually triggered syncs then require `Authorization: Bearer <token>`. The status page asks for it. |
+| `KBI_DATABASE__HOST` | – | PostgreSQL host. Without it an SQLite database in `/data` is used. |
+| `KBI_DATABASE__PORT` / `__DATABASE` / `__USERNAME` / `__PASSWORD` | `5432` / `kickbase` / `kickbase` / – | PostgreSQL connection. |
+| `KBI_DATABASE__URL` | – | A full SQLAlchemy URL, wins over the fields above. |
+| `KBI_DEMO` | `false` | Run with generated sample data, no Kickbase account needed. Always uses its own SQLite file. |
+| `KBI_DEBUG` | `false` | Verbose logging. |
 
-If you run this container in your LAN (via IP), you'll need to change the following line in the `App.js` file in the `frontend/src` folder to this (obv. change `<backend_port>`):     
-```js
-const response = await fetch('http://localhost:<backend_port>/api/livepoints')
-```  
+## Coming from v2.x
 
-If you make this container publically available via a domain, you'll need to create/update the following entry in your reverse proxy:  
-`your.domain.com -> <container_ip_or_hostname>:3000`  
-`your.domain.com/api/livepoints -> <container_ip_or_hostname>:5000`  
-> [!IMPORTANT]
-In order to this to work, both your reverse proxy and the container need to be in the same network.  
+v3 is a complete rewrite and a clean start, not an update: it reads nothing of v2, neither its settings nor its data.
 
-In Traefik, the dynamic config would look like this:  
+1. Stop and remove the v2 container. Its JSON data is not used anymore and can be deleted.
+2. Write a new `.env` from [`.env.example`](.env.example). The v2 variables (`KB_MAIL`, `KB_PASSWORD`, `KB_LIGA`, `DISCORD_WEBHOOK`, `START_DATE`, `START_MONEY`, `RUN_SCHEDULE`) are ignored, every setting has a `KBI_` name now, see [Configuration](#configuration).
+3. Start v3 as in the [Quick start](#quick-start). Everything runs on port `8000`, the ports `3000` and `5000` are gone. The first sync builds the database from Kickbase.
+
+Everyone logs in with their own Kickbase account now. For a dashboard without login, set `KBI_AUTH__REQUIRE_LOGIN=false` together with `KBI_KICKBASE__EMAIL` and `KBI_KICKBASE__PASSWORD`.
+
+## Reverse proxy
+
+Point your proxy at port `8000` of the container and set `KBI_API__FORWARDED_ALLOW_IPS=*`, so the app knows it is served over HTTPS and marks its login cookie as secure. With Traefik:
+
 ```yaml
 http:
   routers:
-    kickbase-web:
-      service: kickbase-web
+    kickbase:
+      service: kickbase
       rule: Host(`your.domain.de`)
       entryPoints:
         - websecure
       tls:
         certResolver: cloudflare
-
-    kickbase-api:
-      service: kickbase-api
-      rule: Host(`your.domain.de`) && PathPrefix(`/api/livepoints`)
-      entryPoints:
-        - websecure
-      tls:
-        certResolver: cloudflare
-
   services:
-    kickbase-web:
+    kickbase:
       loadBalancer:
         servers:
-          - url: http://<container_hostname>:3000
-
-    kickbase-api:
-      loadBalancer:
-        servers:
-          - url: http://<container_hostname>:5000
+          - url: http://<container_hostname>:8000
 ```
 
-> [!NOTE]
-It may take some time to initially start the container, so check the logs!  
-
----
-
 ## Development
-If you want to contribute to this project, you can follow the steps below to jump right into the development environment.  
-```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_timestamp> ubuntu
-```  
-Run this long command to setup the container:  
-```bash
-mkdir /code && cd /code && apt update && apt upgrade -y && apt install tree nano python3 python3-pip git curl -y && git clone https://github.com/casudo/Kickbase-Insights.git . && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && pip install --upgrade pip && pip install --upgrade -r requirements.txt && mkdir -p frontend/src/data/timestamps && mkdir logs && cd frontend && npm install
-```  
 
-If you have this project already cloned, you can run the following command to bind mount the files inside the container:  
+**Backend**
 ```bash
-docker run -dit --name=Kickbase -p <frontend_port>:3000 -p <backend_port>:5000 -e KB_MAIL=<kickbase_mail> -e KB_PASSWORD=<kickbase_password> -e DISCORD_WEBHOOK=<discord_webhook> -e WATCHPACK_POLLING=true -e START_DATE=<start_timestamp> -v <your_folder>\Kickbase-Insights:/code ubuntu
-```  
-Run this long command to setup the container:  
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install ".[dev]"
+cp ../.env.example .env
+python main.py start
+python main.py sync
+pytest
+ruff check . && ruff format .
+```
+
+**Frontend**
 ```bash
-cd /code && apt update && apt upgrade -y && apt install tree nano python3 python3-pip curl -y && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && apt-get install -y nodejs && pip install --upgrade pip && pip install --upgrade -r requirements.txt && mkdir -p frontend/src/data/timestamps && mkdir logs && cd frontend && npm install
-```  
+cd frontend
+npm install
+npm run dev
+npm test
+npm run build
+```
 
-Now you're ready to go. Keep in mind that you'll first need to run `main.py` to get the required data for the frontend.  
-`python3 main.py`  
-
-You'll also need to manually run `npm start` in the `frontend` folder as well as `python3 -u -m flask run --host=0.0.0.0 --port=5000` in the `/code` folder.  
+`KBI_DEMO=true` runs the whole app with two generated leagues, handy to work on the frontend without touching your Kickbase account. Log in with any password: `anna@demo.de` is a member of one league, every other address of both.
 
 ---
 
 ## Planned for the future
-**Frontend:**  
-- Market table: Maybe add ligainsider rating?
-- Add base features
-  - Feed
-  - Lineup
-  - Next matches
-  - League table
-  - Top players
-- Transfererlöse: Hold player for X days  
-- Sum. Transfererlöse: Add custom scale for chart  
-- Misc: Unsold starter players    
-- Reformat changelog  
-- Other menu layout (+ mobile responsive)  
-- Back to top button  
-- ToC on pages with lot of content  
-- Market value graph for players  
 
-**Backend:**  
-- Fix all TODOs  
-- Add best practice to seperate duplicate variables names from modules (e.g. user and user. Which one is the module and which one is the variable?)   
-- Discord notifications  
-- Logging module for entrypoint.py and app.py    
-- Add linter/formatter  
-- Categorize components to frontend menu    
-- Battles: Spieltagsdominator: Fix placements being wrong for people with the same amount of mdWins  
-- Change behavior if player has the position number of "0". Instead of defaulting that to "1", do smth else
-- Support for multiple leagues via ports (League 1: 5000, League 2: 5001, etc.)
-- Rename "endpoints" to "classes" and put all of them into one file
-
-**Misc:**  
-- Add Postman workspace  
-- Add Workflow chart  
-- Automatically disable caching  
+soonTM
 
 ---
 
