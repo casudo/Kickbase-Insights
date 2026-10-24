@@ -165,7 +165,8 @@ npm run build
 
 ## Planned for the future
 
-soonTM
+- Fix player circles on the "Aufstellungsplaner" page
+- All text should be put into an i18n localization system
 
 ---
 
