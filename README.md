@@ -84,6 +84,7 @@ All settings are environment variables with the `KBI_` prefix, nested settings u
 | Variable | Default | Description |
 | --- | --- | --- |
 | `KBI_AUTH__ALLOWED_LEAGUES` | all | Comma separated league names or IDs this server is for. Only these leagues are synced and shown, people in none of them cannot log in. Recommended for public servers. |
+| `KBI_AUTH__BLOCKED_LEAGUES` | none | Comma separated league names or IDs that are never synced or shown, e.g. leagues in a different game mode like Arena. Wins over `KBI_AUTH__ALLOWED_LEAGUES`. |
 | `KBI_AUTH__SESSION_DAYS` | `30` | How long a login lasts at most. It ends earlier when Kickbase expires its token. |
 | `KBI_AUTH__SECRET_KEY` | generated | Encrypts the stored Kickbase session tokens. Without it a key is generated once and kept in `/data/secret.key`. |
 | `KBI_KICKBASE__EMAIL` | – | An account that keeps your leagues synced while nobody is logged in, and collects its daily bonus. |

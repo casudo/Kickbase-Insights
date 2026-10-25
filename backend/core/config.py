@@ -32,6 +32,8 @@ def _comma_separated(value: Any) -> Any:
 class AuthSettings(BaseModel):
     ### League names or IDs this server is for, comma separated. Empty allows every league of whoever logs in
     allowed_leagues: Annotated[list[str], NoDecode, BeforeValidator(_comma_separated)] = []
+    ### League names or IDs that are never synced or shown, comma separated. Wins over allowed_leagues
+    blocked_leagues: Annotated[list[str], NoDecode, BeforeValidator(_comma_separated)] = []
     ### How long a login lasts at most. Kickbase may end it earlier when its token expires.
     session_days: int = 30
     ### Encrypts the stored Kickbase session tokens. Generated and kept in the data folder when not set
@@ -40,10 +42,12 @@ class AuthSettings(BaseModel):
     max_failed_logins: int = 3
 
     def allows(self, league_id: str, league_name: str) -> bool:
+        keys = {league_id.casefold(), league_name.casefold()}
+        if keys & {entry.casefold() for entry in self.blocked_leagues}:
+            return False
         if not self.allowed_leagues:
             return True
-        wanted = {entry.casefold() for entry in self.allowed_leagues}
-        return league_id.casefold() in wanted or league_name.casefold() in wanted
+        return bool(keys & {entry.casefold() for entry in self.allowed_leagues})
 
 
 class AllowSettings(BaseModel):
