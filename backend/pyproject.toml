@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kickbase-insights"
-version = "3.0.0"
+version = "3.0.1"
 description = "Self-hosted insights for your Kickbase league."
 license = "MIT"
 authors = [{ name = "casudo" }]

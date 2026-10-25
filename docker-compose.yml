@@ -10,7 +10,7 @@
 services:
   kickbase-insights:
     container_name: kickbase_insights
-    image: ghcr.io/casudo/kickbase-insights:v3.0.0
+    image: ghcr.io/casudo/kickbase-insights:latest
     restart: unless-stopped
     env_file: .env
     ports:
