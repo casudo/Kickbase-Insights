@@ -758,13 +758,13 @@ class DemoWorld:
                 "md": match["dt"],
                 "t1": match["t1"],
                 "t2": match["t2"],
-                "pt": player.team_id,
                 "mdst": match["st"],
                 "cur": group["day"] == CURRENT_DAY,
                 "st": 0,
             }
             if match["st"]:
-                entry.update({"t1g": match["t1g"], "t2g": match["t2g"]})
+                ### Like Kickbase, the player's club only comes with the matches already played
+                entry.update({"t1g": match["t1g"], "t2g": match["t2g"], "pt": player.team_id})
                 if group["day"] == CURRENT_DAY:
                     role, points = self.match_role(player_id), self.live_points(player_id)[0]
                 else:

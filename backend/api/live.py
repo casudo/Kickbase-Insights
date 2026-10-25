@@ -123,12 +123,20 @@ class LiveService:
         cached = self._matches.get(key)
         if cached and time.monotonic() - cached[0] < MATCHES_MAX_AGE_SECONDS:
             return cached[1]
-        performance = await client.player_performance(league.competition_id, player_id)
+        performance, player = await asyncio.gather(
+            client.player_performance(league.competition_id, player_id),
+            asyncio.to_thread(self._load_player, player_id),
+        )
         ### Oldest season first, the last one is the current
         season = performance.seasons[-1] if performance.seasons else None
+        matches = season.matches if season else []
+        ### Kickbase names the player's club only for the matches already played,
+        ### the ones to come are the current club's
+        last_club = next((match.team_id for match in reversed(matches) if match.team_id), None)
+        club = (player.team_id if player else None) or last_club
         result = PlayerMatchesOut(
             season=season.title if season else None,
-            matches=[_player_match(match) for match in season.matches] if season else [],
+            matches=[_player_match(match, club) for match in matches],
         )
         self._matches[key] = (time.monotonic(), result)
         return result
@@ -305,9 +313,11 @@ class LiveService:
         )
 
 
-def _player_match(match: kb.PerformanceMatch) -> PlayerMatchOut:
-    """A match from the player's point of view: their club's goals first, the other club as opponent."""
-    home = match.team_id is None or match.team_id == match.team1_id
+def _player_match(match: kb.PerformanceMatch, club: str | None) -> PlayerMatchOut:
+    """A match from the player's point of view: their club's goals first, the other club as opponent.
+    `club` stands in for the player's club where Kickbase leaves it out."""
+    team_id = match.team_id or club
+    home = team_id is None or team_id == match.team1_id
     state = analytics.match_state(match.match_status)
     role = analytics.player_role(match.status)
     minutes = re.match(r"\d+", match.minutes or "")
