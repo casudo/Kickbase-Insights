@@ -233,9 +233,6 @@ class SyncService:
             members = await asyncio.to_thread(self.accounts.member_clients, league_id, result.user_id)
             refreshed = [await self.refresh_personal(league_id, member) for member in members]
             stats["members_refreshed"] = sum(refreshed)
-
-            if client is self.accounts.service and self.settings.kickbase.collect_bonus:
-                await self._collect_bonus(client)
             status, error = "success", None
         except KickbaseAuthError as e:
             ### The session behind this client is over, the user has to log in again
@@ -246,6 +243,10 @@ class SyncService:
             log.exception("Sync of league %s failed", league_id)
             status, error = "failed", f"{type(e).__name__}: {e}"
             await notify.discord(self._webhook, f"Sync von {league_name} fehlgeschlagen", error, notify.RED)
+
+        ### Collect the bonus for the configured account, even if the league sync failed
+        if client is self.accounts.service and self.settings.kickbase.collect_bonus:
+            await self._collect_bonus(client)
 
         stats["duration_seconds"] = round(time.monotonic() - started, 1)
         requests = client.request_count - requests_before
