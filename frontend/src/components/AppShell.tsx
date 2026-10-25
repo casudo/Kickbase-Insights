@@ -60,6 +60,11 @@ export function AppShell() {
     setLeaguesOpen(false)
   }, [location.pathname, league?.id])
 
+  // A new page starts at the top, the window would otherwise keep the scroll position of the previous one
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" })
+  }, [location.pathname])
+
   return (
     <div className="min-h-dvh">
       <Sidebar />
