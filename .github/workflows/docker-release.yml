@@ -33,10 +33,11 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/casudo/kickbase-insights
+          ### v1.2.3, v1.2 and v1. No comments inside the block, metadata-action would read them as part of the tag
           tags: |
-            type=semver,pattern=v{{version}},value=${{ github.event.release.tag_name }} # v1.2.3
-            type=semver,pattern=v{{major}}.{{minor}},value=${{ github.event.release.tag_name }} # v1.2
-            type=semver,pattern=v{{major}},value=${{ github.event.release.tag_name }} # v1
+            type=semver,pattern=v{{version}},value=${{ github.event.release.tag_name }}
+            type=semver,pattern=v{{major}}.{{minor}},value=${{ github.event.release.tag_name }}
+            type=semver,pattern=v{{major}},value=${{ github.event.release.tag_name }}
 
       ### The app shows the version with its own "v", so it gets the tag without one
       - name: Read version from the release tag
