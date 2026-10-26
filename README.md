@@ -168,6 +168,7 @@ npm run build
 
 - Fix player circles on the "Aufstellungsplaner" page
 - All text should be put into an i18n localization system
+- Show the localized time when a transfer market offer expires below the remaining time in gray
 
 ---
 
