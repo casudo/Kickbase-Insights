@@ -105,11 +105,11 @@ class FetchResult:
     failures: list[str] = field(default_factory=list)
 
 
-def competition_id_of(league: kb.LeagueInfo, fallback: int) -> int:
+def competition_id_of(league: kb.LeagueInfo) -> int:
     try:
         return int(league.competition_id)
     except (TypeError, ValueError):
-        return fallback
+        return 1 # The Bundesliga
 
 
 class SyncService:
@@ -287,7 +287,7 @@ class SyncService:
         league = next((info for info in await client.leagues() if info.id == league_id), None)
         if league is None:
             raise KickbaseError(f"{user.name or user.id} is no longer a member of league {league_id}.")
-        competition_id = competition_id_of(league, self.settings.kickbase.competition_id)
+        competition_id = competition_id_of(league)
         log.info("Syncing league '%s' (%s)", league.name, league_id)
 
         table, matchdays, overview, market, budget = await asyncio.gather(

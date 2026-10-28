@@ -149,19 +149,30 @@ class Accounts:
                 "Deine Ligen konnten nicht geladen werden. Bitte versuche es erneut.", 502
             ) from e
 
-        allowed = [league for league in leagues if self.settings.auth.allows(league.id, league.name)]
+        allowed = self._usable(leagues)
         if not allowed:
-            message = (
-                "Dieser Server ist für keine deiner Ligen freigeschaltet."
-                if leagues
-                else "Dein Kickbase-Konto ist in keiner Liga."
-            )
+            if not leagues:
+                message = "Dein Kickbase-Konto ist in keiner Liga."
+            elif not any(league.supported for league in leagues):
+                message = "Kickbase Insights unterstützt nur den Spielmodus Classic, nicht Arena oder Rush."
+            else:
+                message = "Dieser Server ist für keine deiner Ligen freigeschaltet."
             raise LoginError(message, 403)
 
         cookie = new_session_token()
         viewer = await asyncio.to_thread(self._store_login, login, email, allowed, cookie)
         log.info("%s logged in (%d leagues)", login.user.name or login.user.id, len(allowed))
         return cookie, viewer
+
+    def _usable(self, leagues: list[kb.LeagueInfo]) -> list[kb.LeagueInfo]:
+        """The leagues this server is for: Classic leagues the settings allow, of any real league."""
+        usable = []
+        for league in leagues:
+            if not league.supported:
+                log.info("Leaving out league '%s' in game mode %d", league.name, league.game_mode)
+            elif self.settings.auth.allows(league.id, league.name):
+                usable.append(league)
+        return usable
 
     def _store_login(
         self, login: kb.LoginResponse, email: str, leagues: list[kb.LeagueInfo], cookie: str
@@ -209,7 +220,7 @@ class Accounts:
             league = session.get(League, info.id) or League(id=info.id, name=info.name)
             league.name = info.name or league.name
             league.image = info.image or league.image
-            league.competition_id = competition_id_of(info, self.settings.kickbase.competition_id)
+            league.competition_id = competition_id_of(info)
             session.add(league)
 
     def logout(self, cookie: str) -> None:
@@ -269,11 +280,7 @@ class Accounts:
         if self.service is None:
             return
         user = await self.service.ensure_login()
-        leagues = [
-            league
-            for league in await self.service.leagues()
-            if self.settings.auth.allows(league.id, league.name)
-        ]
+        leagues = self._usable(await self.service.leagues())
         synced = leagues
         if self.settings.kickbase.league and leagues:
             synced = [select_league(leagues, self.settings.kickbase.league)]

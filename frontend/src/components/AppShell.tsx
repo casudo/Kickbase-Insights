@@ -330,7 +330,7 @@ function BottomNav({ onMore }: { onMore: () => void }) {
   )
 }
 
-/** Pulses while a Bundesliga match of the current matchday is running */
+/** Pulses while a real match of the current matchday is running */
 function LiveDot({ className }: { className?: string }) {
   const { data } = useStatus()
   if (!data?.liveNow) return null

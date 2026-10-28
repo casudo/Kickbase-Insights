@@ -72,7 +72,7 @@ class StatusOut(Schema):
     start_date: datetime | None = None
     start_money: int
     sync: SyncStatus
-    live_now: bool = False # A Bundesliga match of the current matchday is running right now, judged by kick-off times
+    live_now: bool = False # A real match of the current matchday is running, judged by kick-off times
     warnings: list[str] = []
 
 

@@ -8,8 +8,9 @@ from sqlalchemy import JSON, BigInteger, Column, DateTime, Index
 from sqlalchemy.types import TypeDecorator
 from sqlmodel import Field, SQLModel
 
-### Bump when a table changes. Older databases are rebuilt on startup, see db.init_db.
-SCHEMA_VERSION = 1
+### Bump when a table or what is stored in it changes. Older databases are rebuilt on startup, see db.init_db.
+### 2: leagues in another game mode than Classic are no longer stored
+SCHEMA_VERSION = 2
 
 
 class UTCDateTime(TypeDecorator):

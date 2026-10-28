@@ -594,7 +594,7 @@ class DemoWorld:
     def _selection(self, query, user_id):
         return {
             "it": [
-                {"i": league.id, "n": league.name, "cpi": "1"}
+                {"i": league.id, "n": league.name, "cpi": "1", "gpm": 1}
                 for league in self.leagues.values()
                 if user_id in dict(league.managers)
             ]

@@ -84,7 +84,7 @@ All settings are environment variables with the `KBI_` prefix, nested settings u
 | Variable | Default | Description |
 | --- | --- | --- |
 | `KBI_AUTH__ALLOWED_LEAGUES` | all | Comma separated league names or IDs this server is for. Only these leagues are synced and shown, people in none of them cannot log in. Recommended for public servers. |
-| `KBI_AUTH__BLOCKED_LEAGUES` | none | Comma separated league names or IDs that are never synced or shown, e.g. leagues in a different game mode like Arena. Wins over `KBI_AUTH__ALLOWED_LEAGUES`. |
+| `KBI_AUTH__BLOCKED_LEAGUES` | none | Comma separated league names or IDs that are never synced or shown. Wins over `KBI_AUTH__ALLOWED_LEAGUES`. Leagues in another game mode than Classic, i.e. Arena and Rush, are always left out. |
 | `KBI_AUTH__SESSION_DAYS` | `30` | How long a login lasts at most. It ends earlier when Kickbase expires its token. |
 | `KBI_AUTH__SECRET_KEY` | generated | Encrypts the stored Kickbase session tokens. Without it a key is generated once and kept in `/data/secret.key`. |
 | `KBI_KICKBASE__EMAIL` | – | An account that keeps your leagues synced while nobody is logged in, and collects its daily bonus. |
@@ -94,7 +94,6 @@ All settings are environment variables with the `KBI_` prefix, nested settings u
 | `KBI_KICKBASE__START_MONEY` | `50000000` | Starting money, `200000000` for "Ohne Team". Used to estimate the other managers' balances. |
 | `KBI_KICKBASE__COLLECT_BONUS` | `true` | Collect the daily login bonus on every sync. |
 | `KBI_KICKBASE__DISCORD_WEBHOOK` | – | Discord webhook for failed syncs and collected bonuses. |
-| `KBI_KICKBASE__COMPETITION_ID` | `1` | `1` is the Bundesliga. |
 | `KBI_SYNC__SCHEDULE` | `10 2,6,10,14,18,22 * * *` | Cron expression for the sync. |
 | `KBI_SYNC__TIMEZONE` | `TZ` or `Europe/Berlin` | Timezone the schedule is evaluated in. |
 | `KBI_SYNC__LIVE_CACHE_SECONDS` | `45` | How long live points are reused before Kickbase is asked again. |

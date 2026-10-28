@@ -32,7 +32,8 @@ def _comma_separated(value: Any) -> Any:
 class AuthSettings(BaseModel):
     ### League names or IDs this server is for, comma separated. Empty allows every league of whoever logs in
     allowed_leagues: Annotated[list[str], NoDecode, BeforeValidator(_comma_separated)] = []
-    ### League names or IDs that are never synced or shown, comma separated. Wins over allowed_leagues
+    ### League names or IDs that are never synced or shown, comma separated. Wins over allowed_leagues.
+    ### Leagues in another game mode than Classic (Arena, Rush) are left out anyway
     blocked_leagues: Annotated[list[str], NoDecode, BeforeValidator(_comma_separated)] = []
     ### How long a login lasts at most. Kickbase may end it earlier when its token expires.
     session_days: int = 30
@@ -104,7 +105,6 @@ class KickbaseSettings(BaseModel):
     email: str | None = None
     password: SecretStr | None = None
     league: str | None = None # Defaults to the first league of the account.
-    competition_id: int = 1
     discord_webhook: SecretStr | None = None
     start_date: AwareDatetime | None = None # The instant the season started or the league was reset. Feed events before it are ignored.
     start_money: int = 50_000_000
