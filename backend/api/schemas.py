@@ -72,7 +72,7 @@ class StatusOut(Schema):
     start_date: datetime | None = None
     start_money: int
     sync: SyncStatus
-    live_now: bool = False # A real match of the current matchday is running, judged by kick-off times
+    live_now: bool = False # A real match is running, judged by kick-off times and Kickbase's last live answer
     warnings: list[str] = []
 
 
@@ -262,7 +262,7 @@ class LivePlayerOut(Schema):
     match_status: int | None = None
     match_state: MatchState = "upcoming"
     match_minute: str | None = None
-    minute: int | None = None
+    minute: int | None = None # Minutes played, known once the match is finished
     role: PlayerRole | None = None
     on_field: bool = False
     goals: int = 0
@@ -292,6 +292,8 @@ class LiveOut(Schema):
     day: int | None
     updated_at: datetime # When Kickbase was asked, the answer is reused for cache_seconds
     cache_seconds: int
+    ### A real match is on. Only then Kickbase is asked again without an explicit refresh
+    match_running: bool = False
     matches: list[MatchOut]
     managers: list[LiveManagerOut]
 

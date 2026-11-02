@@ -124,7 +124,8 @@ class SyncSettings(BaseModel):
     concurrency: int = 12
     ### Player details (first name, points, injury notes) are re-fetched once they are this old
     player_details_max_age_hours: float = 12
-    ### How long a live points response is reused before Kickbase is asked again
+    ### How long a live points response is reused before Kickbase is asked again.
+    ### Without a running match it is only refreshed when somebody explicitly asks for it
     live_cache_seconds: int = 45
     ### Minimum pause between two manually triggered syncs
     manual_cooldown_seconds: int = 120

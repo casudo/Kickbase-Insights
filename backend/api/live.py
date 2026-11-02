@@ -2,6 +2,9 @@
 
 As in Kickbase only the starting eleven counts: this reads each manager's lineup from the ranking
 and the points of exactly those players from the player center.
+
+Kickbase only has new points while a real match runs. Otherwise the last answer is kept until
+somebody explicitly asks for a refresh.
 """
 
 from __future__ import annotations
@@ -28,7 +31,7 @@ from api.schemas import (
 )
 from core import analytics
 from core.config import Settings
-from db.models import League, Manager, Player
+from db.models import Fixture, League, Manager, Player, utcnow
 from kickbase import KickbaseAuthError, KickbaseClient, KickbaseError
 from kickbase import models as kb
 
@@ -39,6 +42,10 @@ EVENT_TYPES_MAX_AGE = timedelta(hours=24)
 LINEUPS_MAX_AGE_SECONDS = 120
 ### A player's matches change once per match
 MATCHES_MAX_AGE_SECONDS = 10 * 60
+### Kick-off to final whistle including half time and stoppage time
+MATCH_LENGTH = timedelta(minutes=115)
+### A match Kickbase still reports as running this long after kick-off is not believed anymore
+MAX_MATCH_LENGTH = timedelta(hours=4)
 
 
 class LiveService:
@@ -50,6 +57,8 @@ class LiveService:
         ### Players looked up by the search on the live page, by (league, player)
         self._players: dict[tuple[str, str], tuple[float, LivePlayerOut]] = {}
         self._matches: dict[tuple[int, str], tuple[float, PlayerMatchesOut]] = {}
+        ### Minutes played in a finished match, they do not change anymore. By (competition, player, day)
+        self._minutes: dict[tuple[int, str, int], int] = {}
         ### Codes Kickbase sent that are not documented, each logged once so they can be looked into
         self._unknown_codes: set[tuple[str, int]] = set()
         self._lock = asyncio.Lock()
@@ -70,32 +79,70 @@ class LiveService:
         self._lineups[league.id] = (time.monotonic(), result)
         return result
 
-    async def get(self, league: League, client: KickbaseClient, viewer_id: str | None = None) -> LiveOut:
-        """Live data of a league, fetched with the viewer's own token and shared by all its members."""
-        result = await self._shared(league, client)
+    async def get(
+        self, league: League, client: KickbaseClient, viewer_id: str | None = None, refresh: bool = False
+    ) -> LiveOut:
+        """Live data of a league, fetched with the viewer's own token and shared by all its members.
+
+        Kickbase is only asked again while a match runs, or when `refresh` asks for it explicitly.
+        """
+        result = await self._shared(league, client, refresh)
+        running = await asyncio.to_thread(self.match_running, league)
         ### The cached copy is the same for everyone, only "is that me" differs
         return result.model_copy(
             update={
-                "managers": [m.model_copy(update={"is_self": m.id == viewer_id}) for m in result.managers]
+                "match_running": running,
+                "managers": [m.model_copy(update={"is_self": m.id == viewer_id}) for m in result.managers],
             }
         )
 
-    async def _shared(self, league: League, client: KickbaseClient) -> LiveOut:
-        ttl = self.settings.sync.live_cache_seconds
+    def match_running(self, league: League) -> bool:
+        """Whether a real match of the league's competition is on, the only time new points come in.
+
+        That is from the planned kick-off until Kickbase reports the final whistle, as a match may run
+        longer than planned and Kickbase may lag behind the kick-off.
+        """
+        now = utcnow()
         cached = self._cache.get(league.id)
-        if cached and time.monotonic() - cached[0] < ttl:
-            return cached[1]
+        reported = {match.id: match for match in cached[1].matches} if cached else {}
+        if any(
+            match.state == "running" and (match.kickoff is None or now < match.kickoff + MAX_MATCH_LENGTH)
+            for match in reported.values()
+        ):
+            return True
+        with Session(self.engine) as session:
+            kicked_off = session.exec(
+                select(Fixture.id).where(
+                    Fixture.competition_id == league.competition_id,
+                    Fixture.kickoff <= now,
+                    Fixture.kickoff > now - MATCH_LENGTH,
+                )
+            ).all()
+        ### Unless Kickbase already reported the final whistle
+        return any(mid not in reported or reported[mid].state != "finished" for mid in kicked_off)
+
+    async def _outdated(self, league: League, refresh: bool) -> bool:
+        cached = self._cache.get(league.id)
+        if cached is None:
+            return True
+        if time.monotonic() - cached[0] < self.settings.sync.live_cache_seconds:
+            return False
+        return refresh or await asyncio.to_thread(self.match_running, league)
+
+    async def _shared(self, league: League, client: KickbaseClient, refresh: bool) -> LiveOut:
+        if not await self._outdated(league, refresh):
+            return self._cache[league.id][1]
         ### Concurrent viewers share one fetch instead of each hammering Kickbase
         async with self._lock:
-            cached = self._cache.get(league.id)
-            if cached and time.monotonic() - cached[0] < ttl:
-                return cached[1]
+            if not await self._outdated(league, refresh):
+                return self._cache[league.id][1]
             result = await self._build(league, client)
             self._cache[league.id] = (time.monotonic(), result)
             return result
 
     async def player(self, league: League, client: KickbaseClient, player_id: str) -> LivePlayerOut:
-        """Live points and events of any player of the matchday, also of those nobody fielded."""
+        """Live points and events of any player of the matchday, also of those nobody fielded.
+        Looked up on demand by the search, so the frontend only asks again on its own while a match runs."""
         ttl = self.settings.sync.live_cache_seconds
         now = time.monotonic()
         self._players = {key: entry for key, entry in self._players.items() if now - entry[0] < ttl}
@@ -113,6 +160,7 @@ class LiveService:
             for match in shared[1].matches:
                 team_states[match.team1_id] = team_states[match.team2_id] = match.state
         result = self._live_player(player_id, center, player, team_states)
+        await self._add_minutes(league, client, [result], day)
         self._players[(league.id, player_id)] = (time.monotonic(), result)
         return result
 
@@ -140,6 +188,35 @@ class LiveService:
         )
         self._matches[key] = (time.monotonic(), result)
         return result
+
+    async def _add_minutes(
+        self, league: League, client: KickbaseClient, players: list[LivePlayerOut], day: int | None
+    ) -> None:
+        """Fills in the minutes the players played in their finished match of the day.
+
+        The player center only tells how long the match lasted, so the minutes come from the
+        player's matches, like on the player screen. Fetched once per player and matchday.
+        """
+        if day is None:
+            return
+        played = [p for p in players if p.match_state == "finished" and p.role in ("start", "sub")]
+        missing = {p.id for p in played if (league.competition_id, p.id, day) not in self._minutes}
+        await asyncio.gather(*(self._load_minutes(league, client, pid, day) for pid in missing))
+        for p in played:
+            p.minute = self._minutes.get((league.competition_id, p.id, day))
+
+    async def _load_minutes(self, league: League, client: KickbaseClient, player_id: str, day: int) -> None:
+        try:
+            result = await self.matches(league, client, player_id)
+        except KickbaseAuthError:
+            raise
+        except KickbaseError as e:
+            log.debug("No minutes played for player %s: %s", player_id, e)
+            return
+        match = next((m for m in result.matches if m.day == day), None)
+        ### Final only once Kickbase counts the match as finished there too
+        if match and match.state == "finished" and match.minutes is not None:
+            self._minutes[(league.competition_id, player_id, day)] = match.minutes
 
     def _load_player(self, player_id: str) -> Player | None:
         with Session(self.engine) as session:
@@ -206,13 +283,16 @@ class LiveService:
             self._note_code("match status", match.status, analytics.KNOWN_MATCH_CODES)
             team_states[match.team1_id] = team_states[match.team2_id] = match.state
 
+        live_players = {
+            pid: self._live_player(pid, center_by_id.get(pid), players.get(pid), team_states)
+            for pid in lineup_ids
+        }
+        await self._add_minutes(league, client, list(live_players.values()), day)
+
         result_managers = []
         for user in ranking.users:
             fielded = [pid for pid in user.lineup if pid]
-            lineup = [
-                self._live_player(pid, center_by_id.get(pid), players.get(pid), team_states)
-                for pid in fielded
-            ]
+            lineup = [live_players[pid] for pid in fielded]
             lineup.sort(key=lambda p: (p.position, -p.points))
             manager = managers.get(user.id)
             ### Kickbase updates the totals of the ranking with a delay, the points of the players are live.
@@ -300,7 +380,6 @@ class LiveService:
             match_status=center.match_status if center else None,
             match_state=state,
             match_minute=center.match_minute if center else None,
-            minute=center.minute if center else None,
             role=role,
             on_field=analytics.on_field(state, role, sent_off),
             goals=kinds["goal"],

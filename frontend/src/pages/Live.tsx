@@ -1,6 +1,6 @@
 import { AlertTriangle, ChevronDown, RefreshCw, X } from "lucide-react"
 import { type ReactNode, useEffect, useMemo, useState } from "react"
-import { useLive, useLivePlayer, usePlayers, useTeamMap } from "@/api/hooks"
+import { useLive, useLivePlayer, usePlayers, useRefreshLive, useTeamMap } from "@/api/hooks"
 import type { Live as LiveData, LiveManager, LivePlayer, Player } from "@/api/types"
 import { Avatar, PlayerAvatar, PlayerCell, PositionBadge, TeamLogo } from "@/components/kickbase"
 import { MatchTile } from "@/components/matches"
@@ -14,6 +14,7 @@ import { playerName, position } from "@/lib/kickbase"
 export default function Live() {
   const [autoRefresh, setAutoRefresh] = useStoredState("kbi-live-refresh", true)
   const query = useLive(autoRefresh)
+  const refreshLive = useRefreshLive()
   const now = useNow(15_000)
   const [notice, setNotice] = useState<string | null>(null)
   const [searched, setSearched] = useState<string | null>(null)
@@ -26,13 +27,19 @@ export default function Live() {
   }, [notice])
 
   /**
-   * The server asks Kickbase at most every `cacheSeconds` and hands out the same answer until then.
-   * The browser then gets a "304 Not Modified" and keeps what it has, so say why nothing changed.
+   * Asks Kickbase right away, also when no match runs. The server still asks at most every `cacheSeconds`
+   * and hands out the same answer until then, so say why nothing changed.
    */
   const refresh = async () => {
     const before = query.data?.updatedAt
-    const { data: live } = await query.refetch()
-    if (!live || !before || live.updatedAt !== before) {
+    let live: LiveData
+    try {
+      live = await refreshLive.mutateAsync()
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Die Live-Daten konnten nicht aktualisiert werden.")
+      return
+    }
+    if (!before || live.updatedAt !== before) {
       setNotice(null)
       return
     }
@@ -60,8 +67,8 @@ export default function Live() {
               />
               Auto
             </label>
-            <Button onClick={refresh} loading={query.isFetching} aria-label="Aktualisieren">
-              {!query.isFetching && <RefreshCw className="size-4" />}
+            <Button onClick={refresh} loading={query.isFetching || refreshLive.isPending} aria-label="Aktualisieren">
+              {!query.isFetching && !refreshLive.isPending && <RefreshCw className="size-4" />}
               <span className="hidden sm:inline">Aktualisieren</span>
             </Button>
           </div>
@@ -89,7 +96,11 @@ export default function Live() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-muted">
                 Stand {relativeTime(live.updatedAt, now)} ({time(live.updatedAt)} Uhr)
-                {autoRefresh ? " · aktualisiert sich jede Minute" : ""}
+                {live.matchRunning
+                  ? autoRefresh
+                    ? " · aktualisiert sich jede Minute"
+                    : ""
+                  : " · gerade läuft kein Spiel, neue Daten nur per „Aktualisieren“"}
               </p>
               <PlayerSearch onSelect={setSearched} />
             </div>
@@ -160,7 +171,7 @@ function PlayerSearch({ onSelect }: { onSelect: (id: string) => void }) {
 }
 
 function SearchedPlayer({ playerId, live, onClose }: { playerId: string; live: LiveData; onClose: () => void }) {
-  const query = useLivePlayer(playerId)
+  const query = useLivePlayer(playerId, live.matchRunning)
   const teams = useTeamMap()
   const { open } = usePlayerSheet()
   // Only from the live data: who in this league has the player in their starting eleven
