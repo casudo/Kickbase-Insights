@@ -14,7 +14,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from sqlalchemy import Engine, delete
+from sqlalchemy import Engine, delete, update
 from sqlmodel import Session, select
 
 from auth.security import TokenCipher, hash_session_token, new_session_token
@@ -28,6 +28,8 @@ log = logging.getLogger(__name__)
 
 ### last_seen_at is only written this often, so browsing does not turn every request into a write
 TOUCH_INTERVAL = timedelta(minutes=5)
+### A session used again after this long unused counts as a new visit and is logged
+VISIT_GAP = timedelta(minutes=30)
 
 
 @dataclass(frozen=True)
@@ -243,11 +245,29 @@ class Accounts:
                 session.commit()
                 self._session_clients.pop(session_id, None)
                 return None
-            if now - row.last_seen_at > TOUCH_INTERVAL:
-                row.last_seen_at = now
-                session.add(row)
+            unused = now - row.last_seen_at
+            touched = False
+            if unused > TOUCH_INTERVAL:
+                ### Opening the app sends several requests at once. The condition lets only the first
+                ### of them move last_seen_at on, so a visit is logged once
+                touched = (
+                    session.execute(
+                        update(UserSession)
+                        .where(UserSession.id == session_id, UserSession.last_seen_at < now - TOUCH_INTERVAL)
+                        .values(last_seen_at=now)
+                    ).rowcount
+                    == 1
+                )
                 session.commit()
-            return self._viewer(session, row.user_id, session_id)
+            viewer = self._viewer(session, row.user_id, session_id)
+            if viewer is not None and touched and unused > VISIT_GAP:
+                log.info(
+                    "%s logged in with their session (%d leagues, session from %s)",
+                    viewer.name,
+                    len(viewer.league_ids),
+                    row.created_at.date().isoformat(),
+                )
+            return viewer
 
     def _viewer(self, session: Session, user_id: str, session_id: str) -> Viewer | None:
         user = session.get(User, user_id)
