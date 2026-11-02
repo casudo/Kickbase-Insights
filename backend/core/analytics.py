@@ -365,7 +365,7 @@ _EVENT_PREFIXES: list[tuple[EventKind, tuple[str, ...]]] = [
     ("red", ("red card", "rote karte")),
     ("yellow", ("yellow card", "gelbe karte")),
     ("assist", ("assist (", "assist", "vorlage (", "vorlage")),
-    ("goal", ("goal (", "tor (")),
+    ("goal", ("goal (", "tor (", "penalty scored", "elfmeter verwandelt")),
 ]
 
 
