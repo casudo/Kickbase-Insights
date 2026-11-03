@@ -663,15 +663,33 @@ function Board({
         {engine.flash && <FlashLayer key={engine.flash.moment.id} flash={engine.flash} managers={managers} />}
       </section>
       {matches.parallel.length > 0 && (
-        <nav className="lb-parallel" aria-label="Weitere laufende Spiele">
-          {matches.parallel.slice(0, 6).map((match) => (
+        <nav
+          className="lb-parallel"
+          aria-label="Weitere laufende Spiele"
+          data-rows={matches.parallel.length > PARALLEL_PER_ROW ? 2 : 1}
+          style={{ "--cols": parallelColumns(matches.parallel.length) } as CSSProperties}
+        >
+          {matches.parallel.map((match) => (
             <button key={match.id} type="button" className="lb-parallel-match" onClick={() => onPick(match.id)} title="Groß anzeigen">
-              <TeamLogo teamId={match.team1Id} size={26} />
-              <span>
-                {match.team1Goals ?? 0}:{match.team2Goals ?? 0}
+              <span className="lb-parallel-logo">
+                <TeamLogo teamId={match.team1Id} size={120} />
               </span>
-              <TeamLogo teamId={match.team2Id} size={26} />
-              <ParallelClock match={match} updatedAt={live.updatedAt} lag={lag} />
+              <span className="lb-parallel-center">
+                {/* A goal pops the digit, as on the big scoreboard */}
+                <span className="lb-parallel-score">
+                  <span key={`1-${match.team1Goals}`} className="lb-digit">
+                    {match.team1Goals ?? 0}
+                  </span>
+                  <span className="lb-parallel-separator">:</span>
+                  <span key={`2-${match.team2Goals}`} className="lb-digit">
+                    {match.team2Goals ?? 0}
+                  </span>
+                </span>
+                <ParallelClock match={match} updatedAt={live.updatedAt} lag={lag} />
+              </span>
+              <span className="lb-parallel-logo lb-parallel-logo-away">
+                <TeamLogo teamId={match.team2Id} size={120} />
+              </span>
             </button>
           ))}
         </nav>
@@ -1187,9 +1205,13 @@ function TeamSide({ teamId, name }: { teamId: string | null; name: string | unde
   )
 }
 
+/** All in one row up to five matches, more share two rows */
+const PARALLEL_PER_ROW = 5
+const parallelColumns = (count: number) => (count <= PARALLEL_PER_ROW ? count : Math.ceil(count / 2))
+
 function ParallelClock({ match, updatedAt, lag }: { match: Match; updatedAt: string; lag: number }) {
   const now = useNow(10_000) - lag
-  return <em>{matchClock(match, updatedAt, now)}</em>
+  return <span className="lb-parallel-clock">{matchClock(match, updatedAt, now)}</span>
 }
 
 /** Positions of the plus or minus signs bursting out of a flash: left, size, delay, rotation, drift and height */

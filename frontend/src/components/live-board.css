@@ -270,6 +270,7 @@
 }
 
 .lb-team-logo > *,
+.lb-parallel-logo > *,
 .lb-flash-club > *,
 .lb-cutout-fallback > * {
   width: 100% !important;
@@ -386,40 +387,99 @@
 /* ------------------------------------------------------------------------- */
 /* Other running matches and the band */
 
+/* A tile per match, sharing the width. The last row's tiles stretch to fill it */
 .lb-parallel {
+  /* Height of a tile, and the crests' size relative to it */
+  --ph: clamp(64px, 9.5vh, 116px);
+  --logo: 1.4;
   display: flex;
   flex: none;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid rgb(255 255 255 / 0.06);
-  background: rgb(255 255 255 / 0.04);
+  background: rgb(255 255 255 / 0.03);
+}
+
+/* Two rows of matches leave less room for the table */
+.lb-parallel[data-rows="2"] {
+  --ph: clamp(56px, 7.5vh, 92px);
 }
 
 .lb-parallel-match {
-  display: inline-flex;
+  position: relative;
+  display: grid;
+  flex: 1 1 calc(100% / var(--cols, 1) - 8px);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* One row as high as the tile: the bigger crests overflow it instead of stretching it */
+  grid-template-rows: minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  padding: 5px 14px;
-  border: 1px solid rgb(255 255 255 / 0.12);
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.1);
+  min-width: 0;
+  height: var(--ph);
+  padding: 0 calc(var(--ph) * 0.14);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse 60% 90% at 50% 115%, rgb(52 211 153 / 0.2), transparent 70%),
+    linear-gradient(180deg, #2b3847 0%, #1f2a36 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
   color: #fff;
-  font-size: clamp(13px, 1.9vh, 20px);
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
   cursor: pointer;
+  transition: border-color 200ms ease;
 }
 
-.lb-parallel-match:hover {
-  background: rgb(255 255 255 / 0.18);
+.lb-parallel-match:hover,
+.lb-parallel-match:focus-visible {
+  border-color: rgb(255 255 255 / 0.4);
+  outline: none;
 }
 
-.lb-parallel-match em {
+/* The crests big at both ends, centered in the tile. Kickbase's images have a wide transparent margin:
+   the box is bigger than the tile so the crest itself nearly fills its height, and the negative margins
+   pull that margin past the tile's edge */
+.lb-parallel-logo {
+  width: calc(var(--ph) * var(--logo));
+  height: calc(var(--ph) * var(--logo));
+  margin-left: calc(var(--ph) * -0.22);
+  filter: drop-shadow(0 4px 12px rgb(0 0 0 / 0.45));
+}
+
+.lb-parallel-logo-away {
+  justify-self: end;
+  margin-right: calc(var(--ph) * -0.22);
+  margin-left: 0;
+}
+
+.lb-parallel-center {
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--ph) * 0.04);
+  padding: 0 calc(var(--ph) * 0.12);
+}
+
+.lb-parallel-score {
+  display: flex;
+  align-items: center;
+  font-size: calc(var(--ph) * 0.52);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 0.9;
+  text-shadow: 0 4px 16px rgb(0 0 0 / 0.45);
+}
+
+.lb-parallel-separator {
+  padding: 0 0.06em;
+  font-size: 0.8em;
+  opacity: 0.45;
+}
+
+.lb-parallel-clock {
   color: var(--lb-accent);
-  font-size: 0.85em;
-  font-style: normal;
+  font-size: calc(var(--ph) * 0.2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .lb-band {
@@ -1425,6 +1485,20 @@
 
   .lb-countdown {
     font-size: 38px;
+  }
+
+  /* Two matches per row, an odd last one takes the whole row */
+  .lb-parallel,
+  .lb-parallel[data-rows="2"] {
+    --ph: 56px;
+    --logo: 1.3;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .lb-parallel-match {
+    flex-basis: calc(50% - 3px);
+    border-radius: 12px;
   }
 
   .lb-list {
