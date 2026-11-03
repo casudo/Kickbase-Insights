@@ -786,10 +786,8 @@ class DemoWorld:
         p = self.players[player_id]
         points, events, match = self.live_points(player_id)
         role = self.match_role(player_id)
-        clock = int(match["mtd"]) if match and match["mtd"] else 0
-        ### Minutes played: the whole match so far, from the substitution on, or none
-        came_on = random.Random(f"{self.seed}-sub-{player_id}").randint(5, 40)
-        played = {5: clock, 3: max(1, clock - came_on), 4: 0}
+        ### Like Kickbase: how long the match lasted so far, not the minutes the player played
+        clock = int(match["mtd"]) if match and match["mtd"] else None
         return {
             "i": p.id,
             "tid": p.team_id,
@@ -801,7 +799,7 @@ class DemoWorld:
             "t1g": match["t1g"] if match else None,
             "t2g": match["t2g"] if match else None,
             "st": role,
-            "mt": played.get(role),
+            "mt": clock,
             "mtd": match["mtd"] if match else None,
             "mst": match["st"] if match else None,
             "md": match["dt"] if match else None,

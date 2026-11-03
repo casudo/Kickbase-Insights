@@ -47,15 +47,13 @@ from api.schemas import (
 )
 from auth.accounts import Accounts, LoginError, Viewer
 from core.config import Settings
-from db.models import Fixture, League, SyncRun, utcnow
+from db.models import League, SyncRun, utcnow
 from kickbase import KickbaseAuthError, KickbaseClient, KickbaseError
 from sync.scheduler import Scheduler
 from sync.service import SyncService
 
 COOKIE = "kbi_session"
 PlayerIdPath = Annotated[str, Path(pattern=r"^\d+$")]
-### Kick-off to final whistle including half time and stoppage time
-MATCH_LENGTH = timedelta(minutes=115)
 
 
 @dataclass
@@ -258,17 +256,7 @@ def status(
     if last_run and last_run.status == "failed":
         warnings.append(f"Der letzte Sync ist fehlgeschlagen: {last_run.error}")
 
-    live_now = False
-    if league_row and league_row.current_day:
-        now = utcnow()
-        kickoffs = session.exec(
-            select(Fixture.kickoff).where(
-                Fixture.competition_id == league_row.competition_id,
-                Fixture.day == league_row.current_day,
-                Fixture.kickoff.is_not(None),
-            )
-        ).all()
-        live_now = any(kickoff <= now < kickoff + MATCH_LENGTH for kickoff in kickoffs)
+    live_now = state.live.match_running(league_row) if league_row else False
 
     return StatusOut(
         version=settings.version,
@@ -430,8 +418,17 @@ async def lineups(state: StateDep, league: LeagueDep, viewer: ViewerDep) -> Line
 
 
 @router.get("/live", response_model=LiveOut)
-async def live(state: StateDep, league: LeagueDep, viewer: ViewerDep) -> LiveOut:
-    return await ask_kickbase(state, viewer, lambda client: state.live.get(league, client, viewer.user_id))
+async def live(
+    state: StateDep,
+    league: LeagueDep,
+    viewer: ViewerDep,
+    refresh: Annotated[
+        bool, Query(description="Ask Kickbase even though no match runs, at most every live_cache_seconds")
+    ] = False,
+) -> LiveOut:
+    return await ask_kickbase(
+        state, viewer, lambda client: state.live.get(league, client, viewer.user_id, refresh)
+    )
 
 
 @router.get("/players/{player_id}/matches", response_model=PlayerMatchesOut)

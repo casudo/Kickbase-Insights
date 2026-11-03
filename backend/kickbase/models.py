@@ -389,7 +389,8 @@ class PlayerCenter(KBModel):
     team2_goals: int | None = Field(None, alias="t2g")
     points: int = Field(0, alias="p")
     status: int | None = Field(None, alias="st")
-    minute: int | None = Field(None, alias="mt")
+    ### Not the minutes the player played: how long the match lasted so far, stoppage time included
+    match_length: int | None = Field(None, alias="mt")
     kickoff: Timestamp = Field(None, alias="md")
     match_status: int | None = Field(None, alias="mst")
     match_minute: str | None = Field(None, alias="mtd")

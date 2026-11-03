@@ -495,7 +495,11 @@ function PlayerDetails({ player }: { player: PlayerDetail }) {
         <h3 className="mb-2 text-sm font-semibold">Marktwertverlauf</h3>
         <Segmented className="mb-3" value={range} onChange={setRange} options={RANGE_OPTIONS} />
         {points.length > 1 ? (
-          <ValueHistoryChart points={points} />
+          <>
+            <ValueHistoryChart points={points} />
+            <h4 className="mt-4 mb-1 text-xs font-medium text-muted">Veränderung zum Vortag</h4>
+            <DailyChangeChart points={points} height={120} />
+          </>
         ) : (
           <p className="py-8 text-center text-sm text-muted">Noch kein Verlauf vorhanden.</p>
         )}

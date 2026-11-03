@@ -110,8 +110,30 @@ export const useSyncRuns = () => useLeagueQuery<SyncRun[]>(["sync-runs"], "/sync
 export const useFixtures = (day?: number) =>
   useLeagueQuery<Fixtures>(["fixtures", day ?? "current"], day ? `/fixtures?day=${day}` : "/fixtures")
 export const useLineups = () => useLeagueQuery<Lineups>(["lineups"], "/lineups", { staleTime: 120_000 })
-export const useLive = (autoRefresh: boolean) =>
-  useLeagueQuery<Live>(["live"], "/live", { refetchInterval: autoRefresh ? 60_000 : false, staleTime: 30_000 })
+/**
+ * Live points. Kickbase only has new ones while a match runs, so only then the page refreshes every minute.
+ * Otherwise the server keeps its last answer without asking Kickbase, and is only checked now and then to notice the kick-off.
+ */
+export function useLive(autoRefresh: boolean) {
+  const leagueId = useLeagueId()
+  return useQuery({
+    queryKey: ["live", leagueId],
+    queryFn: () => api<Live>(withLeague("/live", leagueId)),
+    enabled: leagueId !== null,
+    refetchInterval: (query) => (!autoRefresh ? false : query.state.data?.matchRunning ? 60_000 : 5 * 60_000),
+    staleTime: 30_000,
+  })
+}
+
+/** Asks Kickbase for new live points right away, also when no match runs */
+export function useRefreshLive() {
+  const client = useQueryClient()
+  const leagueId = useLeagueId()
+  return useMutation({
+    mutationFn: () => api<Live>(withLeague("/live?refresh=true", leagueId)),
+    onSuccess: (live) => client.setQueryData(["live", leagueId], live),
+  })
+}
 
 /** A player's matches of the current season, fetched from Kickbase when the player screen opens */
 export function usePlayerMatches(id: string | null) {
@@ -148,14 +170,15 @@ export function useBid() {
   return { place, withdraw }
 }
 
-/** Live points of any player of the matchday, for the search on the live page */
-export function useLivePlayer(id: string | null) {
+/** Live points of any player of the matchday, for the search on the live page. Refreshed only while a match runs. */
+export function useLivePlayer(id: string | null, matchRunning: boolean) {
   const leagueId = useLeagueId()
   return useQuery({
     queryKey: ["live-player", id, leagueId],
     queryFn: () => api<LivePlayer>(withLeague(`/live/players/${id}`, leagueId)),
     enabled: id !== null && leagueId !== null,
-    refetchInterval: 60_000,
+    refetchInterval: matchRunning ? 60_000 : false,
+    refetchOnWindowFocus: matchRunning,
     staleTime: 30_000,
   })
 }

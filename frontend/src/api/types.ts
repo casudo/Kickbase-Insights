@@ -219,7 +219,7 @@ export type LivePlayer = {
   matchStatus: number | null
   matchState: MatchState
   matchMinute: string | null
-  minute: number | null /** Minutes the player has played */
+  minute: number | null /** Minutes the player has played, known once the match is finished */
   role: "start" | "sub" | "bench" | null
   onField: boolean
   goals: number
@@ -250,6 +250,8 @@ export type Live = {
   /** When Kickbase was asked. The server reuses that answer for `cacheSeconds`. */
   updatedAt: string
   cacheSeconds: number
+  /** A real match is on. Otherwise the server keeps its last answer until a refresh asks for a new one. */
+  matchRunning: boolean
   matches: Match[]
   managers: LiveManager[]
 }
