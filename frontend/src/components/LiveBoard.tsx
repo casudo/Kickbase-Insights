@@ -20,7 +20,18 @@ import { number, signedNumber, time, weekdayTime } from "@/lib/format"
 import { useNow, useStoredState } from "@/lib/hooks"
 import { cdnUrl, initials, playerName, pointsGrade, position } from "@/lib/kickbase"
 import { useLeague } from "@/lib/league"
-import { boardMatches, demoStep, diffLive, matchClock, type Moment, planSteps, startDemo, type Step } from "@/lib/liveBoard"
+import {
+  BIG_POINTS,
+  boardMatches,
+  demoStep,
+  diffLive,
+  matchClock,
+  type Moment,
+  type MomentKind,
+  planSteps,
+  startDemo,
+  type Step,
+} from "@/lib/liveBoard"
 
 // Timings of one moment. The CSS animations in live-board.css are made to fit these.
 const FLASH_MS = 5600
@@ -43,14 +54,31 @@ type BoardSettings = {
   /** Holds new data back, so the board does not show a goal before the TV does */
   delay: boolean
   delaySeconds: number
+  /** The kinds of moments that take over the scoreboard, the others show as a badge on the player */
+  flash: Record<MomentKind, boolean>
 }
-const DEFAULT_SETTINGS: BoardSettings = { delay: true, delaySeconds: 30 }
-const MAX_DELAY_SECONDS = 600 // 5 minutes
+const DEFAULT_SETTINGS: BoardSettings = {
+  delay: true,
+  delaySeconds: 30,
+  flash: { goal: true, ownGoal: true, assist: true, yellow: true, yellowRed: true, red: true, points: true },
+}
+
+/** The choices for the big animation, in the settings' order. `mark` is the sign shown next to it. */
+const FLASH_OPTIONS: { kind: MomentKind; label: string; mark: LiveEventKind | null }[] = [
+  { kind: "goal", label: "Tore", mark: "goal" },
+  { kind: "ownGoal", label: "Eigentore", mark: "own_goal" },
+  { kind: "assist", label: "Vorlagen", mark: "assist" },
+  { kind: "yellow", label: "Gelbe Karten", mark: "yellow" },
+  { kind: "yellowRed", label: "Gelb-Rot", mark: "yellow_red" },
+  { kind: "red", label: "Rote Karten", mark: "red" },
+  { kind: "points", label: `Sonst ab ±${BIG_POINTS} Punkten`, mark: null },
+]
+const MAX_DELAY_SECONDS = 600 // 10 minutes
 const DELAY_STEP_SECONDS = 5
 
 /** The stored settings on top of the defaults, so settings added later get their default */
 function readSettings(stored: Partial<BoardSettings>): BoardSettings {
-  const settings = { ...DEFAULT_SETTINGS, ...stored }
+  const settings = { ...DEFAULT_SETTINGS, ...stored, flash: { ...DEFAULT_SETTINGS.flash, ...stored.flash } }
   const seconds = Math.round(Number(settings.delaySeconds))
   return { ...settings, delaySeconds: Number.isFinite(seconds) ? Math.min(MAX_DELAY_SECONDS, Math.max(0, seconds)) : DEFAULT_SETTINGS.delaySeconds }
 }
@@ -78,7 +106,8 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
   const key = demo ? "demo" : "live"
   // The board's clocks run as far behind as its data, the demo makes up its own
   const lag = demo ? 0 : delayMs
-  const engine = useBoardEngine(live, key, root)
+  const flashKinds = new Set(FLASH_OPTIONS.filter((option) => settings.flash[option.kind]).map((option) => option.kind))
+  const engine = useBoardEngine(live, key, root, flashKinds)
   useEffect(() => setIdle(engine.idle), [engine.idle])
 
   const fullscreen = useFullscreen()
@@ -325,6 +354,23 @@ function SettingsPanel({ settings, onChange }: { settings: BoardSettings; onChan
         </div>
         <p className="lb-settings-hint">Alle Punkte erscheinen N Sekunden später, damit das Board nicht spoilert.</p>
       </section>
+      <section className="lb-settings-section">
+        <h3 className="lb-settings-title">Große Animation bei</h3>
+        <div className="lb-settings-kinds">
+          {FLASH_OPTIONS.map((option) => (
+            <label key={option.kind} className={cn("lb-settings-check lb-settings-kind", option.kind === "points" && "lb-settings-wide")}>
+              <input
+                type="checkbox"
+                checked={settings.flash[option.kind]}
+                onChange={(event) => onChange({ ...settings, flash: { ...settings.flash, [option.kind]: event.target.checked } })}
+              />
+              {option.mark && <EventMark kind={option.mark} />}
+              {option.label}
+            </label>
+          ))}
+        </div>
+        <p className="lb-settings-hint">Alles andere zählt klein auf dem Spieler hoch.</p>
+      </section>
     </div>
   )
 }
@@ -361,8 +407,16 @@ function sleep(ms: number, signal: AbortSignal) {
  *
  * The board draws `view.live`, not the incoming data: new data is only taken over together with its pins,
  * so no render ever shows the new points in the new order before their moment played.
+ *
+ * `flashKinds` are the kinds of moments that get the flash. A change applies to the next update, without
+ * interrupting what plays.
  */
-function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElement | null>) {
+function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElement | null>, flashKinds: ReadonlySet<MomentKind>) {
+  const kinds = useRef(flashKinds)
+  // Declared first, so the effect below already plans with the current choice
+  useLayoutEffect(() => {
+    kinds.current = flashKinds
+  })
   const [view, setView] = useState<View>({ live: null, pins: {} })
   const [flash, setFlash] = useState<Flash | null>(null)
   const [badges, setBadges] = useState<Record<string, number>>({})
@@ -396,7 +450,7 @@ function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElem
       return { live, pins }
     })
     if (!moments.length) return
-    queue.current.push(...planSteps(moments))
+    queue.current.push(...planSteps(moments, kinds.current))
     setIdle(false)
     wake.current?.()
   }, [live, key])

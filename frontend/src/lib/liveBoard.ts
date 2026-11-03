@@ -17,12 +17,10 @@ export type Moment = {
   points: number
   action: string
   kind: MomentKind
-  /** Gets the full-width flash, otherwise just a badge on the player */
-  big: boolean
 }
 
-/** Point changes from this size on get the flash even without a goal, assist or card */
-const BIG_POINTS = 40
+/** Point changes from this size on can get the flash even without a goal, assist or card */
+export const BIG_POINTS = 20
 /** More flashes from a single update would hold the board up for too long, the rest become badges */
 const MAX_FLASHES = 4
 
@@ -96,7 +94,6 @@ export function diffLive(previous: Live, next: Live): Moment[] {
       points,
       action,
       kind,
-      big: kind !== "points" || Math.abs(points) >= BIG_POINTS,
     })
   }
   return moments
@@ -104,10 +101,19 @@ export function diffLive(previous: Live, next: Live): Moment[] {
 
 export type Step = { type: "flash"; moment: Moment } | { type: "badges"; moments: Moment[] }
 
+/**
+ * Whether a moment gets the full-width flash, otherwise just a badge on the player. `flashes` are the
+ * kinds chosen for it, "points" stands for a big jump in points without a goal, assist or card.
+ */
+export function flashes(moment: Moment, kinds: ReadonlySet<MomentKind>): boolean {
+  return kinds.has(moment.kind) && (moment.kind !== "points" || Math.abs(moment.points) >= BIG_POINTS)
+}
+
 /** The order the board plays the moments of one update in: the biggest flashes first, then all small ones at once */
-export function planSteps(moments: Moment[]): Step[] {
-  const big = moments.filter((moment) => moment.big).sort((a, b) => Math.abs(b.points) - Math.abs(a.points))
-  const small = [...big.slice(MAX_FLASHES), ...moments.filter((moment) => !moment.big)]
+export function planSteps(moments: Moment[], kinds: ReadonlySet<MomentKind>): Step[] {
+  const isBig = (moment: Moment) => flashes(moment, kinds)
+  const big = moments.filter(isBig).sort((a, b) => Math.abs(b.points) - Math.abs(a.points))
+  const small = [...big.slice(MAX_FLASHES), ...moments.filter((moment) => !isBig(moment))]
   const steps: Step[] = big.slice(0, MAX_FLASHES).map((moment) => ({ type: "flash", moment }))
   if (small.length) steps.push({ type: "badges", moments: small })
   return steps

@@ -124,6 +124,37 @@
   gap: 8px;
 }
 
+.lb-settings-section + .lb-settings-section {
+  padding-top: 14px;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.lb-settings-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* The kinds for the big animation, two per line */
+.lb-settings-kinds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.lb-settings-check.lb-settings-kind {
+  gap: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lb-settings-kind .lb-mark-card {
+  font-size: 13px;
+}
+
+.lb-settings-wide {
+  grid-column: 1 / -1;
+}
+
 .lb-settings-check {
   display: flex;
   align-items: center;
