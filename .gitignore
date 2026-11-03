@@ -1,6 +1,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,vue,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,vue,node
 
+docker-compose-dev.yaml
+
 ### Node ###
 # Logs
 logs
