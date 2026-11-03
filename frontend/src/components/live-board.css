@@ -520,16 +520,6 @@
   text-transform: uppercase;
 }
 
-.lb-band::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%);
-  content: "";
-  pointer-events: none;
-  transform: translateX(-110%);
-  animation: lb-gleam 11s ease-in-out 4s infinite;
-}
-
 .lb-band-side {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -618,7 +608,7 @@
   transition-duration: 450ms;
 }
 
-/* A gleam running over the row: once when it lights up, now and then for the leader */
+/* A gleam running over the row once, when it lights up while its points come in */
 .lb-row::after {
   position: absolute;
   inset: 0;
@@ -627,11 +617,6 @@
   content: "";
   pointer-events: none;
   transform: translateX(-110%);
-}
-
-.lb-rank-1::after {
-  background: linear-gradient(105deg, transparent 35%, rgb(253 230 138 / 0.18) 50%, transparent 65%);
-  animation: lb-gleam 9s ease-in-out 3s infinite;
 }
 
 .lb-row-lit::after {
@@ -1898,17 +1883,6 @@
     transform: translateX(-110%);
   }
   to {
-    transform: translateX(110%);
-  }
-}
-
-/* The same sweep, once in a long while */
-@keyframes lb-gleam {
-  0% {
-    transform: translateX(-110%);
-  }
-  18%,
-  100% {
     transform: translateX(110%);
   }
 }
