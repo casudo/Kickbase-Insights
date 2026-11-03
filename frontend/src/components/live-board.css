@@ -100,6 +100,99 @@
   color: var(--lb-accent-ink);
 }
 
+/* The settings, opening below the controls */
+.lb-settings {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 14px;
+  width: min(300px, calc(100vw - 24px));
+  padding: 14px 16px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 16px;
+  background: rgb(22 31 41 / 0.95);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.45);
+  color-scheme: dark;
+  font-size: 13px;
+  backdrop-filter: blur(12px);
+  animation: lb-enter 150ms ease-out;
+}
+
+.lb-settings-section {
+  display: grid;
+  gap: 8px;
+}
+
+.lb-settings-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lb-settings-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--lb-accent);
+  cursor: pointer;
+}
+
+.lb-settings-seconds {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.lb-settings-seconds input,
+.lb-settings-step {
+  height: 34px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.lb-settings-seconds input {
+  width: 60px;
+  padding: 0 8px;
+  text-align: center;
+}
+
+.lb-settings-seconds input:focus {
+  border-color: var(--lb-accent);
+  outline: none;
+}
+
+.lb-settings-step {
+  width: 34px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lb-settings-step:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.lb-settings-step:disabled {
+  cursor: default;
+}
+
+.lb-settings-off {
+  opacity: 0.45;
+}
+
+.lb-settings-hint {
+  color: rgb(255 255 255 / 0.55);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 /* ------------------------------------------------------------------------- */
 /* Scoreboard */
 

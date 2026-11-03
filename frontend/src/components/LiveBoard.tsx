@@ -5,18 +5,19 @@
  * jump in points takes over the scoreboard with a flash, then the points fly into the player's tile,
  * the scores count up and the players and managers slide into their new order. Smaller changes show
  * up as badges on the players. The demo plays made-up moments on top of the real lineups, to see the
- * board at work while no match runs.
+ * board at work while no match runs. New data can be held back for a while, so the board does not
+ * run ahead of the TV.
  */
 
 import "./live-board.css"
-import { FlaskConical, Loader2, Maximize, Minimize, X } from "lucide-react"
+import { FlaskConical, Loader2, Maximize, Minimize, Settings2, X } from "lucide-react"
 import { type CSSProperties, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useLive, useTeamMap } from "@/api/hooks"
 import type { Live, LiveManager, LivePlayer, Match } from "@/api/types"
 import { TeamLogo } from "@/components/kickbase"
 import { cn } from "@/lib/cn"
 import { number, signedNumber, time, weekdayTime } from "@/lib/format"
-import { useNow } from "@/lib/hooks"
+import { useNow, useStoredState } from "@/lib/hooks"
 import { cdnUrl, initials, playerName, pointsGrade } from "@/lib/kickbase"
 import { useLeague } from "@/lib/league"
 import { boardMatches, demoStep, diffLive, matchClock, type Moment, planSteps, startDemo, type Step } from "@/lib/liveBoard"
@@ -37,17 +38,43 @@ const VISIBLE_ROWS = 6
 /** Poll a bit faster than the live page while a match runs, the server still asks Kickbase at most every 45 seconds */
 const RUNNING_REFRESH_MS = 30_000
 
+/** What the viewer set up for the board, kept in the browser */
+type BoardSettings = {
+  /** Holds new data back, so the board does not show a goal before the TV does */
+  delay: boolean
+  delaySeconds: number
+}
+const DEFAULT_SETTINGS: BoardSettings = { delay: true, delaySeconds: 30 }
+const MAX_DELAY_SECONDS = 600 // 5 minutes
+const DELAY_STEP_SECONDS = 5
+
+/** The stored settings on top of the defaults, so settings added later get their default */
+function readSettings(stored: Partial<BoardSettings>): BoardSettings {
+  const settings = { ...DEFAULT_SETTINGS, ...stored }
+  const seconds = Math.round(Number(settings.delaySeconds))
+  return { ...settings, delaySeconds: Number.isFinite(seconds) ? Math.min(MAX_DELAY_SECONDS, Math.max(0, seconds)) : DEFAULT_SETTINGS.delaySeconds }
+}
+
 export default function LiveBoard({ onClose }: { onClose: () => void }) {
   const query = useLive(true, RUNNING_REFRESH_MS)
   const { league } = useLeague()
   const root = useRef<HTMLDivElement>(null)
+  const toolbar = useRef<HTMLDivElement>(null)
   const [demo, setDemo] = useState(false)
   const [picked, setPicked] = useState<string | null>(null)
   const [idle, setIdle] = useState(true)
+  const [stored, setStored] = useStoredState<Partial<BoardSettings>>("kbi-board-settings", {})
+  const settings = readSettings(stored)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const demoLive = useDemo(demo, query.data, idle)
-  const live = (demo ? demoLive : null) ?? query.data ?? null
+  const delayMs = settings.delay ? settings.delaySeconds * 1000 : 0
+  const delayed = useDelayed(query.data, delayMs)
+  // The demo plays on the delayed data too: it keeps the real scores of running matches
+  const demoLive = useDemo(demo, delayed ?? undefined, idle)
+  const live = (demo ? demoLive : null) ?? delayed
   const key = demo ? "demo" : "live"
+  // The board's clocks run as far behind as its data, the demo makes up its own
+  const lag = demo ? 0 : delayMs
   const engine = useBoardEngine(live, key, root)
   useEffect(() => setIdle(engine.idle), [engine.idle])
 
@@ -55,17 +82,35 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
   const restless = useRestless(root)
   useWakeLock()
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !document.fullscreenElement) onClose()
-    }
-    document.addEventListener("keydown", onKey)
     const overflow = document.body.style.overflow
     document.body.style.overflow = "hidden"
     return () => {
-      document.removeEventListener("keydown", onKey)
       document.body.style.overflow = overflow
     }
-  }, [onClose])
+  }, [])
+  useEffect(() => {
+    // Leaving the field first, so a number typed into it counts before the settings go away
+    const closeSettings = () => {
+      const focused = document.activeElement
+      if (focused instanceof HTMLElement && toolbar.current?.contains(focused)) focused.blur()
+      setSettingsOpen(false)
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      if (settingsOpen) closeSettings()
+      else if (!document.fullscreenElement) onClose()
+    }
+    // The settings close when tapping anywhere outside the controls
+    const onPointer = (event: PointerEvent) => {
+      if (settingsOpen && !toolbar.current?.contains(event.target as Node)) closeSettings()
+    }
+    document.addEventListener("keydown", onKey)
+    document.addEventListener("pointerdown", onPointer)
+    return () => {
+      document.removeEventListener("keydown", onKey)
+      document.removeEventListener("pointerdown", onPointer)
+    }
+  }, [onClose, settingsOpen])
 
   const close = () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
@@ -73,9 +118,20 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div ref={root} className={cn("lb-root dark", !restless && "lb-calm")} role="dialog" aria-modal="true" aria-label="Live-Board">
-      <div className="lb-toolbar">
-        {live && <span className="lb-toolbar-stand">Stand {time(live.updatedAt)}</span>}
+    <div
+      ref={root}
+      className={cn("lb-root dark", !restless && !settingsOpen && "lb-calm")}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Live-Board"
+    >
+      <div ref={toolbar} className="lb-toolbar">
+        {live && (
+          <span className="lb-toolbar-stand">
+            Stand {time(live.updatedAt)}
+            {lag > 0 && ` · ${settings.delaySeconds} s verzögert`}
+          </span>
+        )}
         <button
           type="button"
           onClick={() => setDemo(!demo)}
@@ -86,6 +142,16 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
           <FlaskConical className="size-4" />
           {demo ? "Demo beenden" : "Demo"}
         </button>
+        <button
+          type="button"
+          onClick={() => setSettingsOpen(!settingsOpen)}
+          aria-expanded={settingsOpen}
+          aria-label="Einstellungen"
+          title="Einstellungen"
+          className={cn("lb-toolbar-button", settingsOpen && "lb-toolbar-active")}
+        >
+          <Settings2 className="size-4" />
+        </button>
         {fullscreen.supported && (
           <button type="button" onClick={fullscreen.toggle} className="lb-toolbar-button" aria-label={fullscreen.active ? "Vollbild beenden" : "Vollbild"}>
             {fullscreen.active ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
@@ -94,10 +160,20 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
         <button type="button" onClick={close} className="lb-toolbar-button" aria-label="Schließen">
           <X className="size-4" />
         </button>
+        {settingsOpen && <SettingsPanel settings={settings} onChange={setStored} />}
       </div>
 
       {engine.view.live ? (
-        <Board live={engine.view.live} sourceKey={key} demo={demo} leagueName={league?.name ?? ""} engine={engine} picked={picked} onPick={setPicked} />
+        <Board
+          live={engine.view.live}
+          sourceKey={key}
+          demo={demo}
+          leagueName={league?.name ?? ""}
+          engine={engine}
+          picked={picked}
+          onPick={setPicked}
+          lag={lag}
+        />
       ) : query.error ? (
         <div className="lb-message">
           <p>{query.error instanceof Error ? query.error.message : "Die Live-Daten konnten nicht geladen werden."}</p>
@@ -123,6 +199,122 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
           </span>
         </span>
       ))}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// The delay and the settings
+
+type Held = { live: Live; arrived: number }
+type Delayed = { shown: Live | null; held: Held[] }
+
+/**
+ * Due `delayMs` after Kickbase was asked. At the latest `delayMs` after it got here, in case this
+ * device's clock runs behind the server's.
+ */
+const dueAt = (item: Held, delayMs: number) => Math.min(Date.parse(item.live.updatedAt), item.arrived) + delayMs
+
+/** The newest held back data whose time has come, the older ones are passed over */
+function releaseDue(state: Delayed, delayMs: number): Delayed {
+  const now = Date.now()
+  const ready = state.held.findLastIndex((item) => dueAt(item, delayMs) <= now)
+  return ready < 0 ? state : { shown: state.held[ready].live, held: state.held.slice(ready + 1) }
+}
+
+/**
+ * Holds new live data back until `delayMs` after Kickbase was asked for it, so a goal does not show up
+ * on the board before it does on the TV. Everything waits together: points, scores and match clocks.
+ * The first data shows right away, so the board opens at once. So does data older than the delay,
+ * like the last answer while no match runs.
+ */
+function useDelayed(live: Live | undefined, delayMs: number): Live | null {
+  const [state, setState] = useState<Delayed>({ shown: null, held: [] })
+
+  // Layout effects, so data that is due right away is shown without a frame of waiting
+  useLayoutEffect(() => {
+    if (!live) return
+    setState((current) => {
+      if (!current.shown) return { shown: live, held: [] }
+      if (current.shown === live || current.held.some((item) => item.live === live)) return current
+      return { ...current, held: [...current.held, { live, arrived: Date.now() }] }
+    })
+  }, [live])
+
+  useLayoutEffect(() => {
+    const first = state.held[0]
+    if (!first) return
+    const wait = dueAt(first, delayMs) - Date.now()
+    if (wait <= 0) {
+      setState((current) => releaseDue(current, delayMs))
+      return
+    }
+    const timer = setTimeout(() => setState((current) => releaseDue(current, delayMs)), wait)
+    return () => clearTimeout(timer)
+  }, [state, delayMs])
+
+  return state.shown
+}
+
+function SettingsPanel({ settings, onChange }: { settings: BoardSettings; onChange: (settings: BoardSettings) => void }) {
+  /**
+   * What is being typed. It only counts once done (Enter or leaving the field): on the way from 30 to 45
+   * the field reads 4 for a moment, and held back goals would show up early.
+   */
+  const [typed, setTyped] = useState<string | null>(null)
+  const setSeconds = (seconds: number) => {
+    if (Number.isFinite(seconds)) onChange({ ...settings, delaySeconds: Math.min(MAX_DELAY_SECONDS, Math.max(0, Math.round(seconds))) })
+  }
+  const commit = () => {
+    if (typed !== null && typed.trim() !== "") setSeconds(Number(typed.replace(",", ".")))
+    setTyped(null)
+  }
+  return (
+    <div className="lb-settings" role="group" aria-label="Einstellungen">
+      <section className="lb-settings-section">
+        <label className="lb-settings-check">
+          <input type="checkbox" checked={settings.delay} onChange={(event) => onChange({ ...settings, delay: event.target.checked })} />
+          Verzögerung
+        </label>
+        <div className={cn("lb-settings-seconds", !settings.delay && "lb-settings-off")}>
+          <button
+            type="button"
+            className="lb-settings-step"
+            disabled={!settings.delay || settings.delaySeconds <= 0}
+            onClick={() => setSeconds(settings.delaySeconds - DELAY_STEP_SECONDS)}
+            aria-label={`${DELAY_STEP_SECONDS} Sekunden weniger`}
+          >
+            −
+          </button>
+          <input
+            type="text"
+            inputMode="numeric"
+            aria-label="Verzögerung in Sekunden"
+            value={typed ?? String(settings.delaySeconds)}
+            disabled={!settings.delay}
+            onFocus={(event) => {
+              setTyped(String(settings.delaySeconds))
+              event.currentTarget.select()
+            }}
+            onChange={(event) => setTyped(event.target.value.replace(/[^\d,.]/g, ""))}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur()
+            }}
+          />
+          <button
+            type="button"
+            className="lb-settings-step"
+            disabled={!settings.delay || settings.delaySeconds >= MAX_DELAY_SECONDS}
+            onClick={() => setSeconds(settings.delaySeconds + DELAY_STEP_SECONDS)}
+            aria-label={`${DELAY_STEP_SECONDS} Sekunden mehr`}
+          >
+            +
+          </button>
+          <span>Sekunden</span>
+        </div>
+        <p className="lb-settings-hint">Alle Punkte erscheinen N Sekunden später, damit das Board nicht spoilert.</p>
+      </section>
     </div>
   )
 }
@@ -425,6 +617,7 @@ function Board({
   engine,
   picked,
   onPick,
+  lag,
 }: {
   live: Live
   sourceKey: string
@@ -433,6 +626,8 @@ function Board({
   engine: Engine
   picked: string | null
   onPick: (id: string) => void
+  /** How far the board runs behind, in milliseconds */
+  lag: number
 }) {
   const list = useRef<HTMLDivElement>(null)
   const rows = useMemo(() => boardRows(live, engine.view.pins), [live, engine.view.pins])
@@ -452,7 +647,7 @@ function Board({
   return (
     <>
       <section className="lb-hero">
-        <Scoreboard live={live} matches={matches} />
+        <Scoreboard live={live} matches={matches} lag={lag} />
         {engine.flash && <FlashLayer key={engine.flash.moment.id} flash={engine.flash} managers={managers} />}
       </section>
       {matches.parallel.length > 0 && (
@@ -464,7 +659,7 @@ function Board({
                 {match.team1Goals ?? 0}:{match.team2Goals ?? 0}
               </span>
               <TeamLogo teamId={match.team2Id} size={26} />
-              <ParallelClock match={match} updatedAt={live.updatedAt} />
+              <ParallelClock match={match} updatedAt={live.updatedAt} lag={lag} />
             </button>
           ))}
         </nav>
@@ -702,8 +897,9 @@ function Marks({ player }: { player: LivePlayer }) {
 // ---------------------------------------------------------------------------
 // Scoreboard and flash
 
-function Scoreboard({ live, matches }: { live: Live; matches: ReturnType<typeof boardMatches> }) {
-  const now = useNow(1_000)
+function Scoreboard({ live, matches, lag }: { live: Live; matches: ReturnType<typeof boardMatches>; lag: number }) {
+  // The board's time: as far behind as its data, so the clock does not run ahead of the TV
+  const now = useNow(1_000) - lag
   const teams = useTeamMap()
   const { featured, next } = matches
 
@@ -778,8 +974,8 @@ function TeamSide({ teamId, name }: { teamId: string | null; name: string | unde
   )
 }
 
-function ParallelClock({ match, updatedAt }: { match: Match; updatedAt: string }) {
-  const now = useNow(10_000)
+function ParallelClock({ match, updatedAt, lag }: { match: Match; updatedAt: string; lag: number }) {
+  const now = useNow(10_000) - lag
   return <em>{matchClock(match, updatedAt, now)}</em>
 }
 
