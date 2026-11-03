@@ -290,13 +290,12 @@
 .lb-team {
   display: grid;
   justify-items: center;
-  gap: 1.4vh;
   min-width: 0;
 }
 
 .lb-team-logo {
-  width: clamp(64px, 14vh, 180px);
-  height: clamp(64px, 14vh, 180px);
+  width: clamp(80px, 19vh, 230px);
+  height: clamp(80px, 19vh, 230px);
   filter: drop-shadow(0 8px 22px rgb(0 0 0 / 0.4)) drop-shadow(0 0 28px rgb(255 255 255 / 0.14));
 }
 
@@ -306,18 +305,6 @@
 .lb-cutout-fallback > * {
   width: 100% !important;
   height: 100% !important;
-}
-
-.lb-team-name {
-  max-width: 100%;
-  overflow: hidden;
-  color: rgb(255 255 255 / 0.85);
-  font-size: clamp(12px, 2vh, 24px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .lb-score-center {
@@ -1496,18 +1483,9 @@
     padding: 40px 3vw 0;
   }
 
-  .lb-team {
-    gap: 6px;
-  }
-
   .lb-team-logo {
-    width: 44px;
-    height: 44px;
-  }
-
-  .lb-team-name {
-    font-size: 10px;
-    letter-spacing: 0.04em;
+    width: 68px;
+    height: 68px;
   }
 
   .lb-score-center {
@@ -1732,18 +1710,9 @@
     padding: 0 3vw;
   }
 
-  .lb-team {
-    gap: 4px;
-  }
-
   .lb-team-logo {
-    width: 40px;
-    height: 40px;
-  }
-
-  .lb-team-name {
-    font-size: 10px;
-    letter-spacing: 0.04em;
+    width: 64px;
+    height: 64px;
   }
 
   .lb-score-center {

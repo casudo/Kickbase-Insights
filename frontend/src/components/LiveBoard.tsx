@@ -1185,13 +1185,12 @@ function EventMark({ kind }: { kind: LiveEventKind | null }) {
 function Scoreboard({ live, matches, lag }: { live: Live; matches: ReturnType<typeof boardMatches>; lag: number }) {
   // The board's time: as far behind as its data, so the clock does not run ahead of the TV
   const now = useNow(1_000) - lag
-  const teams = useTeamMap()
   const { featured, next } = matches
 
   if (featured) {
     return (
       <div className="lb-scoreboard">
-        <TeamSide teamId={featured.team1Id} name={teams.get(featured.team1Id ?? "")?.name} />
+        <TeamSide teamId={featured.team1Id} />
         <div className="lb-score-center">
           <div className="lb-score">
             <span key={`1-${featured.team1Goals}`} className="lb-digit">
@@ -1207,7 +1206,7 @@ function Scoreboard({ live, matches, lag }: { live: Live; matches: ReturnType<ty
             {matchClock(featured, live.updatedAt, now)}
           </span>
         </div>
-        <TeamSide teamId={featured.team2Id} name={teams.get(featured.team2Id ?? "")?.name} />
+        <TeamSide teamId={featured.team2Id} />
       </div>
     )
   }
@@ -1216,13 +1215,13 @@ function Scoreboard({ live, matches, lag }: { live: Live; matches: ReturnType<ty
     const left = new Date(next.kickoff).getTime() - now
     return (
       <div className="lb-scoreboard">
-        <TeamSide teamId={next.team1Id} name={teams.get(next.team1Id ?? "")?.name} />
+        <TeamSide teamId={next.team1Id} />
         <div className="lb-score-center">
           <span className="lb-eyebrow">Nächster Anstoß</span>
           <div className="lb-countdown">{left > 0 && left < 86_400_000 ? hms(left) : weekdayTime(next.kickoff)}</div>
           {left > 0 && left < 86_400_000 && <span className="lb-eyebrow lb-eyebrow-dim">{weekdayTime(next.kickoff)} Uhr</span>}
         </div>
-        <TeamSide teamId={next.team2Id} name={teams.get(next.team2Id ?? "")?.name} />
+        <TeamSide teamId={next.team2Id} />
       </div>
     )
   }
@@ -1248,13 +1247,13 @@ const hms = (ms: number) => {
   return `${pad(Math.floor(seconds / 3600))}:${pad(Math.floor((seconds % 3600) / 60))}:${pad(seconds % 60)}`
 }
 
-function TeamSide({ teamId, name }: { teamId: string | null; name: string | undefined }) {
+/** Just the crest: its name is in the logo's tooltip */
+function TeamSide({ teamId }: { teamId: string | null }) {
   return (
     <div className="lb-team">
       <div className="lb-team-logo">
-        <TeamLogo teamId={teamId} size={160} />
+        <TeamLogo teamId={teamId} size={240} />
       </div>
-      <span className="lb-team-name">{name ?? ""}</span>
     </div>
   )
 }
