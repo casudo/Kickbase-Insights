@@ -1487,7 +1487,7 @@
 
 @media (max-width: 720px) {
   .lb-hero {
-    height: clamp(170px, 26vh, 230px);
+    height: clamp(150px, 21vh, 190px);
   }
 
   /* Room for the controls at the top */
@@ -1496,32 +1496,49 @@
     padding: 40px 3vw 0;
   }
 
+  .lb-team {
+    gap: 6px;
+  }
+
   .lb-team-logo {
-    width: 52px;
-    height: 52px;
+    width: 44px;
+    height: 44px;
   }
 
   .lb-team-name {
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 0.04em;
   }
 
+  .lb-score-center {
+    gap: 8px;
+  }
+
   .lb-score {
-    font-size: 60px;
+    font-size: 46px;
   }
 
   .lb-clock {
-    font-size: 20px;
+    font-size: 15px;
+  }
+
+  .lb-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.14em;
   }
 
   .lb-countdown {
-    font-size: 38px;
+    font-size: 30px;
+  }
+
+  .lb-final {
+    font-size: 22px;
   }
 
   /* Two matches per row, an odd last one takes the whole row */
   .lb-parallel,
   .lb-parallel[data-rows="2"] {
-    --ph: 56px;
+    --ph: 48px;
     --logo: 1.3;
     gap: 6px;
     padding: 6px;
@@ -1532,19 +1549,51 @@
     border-radius: 12px;
   }
 
-  .lb-list {
-    --row-h: 60px !important;
+  .lb-band {
+    gap: 10px;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .lb-band-live {
+    letter-spacing: 0.2em;
   }
 
   .lb-list {
-    padding: 8px 6px;
+    --row-h: 54px !important;
+    gap: 6px;
+    padding: 6px;
   }
 
   .lb-row {
-    --chip-h: 58px;
-    grid-template-columns: 40px 60px minmax(0, 1fr);
-    grid-template-rows: 60px auto;
+    --chip-h: 46px;
+    grid-template-columns: 34px 54px minmax(0, 1fr);
+    grid-template-rows: 54px auto;
     height: auto;
+    border-radius: 10px;
+  }
+
+  /* Name, points and status tight enough for the manager's line */
+  .lb-row-info {
+    gap: 1px;
+    padding: 0 10px;
+  }
+
+  .lb-row-name {
+    font-size: 13px;
+    line-height: 1.15;
+  }
+
+  .lb-row-total {
+    font-size: 20px;
+  }
+
+  .lb-row-status {
+    gap: 6px;
+    font-size: 10px;
+    line-height: 1.2;
   }
 
   .lb-track {
@@ -1556,24 +1605,41 @@
   /* The players scroll sideways instead of squeezing */
   .lb-chip-wide {
     flex-shrink: 0;
+    width: calc(var(--chip-h) * 2.4);
+  }
+
+  .lb-chip-name {
+    font-size: 10px;
+  }
+
+  .lb-chip-marks {
+    font-size: 9px;
+  }
+
+  .lb-chip-kickoff {
+    font-size: 9px;
+  }
+
+  .lb-flight-text {
+    font-size: 30px;
   }
 
   .lb-flash-content {
     grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.6fr);
     gap: 2vw;
-    padding: 0 84px 0 0;
+    padding: 0 76px 0 0;
   }
 
   .lb-flash-name {
-    font-size: 8.5vw;
+    font-size: 7vw;
   }
 
   .lb-flash-action {
-    font-size: 10vw;
+    font-size: 8.5vw;
   }
 
   .lb-flash-goal .lb-flash-action {
-    font-size: 14vw;
+    font-size: 12vw;
   }
 
   .lb-flash-badges {
@@ -1583,15 +1649,28 @@
   }
 
   .lb-flash-circle {
-    width: 72px;
+    width: 62px;
+    border-width: 3px;
   }
 
   .lb-flash-circle strong {
-    font-size: 22px;
+    font-size: 19px;
   }
 
   .lb-flash-circle span {
-    font-size: 9px;
+    font-size: 8px;
+  }
+
+  .lb-flash-managers {
+    bottom: 10%;
+  }
+
+  .lb-flash-manager {
+    width: 32px;
+    height: 32px;
+    margin-right: -8px;
+    border-width: 2px;
+    font-size: 11px;
   }
 
   .lb-toolbar-stand {
@@ -1637,6 +1716,125 @@
     grid-template-columns: 38px minmax(0, 1fr) auto;
     gap: 8px;
     font-size: 13px;
+  }
+}
+
+/* ------------------------------------------------------------------------- */
+/* Phones on their side: little height, so the scoreboard shrinks and the table stays in sight */
+
+@media (max-height: 500px) {
+  .lb-hero {
+    height: 128px;
+  }
+
+  .lb-scoreboard {
+    gap: 2vw;
+    padding: 0 3vw;
+  }
+
+  .lb-team {
+    gap: 4px;
+  }
+
+  .lb-team-logo {
+    width: 40px;
+    height: 40px;
+  }
+
+  .lb-team-name {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .lb-score-center {
+    gap: 6px;
+  }
+
+  .lb-score {
+    font-size: 46px;
+  }
+
+  .lb-clock {
+    font-size: 14px;
+  }
+
+  .lb-eyebrow {
+    font-size: 10px;
+  }
+
+  .lb-countdown {
+    font-size: 30px;
+  }
+
+  .lb-final {
+    font-size: 22px;
+  }
+
+  .lb-parallel,
+  .lb-parallel[data-rows="2"] {
+    --ph: 44px;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .lb-band {
+    height: 24px;
+    font-size: 11px;
+  }
+
+  /* A narrower name column, and the players scroll sideways instead of squeezing */
+  .lb-row {
+    grid-template-columns: calc(var(--row-h) * 0.62) var(--row-h) clamp(120px, 18vw, 200px) minmax(0, 1fr);
+  }
+
+  .lb-track {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .lb-chip-wide {
+    flex-shrink: 0;
+  }
+
+  .lb-flash-name {
+    font-size: 28px;
+  }
+
+  .lb-flash-action {
+    font-size: 32px;
+  }
+
+  .lb-flash-goal .lb-flash-action {
+    font-size: 44px;
+  }
+
+  .lb-flash-circle {
+    width: 70px;
+    border-width: 3px;
+  }
+
+  .lb-flash-circle strong {
+    font-size: 20px;
+  }
+
+  .lb-flash-circle span {
+    font-size: 8px;
+  }
+
+  .lb-flash-manager {
+    width: 32px;
+    height: 32px;
+    margin-right: -8px;
+    border-width: 2px;
+    font-size: 11px;
+  }
+
+  .lb-flight-text {
+    font-size: 30px;
+  }
+
+  .lb-toolbar-stand {
+    display: none;
   }
 }
 
