@@ -26,11 +26,8 @@ export default function Live() {
 
   // Indicator whether the live board is open in the address bar
   const boardOpen = params.has("board")
-  const openBoard = () => {
-    // Right in the click, browsers only allow fullscreen in answer to one
-    if (document.fullscreenEnabled && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {})
-    setParams({ board: "" })
-  }
+  // Opens in the window, the board's own button switches to fullscreen
+  const openBoard = () => setParams({ board: "" })
   const closeBoard = useCallback(() => setParams({}, { replace: true }), [setParams])
 
   // The notice about unchanged data goes away by itself
