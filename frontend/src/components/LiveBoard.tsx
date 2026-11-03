@@ -23,12 +23,7 @@ import { boardMatches, demoStep, diffLive, matchClock, type Moment, planSteps, s
 
 // Timings of one moment. The CSS animations in live-board.css are made to fit these.
 const FLASH_MS = 5600
-const FLIGHT_MS = 750
-const PLAYER_COUNT_MS = 700
-const MANAGER_COUNT_MS = 1500
-const BADGE_MS = 2200
-const CHIP_MOVE_MS = 900
-const ROW_MOVE_MS = 1200
+const VISIBLE_ROWS = 6
 /** Poll a bit faster than the live page while a match runs, the server still asks Kickbase at most every 45 seconds */
 const RUNNING_REFRESH_MS = 30_000
 
@@ -432,18 +427,21 @@ function Board({
   )
 }
 
-/** Rows share the height of the screen, within limits. Too many managers scroll. */
+/**
+ * Show VISIBLE_ROWS managers on the screen, scroll down to see the rest
+ */
 function useRowHeight(list: RefObject<HTMLElement | null>, count: number, resetKey: string) {
-  const [height, setHeight] = useState(96)
+  const [height, setHeight] = useState(110)
   // The list is a new element after switching between live and demo, so it is observed anew
   useLayoutEffect(() => {
     const node = list.current
     if (!node) return
     const measure = () => {
       if (!node.isConnected) return
-      const gap = 6
-      const available = node.clientHeight - 12 - gap * Math.max(0, count - 1)
-      setHeight(Math.round(Math.min(150, Math.max(58, available / Math.max(1, count)))))
+      const rows = Math.min(Math.max(count, 1), VISIBLE_ROWS)
+      const gap = 8
+      const available = node.clientHeight - 16 - gap * (rows - 1)
+      setHeight(Math.round(Math.min(170, Math.max(64, available / rows))))
     }
     measure()
     const observer = new ResizeObserver(measure)
