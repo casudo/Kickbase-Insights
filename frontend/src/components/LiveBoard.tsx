@@ -843,10 +843,18 @@ function Cutout({ image, teamId, className }: { image: string | null; teamId: st
   return <img src={src} alt="" className={className} onError={() => setFailed(src)} />
 }
 
+/** Without a photo, the initials on a color of their own, the same for a manager every time */
 function ManagerPhoto({ name, image }: { name: string; image: string | null }) {
   const src = cdnUrl(image)
   const [failed, setFailed] = useState<string | null>(null)
-  if (!src || failed === src) return <span className="lb-initials">{initials(name)}</span>
+  if (!src || failed === src) {
+    const hue = [...name].reduce((sum, char) => (sum * 31 + char.charCodeAt(0)) % 360, 7)
+    return (
+      <span className="lb-initials" style={{ "--hue": hue } as CSSProperties}>
+        {initials(name)}
+      </span>
+    )
+  }
   return <img src={src} alt="" onError={() => setFailed(src)} />
 }
 
