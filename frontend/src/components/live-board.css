@@ -1,6 +1,6 @@
 /*
- * The animated live board (LiveBoard.tsx). Always dark, sized by the screen, made for a TV or a second
- * screen. Durations fit the timings at the top of LiveBoard.tsx: the flash stays 5.6 s, the player's name
+ * The animated live board (LiveBoard.tsx). A dark slate with lit-up spots, sized by the screen, made for a
+ * TV or a second screen. Durations fit the timings at the top of LiveBoard.tsx: the flash stays 5.6 s, the player's name
  * shows until 2.3 s, then the action and the points.
  */
 
@@ -16,10 +16,14 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #060708;
-  color: #f3f5f7;
+  background:
+    radial-gradient(1400px 520px at 50% -8%, rgb(52 211 153 / 0.2), transparent 65%),
+    radial-gradient(900px 600px at 105% 105%, rgb(56 189 248 / 0.12), transparent 60%),
+    radial-gradient(700px 500px at -5% 100%, rgb(52 211 153 / 0.08), transparent 60%),
+    linear-gradient(180deg, #1a2531 0%, #141d26 100%);
+  color: #f5f7fa;
   user-select: none;
-  animation: lb-enter 260ms ease-out;
+  animation: lb-enter 400ms ease-out;
 }
 
 .lb-root.lb-calm {
@@ -71,9 +75,9 @@
   gap: 6px;
   height: 38px;
   min-width: 38px;
-  border: 1px solid rgb(255 255 255 / 0.14);
+  border: 1px solid rgb(255 255 255 / 0.2);
   border-radius: 999px;
-  background: rgb(10 12 14 / 0.72);
+  background: rgb(30 41 54 / 0.78);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -82,7 +86,7 @@
 }
 
 .lb-toolbar-button:hover {
-  background: rgb(40 44 50 / 0.9);
+  background: rgb(51 65 85 / 0.92);
 }
 
 .lb-toolbar-wide {
@@ -104,16 +108,28 @@
   flex: none;
   height: clamp(170px, 27vh, 330px);
   overflow: hidden;
-  border-bottom: 1px solid rgb(255 255 255 / 0.06);
-  background-color: #0b0c0e;
-  background-image: radial-gradient(rgb(255 255 255 / 0.11) 1.4px, transparent 1.6px);
-  background-size: 18px 18px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  background:
+    radial-gradient(rgb(255 255 255 / 0.13) 1.3px, transparent 1.5px) 0 0 / 18px 18px,
+    linear-gradient(180deg, #223140 0%, #18232e 100%);
+}
+
+/* Two floodlight beams, slowly swaying */
+.lb-hero::before {
+  position: absolute;
+  inset: -40% -15%;
+  background:
+    linear-gradient(115deg, transparent 36%, rgb(255 255 255 / 0.08) 45%, transparent 54%),
+    linear-gradient(65deg, transparent 40%, rgb(255 255 255 / 0.06) 48%, transparent 56%);
+  content: "";
+  pointer-events: none;
+  animation: lb-sway 16s ease-in-out infinite alternate;
 }
 
 .lb-hero::after {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 35%, rgb(0 0 0 / 0.6));
+  background: radial-gradient(ellipse at center, transparent 50%, rgb(0 0 0 / 0.3));
   content: "";
   pointer-events: none;
 }
@@ -127,6 +143,20 @@
   gap: 3vw;
   height: 100%;
   padding: 0 5vw;
+}
+
+/* A soft light behind the score, breathing */
+.lb-scoreboard::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  width: min(80vh, 70vw);
+  aspect-ratio: 1.7;
+  background: radial-gradient(ellipse at center, rgb(52 211 153 / 0.3), rgb(52 211 153 / 0.08) 45%, transparent 70%);
+  content: "";
+  transform: translate(-50%, -50%);
+  animation: lb-breathe 6s ease-in-out infinite alternate;
 }
 
 .lb-scoreboard-single {
@@ -143,7 +173,7 @@
 .lb-team-logo {
   width: clamp(64px, 14vh, 180px);
   height: clamp(64px, 14vh, 180px);
-  filter: drop-shadow(0 10px 30px rgb(0 0 0 / 0.6));
+  filter: drop-shadow(0 8px 22px rgb(0 0 0 / 0.4)) drop-shadow(0 0 28px rgb(255 255 255 / 0.14));
 }
 
 .lb-team-logo > *,
@@ -156,7 +186,7 @@
 .lb-team-name {
   max-width: 100%;
   overflow: hidden;
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
   font-size: clamp(12px, 2vh, 24px);
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -179,7 +209,9 @@
   font-weight: 900;
   letter-spacing: -0.02em;
   line-height: 0.82;
-  text-shadow: 0 10px 40px rgb(0 0 0 / 0.6);
+  text-shadow:
+    0 0 40px rgb(52 211 153 / 0.35),
+    0 10px 30px rgb(0 0 0 / 0.45);
 }
 
 .lb-digit {
@@ -207,6 +239,7 @@
   font-size: clamp(20px, 3.8vh, 50px);
   font-variant-numeric: tabular-nums;
   font-weight: 900;
+  filter: drop-shadow(0 0 18px rgb(52 211 153 / 0.45));
 }
 
 .lb-clock i,
@@ -267,7 +300,8 @@
   justify-content: center;
   gap: 8px;
   padding: 8px 12px;
-  background: #0c0d10;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  background: rgb(255 255 255 / 0.04);
 }
 
 .lb-parallel-match {
@@ -275,9 +309,9 @@
   align-items: center;
   gap: 10px;
   padding: 5px 14px;
-  border: 1px solid rgb(255 255 255 / 0.08);
+  border: 1px solid rgb(255 255 255 / 0.12);
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.06);
+  background: rgb(255 255 255 / 0.1);
   color: #fff;
   font-size: clamp(13px, 1.9vh, 20px);
   font-variant-numeric: tabular-nums;
@@ -286,7 +320,7 @@
 }
 
 .lb-parallel-match:hover {
-  background: rgb(255 255 255 / 0.12);
+  background: rgb(255 255 255 / 0.18);
 }
 
 .lb-parallel-match em {
@@ -296,8 +330,12 @@
 }
 
 .lb-band {
+  position: relative;
+  z-index: 1;
   display: grid;
   flex: none;
+  overflow: hidden;
+  box-shadow: 0 0 34px rgb(52 211 153 / 0.4);
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 16px;
@@ -309,6 +347,16 @@
   font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.lb-band::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%);
+  content: "";
+  pointer-events: none;
+  transform: translateX(-110%);
+  animation: lb-gleam 11s ease-in-out 4s infinite;
 }
 
 .lb-band-side {
@@ -344,9 +392,9 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   min-height: 0;
-  padding: 6px 0;
+  padding: 8px 10px;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: none;
@@ -358,43 +406,114 @@
 
 .lb-row {
   --chip-h: calc(var(--row-h) - 2 * var(--lb-pad));
+  --lb-row-bg: linear-gradient(90deg, #2a3644 0%, #222d39 45%, #1e2731 100%);
   position: relative;
   display: grid;
   flex: none;
-  grid-template-columns: calc(var(--row-h) * 0.7) var(--row-h) clamp(150px, 15vw, 290px) minmax(0, 1fr);
+  grid-template-columns: calc(var(--row-h) * 0.62) var(--row-h) clamp(170px, 16vw, 300px) minmax(0, 1fr);
   height: var(--row-h);
-  background: linear-gradient(90deg, #15171b, #0f1114 60%);
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--lb-row-bg);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 4px 14px rgb(0 0 0 / 0.18);
+  transition: box-shadow 500ms ease;
+}
+
+.lb-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The row lights up while its points come in, and fades back afterwards */
+.lb-row::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgb(52 211 153 / 0.42) 0%, rgb(52 211 153 / 0.12) 55%, transparent 85%);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms ease;
+}
+
+.lb-row-tone-down::before {
+  background: linear-gradient(90deg, rgb(244 63 94 / 0.4) 0%, rgb(244 63 94 / 0.1) 55%, transparent 85%);
+}
+
+.lb-row-lit::before {
+  opacity: 1;
+  transition-duration: 450ms;
+}
+
+/* A gleam running over the row: once when it lights up, now and then for the leader */
+.lb-row::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.14) 50%, transparent 65%);
+  content: "";
+  pointer-events: none;
+  transform: translateX(-110%);
+}
+
+.lb-rank-1::after {
+  background: linear-gradient(105deg, transparent 35%, rgb(253 230 138 / 0.18) 50%, transparent 65%);
+  animation: lb-gleam 9s ease-in-out 3s infinite;
+}
+
+.lb-row-lit::after {
+  animation: lb-shine 1.4s ease-out 150ms both;
+}
+
+/* A warm light on the leader, a green one on your own row */
+.lb-rank-1 {
+  background: linear-gradient(90deg, rgb(251 191 36 / 0.2) 0%, rgb(251 191 36 / 0.06) 40%, transparent 70%), var(--lb-row-bg);
 }
 
 .lb-row-self {
-  box-shadow: inset 4px 0 0 var(--lb-accent);
+  background: linear-gradient(90deg, rgb(52 211 153 / 0.22) 0%, rgb(52 211 153 / 0.06) 40%, transparent 70%), var(--lb-row-bg);
 }
 
-/* Climbing the table, on top of the rows it passes */
+/* Climbing the table, glowing and on top of the rows it passes */
 .lb-row[data-rising] {
   z-index: 3;
-  background: #1b1e23;
   box-shadow:
-    0 18px 44px rgb(0 0 0 / 0.6),
-    inset 0 0 0 2px var(--lb-accent);
+    0 18px 44px rgb(0 0 0 / 0.45),
+    0 0 0 2px var(--lb-accent),
+    0 0 30px rgb(52 211 153 / 0.45);
 }
 
 .lb-row-rank {
   display: grid;
   place-items: center;
-  color: rgb(255 255 255 / 0.9);
-  font-size: calc(var(--row-h) * 0.42);
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(255 255 255 / 0.92);
+  font-size: calc(var(--row-h) * 0.4);
   font-variant-numeric: tabular-nums;
   font-weight: 900;
 }
 
-.lb-row-leader .lb-row-rank {
-  color: #fbbf24;
+/* Gold, silver and bronze for the first three */
+.lb-rank-1 .lb-row-rank {
+  background: linear-gradient(160deg, #fde68a, #f59e0b);
+  color: #3b2300;
+}
+
+.lb-rank-2 .lb-row-rank {
+  background: linear-gradient(160deg, #f8fafc, #94a3b8);
+  color: #1e293b;
+}
+
+.lb-rank-3 .lb-row-rank {
+  background: linear-gradient(160deg, #fed7aa, #c2410c);
+  color: #3b1405;
 }
 
 .lb-row-photo {
   overflow: hidden;
-  background: #050506;
+  background: #2b3644;
 }
 
 .lb-row-photo img,
@@ -426,11 +545,23 @@
 
 .lb-row-name {
   overflow: hidden;
-  color: rgb(255 255 255 / 0.82);
-  font-size: clamp(13px, calc(var(--row-h) * 0.19), 24px);
+  color: rgb(255 255 255 / 0.92);
+  font-size: clamp(13px, calc(var(--row-h) * 0.17), 24px);
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lb-row-you {
+  margin-left: 0.5em;
+  padding: 0.1em 0.45em;
+  border-radius: 0.35em;
+  background: var(--lb-accent);
+  color: var(--lb-accent-ink);
+  font-size: 0.72em;
+  font-style: normal;
+  font-weight: 800;
+  vertical-align: 0.12em;
 }
 
 .lb-row-total {
@@ -444,8 +575,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: rgb(255 255 255 / 0.5);
-  font-size: clamp(10px, calc(var(--row-h) * 0.13), 15px);
+  color: rgb(255 255 255 / 0.62);
+  font-size: clamp(10px, calc(var(--row-h) * 0.12), 16px);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -490,8 +621,9 @@
   height: var(--chip-h);
   overflow: hidden;
   border-radius: calc(var(--chip-h) * 0.1);
-  background: #1c1f24;
-  transition: box-shadow 300ms ease;
+  background: #303b49;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  transition: box-shadow 500ms ease;
 }
 
 /* The player's points in Kickbase's colors */
@@ -508,12 +640,12 @@
 
 .lb-chip-wide {
   flex: 0 1 auto;
-  width: calc(var(--chip-h) * 2.9);
+  width: calc(var(--chip-h) * 2.7);
   min-width: calc(var(--chip-h) * 1.6);
-  background: linear-gradient(105deg, #343a42 0%, #23272d 55%, #17191d 100%);
+  background: linear-gradient(105deg, #4a5869 0%, #384453 55%, #2e3946 100%);
   box-shadow:
-    inset 0 0 0 2px rgb(52 211 153 / 0.75),
-    0 0 16px rgb(52 211 153 / 0.18);
+    inset 0 0 0 2px rgb(52 211 153 / 0.85),
+    0 0 18px rgb(52 211 153 / 0.25);
 }
 
 .lb-chip-compact {
@@ -522,14 +654,14 @@
 }
 
 .lb-chip-upcoming {
-  opacity: 0.55;
+  opacity: 0.6;
 }
 
 .lb-chip-photo {
   position: relative;
   flex: none;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 30%, #3a4048, #1a1d22 70%);
+  background: radial-gradient(circle at 50% 30%, #5d6b80, #34404e 72%);
 }
 
 .lb-chip-wide .lb-chip-photo {
@@ -613,7 +745,7 @@
   flex: none;
   place-items: center;
   height: calc(var(--chip-h) * 0.3);
-  background: #0d0f12;
+  background: rgb(0 0 0 / 0.25);
 }
 
 .lb-chip-foot .lb-chip-points {
@@ -651,7 +783,7 @@
   font-variant-numeric: tabular-nums;
   font-weight: 900;
   text-shadow: 0 2px 10px rgb(0 0 0 / 0.4);
-  animation: lb-badge 2200ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation: lb-badge 2400ms cubic-bezier(0.33, 1, 0.68, 1) both;
 }
 
 .lb-chip-hit-up .lb-chip-badge {
@@ -666,6 +798,7 @@
 .lb-count {
   display: inline-block;
   transform-origin: left center;
+  transition: color 500ms ease;
 }
 
 .lb-chip-foot .lb-count {
@@ -674,12 +807,12 @@
 
 .lb-count[data-trend="up"] {
   color: var(--lb-up);
-  animation: lb-count 900ms cubic-bezier(0.2, 1.2, 0.3, 1);
+  animation: lb-count 1100ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .lb-count[data-trend="down"] {
   color: var(--lb-down);
-  animation: lb-count 900ms cubic-bezier(0.2, 1.2, 0.3, 1);
+  animation: lb-count 1100ms cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -890,28 +1023,43 @@
   animation: lb-pop 600ms cubic-bezier(0.2, 1.5, 0.4, 1) 2.5s both;
 }
 
-/* The points on their way from the flash into the player's tile */
+/* The points on their way from the flash into the player's tile: sideways eased out, downwards eased
+   in after a little lift, together an arc */
 .lb-flight {
   position: fixed;
   top: var(--y);
   left: var(--x);
   z-index: 80;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation:
+    lb-fly-x 950ms cubic-bezier(0.3, 0.6, 0.35, 1) forwards,
+    lb-fly-fade 950ms linear forwards;
+}
+
+.lb-flight-y {
+  display: block;
+  will-change: transform;
+  animation: lb-fly-y 950ms cubic-bezier(0.5, -0.45, 0.75, 1) forwards;
+}
+
+.lb-flight-text {
+  display: block;
   color: #fff;
   font-size: clamp(28px, 6vh, 80px);
   font-variant-numeric: tabular-nums;
   font-weight: 900;
-  pointer-events: none;
   text-shadow:
     0 0 18px rgb(52 211 153 / 0.9),
-    0 6px 18px rgb(0 0 0 / 0.5);
+    0 6px 18px rgb(0 0 0 / 0.45);
   transform: translate(-50%, -50%);
-  animation: lb-fly 750ms cubic-bezier(0.45, 0, 0.25, 1) forwards;
+  animation: lb-fly-scale 950ms ease-in forwards;
 }
 
-.lb-flight-negative {
+.lb-flight-negative .lb-flight-text {
   text-shadow:
     0 0 18px rgb(244 63 94 / 0.9),
-    0 6px 18px rgb(0 0 0 / 0.5);
+    0 6px 18px rgb(0 0 0 / 0.45);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -952,6 +1100,10 @@
 
   .lb-list {
     --row-h: 60px !important;
+  }
+
+  .lb-list {
+    padding: 8px 6px;
   }
 
   .lb-row {
@@ -1042,8 +1194,8 @@
   0% {
     transform: scale(1);
   }
-  25% {
-    transform: scale(1.28);
+  30% {
+    transform: scale(1.16);
   }
   100% {
     transform: scale(1);
@@ -1053,20 +1205,62 @@
 @keyframes lb-badge {
   0% {
     opacity: 0;
-    transform: scale(0.6);
+    transform: scale(0.85);
   }
-  12% {
+  16% {
     opacity: 1;
-    transform: scale(1.08);
+    transform: scale(1.03);
   }
-  22% {
+  28% {
     transform: scale(1);
   }
-  78% {
+  75% {
     opacity: 1;
+    transform: scale(1);
   }
   100% {
     opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes lb-sway {
+  from {
+    transform: translateX(-6%) rotate(-2deg);
+  }
+  to {
+    transform: translateX(6%) rotate(2deg);
+  }
+}
+
+@keyframes lb-breathe {
+  from {
+    opacity: 0.65;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes lb-shine {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(110%);
+  }
+}
+
+/* The same sweep, once in a long while */
+@keyframes lb-gleam {
+  0% {
+    transform: translateX(-110%);
+  }
+  18%,
+  100% {
+    transform: translateX(110%);
   }
 }
 
@@ -1221,15 +1415,33 @@
   }
 }
 
-@keyframes lb-fly {
-  0% {
+@keyframes lb-fly-x {
+  to {
+    transform: translateX(var(--dx));
+  }
+}
+
+@keyframes lb-fly-y {
+  to {
+    transform: translateY(var(--dy));
+  }
+}
+
+@keyframes lb-fly-scale {
+  from {
     transform: translate(-50%, -50%) scale(1.15);
   }
-  85% {
+  to {
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+}
+
+@keyframes lb-fly-fade {
+  0%,
+  82% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.4);
   }
 }

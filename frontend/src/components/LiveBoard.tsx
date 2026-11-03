@@ -23,6 +23,16 @@ import { boardMatches, demoStep, diffLive, matchClock, type Moment, planSteps, s
 
 // Timings of one moment. The CSS animations in live-board.css are made to fit these.
 const FLASH_MS = 5600
+/** Before the points fly, the list glides to the manager when their row is out of sight */
+const REVEAL_MS = 700
+const FLIGHT_MS = 950
+const PLAYER_COUNT_MS = 900
+const MANAGER_COUNT_MS = 1800
+const BADGE_MS = 2400
+const CHIP_MOVE_MS = 1000
+const ROW_MOVE_MS = 1400
+/** Slow in and out, so rows and players glide instead of jumping off */
+const MOVE_EASE = "cubic-bezier(0.65, 0, 0.35, 1)"
 const VISIBLE_ROWS = 6
 /** Poll a bit faster than the live page while a match runs, the server still asks Kickbase at most every 45 seconds */
 const RUNNING_REFRESH_MS = 30_000
@@ -101,13 +111,16 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
+      {/* Sideways and downwards move with different easings, so the points fly in an arc */}
       {engine.flights.map((flight) => (
         <span
           key={flight.id}
           className={cn("lb-flight", flight.points < 0 && "lb-flight-negative")}
           style={{ "--x": `${flight.x}px`, "--y": `${flight.y}px`, "--dx": `${flight.dx}px`, "--dy": `${flight.dy}px` } as CSSProperties}
         >
-          {signedNumber(flight.points)}
+          <span className="lb-flight-y">
+            <span className="lb-flight-text">{signedNumber(flight.points)}</span>
+          </span>
         </span>
       ))}
     </div>
@@ -152,6 +165,8 @@ function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElem
   const [flash, setFlash] = useState<Flash | null>(null)
   const [badges, setBadges] = useState<Record<string, number>>({})
   const [flights, setFlights] = useState<Flight[]>([])
+  /** Managers whose row lights up while their points come in: 1 for gains, -1 for losses */
+  const [lit, setLit] = useState<Record<string, number>>({})
   const [idle, setIdle] = useState(true)
   const queue = useRef<Step[]>([])
   const last = useRef<{ key: string; live: Live } | null>(null)
@@ -169,6 +184,7 @@ function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElem
       setFlash(null)
       setBadges({})
       setFlights([])
+      setLit({})
       return
     }
     const moments = diffLive(previous.live, live)
@@ -211,12 +227,44 @@ function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElem
       )
     }
 
+    /**
+     * Glides the list to where the points are headed: back to the top when one of the managers is
+     * among the first rows, otherwise to the best placed of them.
+     */
+    const reveal = (managerIds: string[]) => {
+      const list = root.current?.querySelector<HTMLElement>(".lb-list")
+      if (!list) return
+      const rows = managerIds
+        .map((id) => list.querySelector<HTMLElement>(`[data-flip="${CSS.escape(`row:${id}`)}"]`))
+        .filter((row): row is HTMLElement => row !== null)
+        .sort((a, b) => a.offsetTop - b.offsetTop)
+      if (!rows.length) return
+      const atTop = rows[0].offsetTop + rows[0].offsetHeight <= list.clientHeight
+      const top = atTop ? 0 : rows[0].offsetTop - (list.clientHeight - rows[0].offsetHeight) / 2
+      if (Math.abs(list.scrollTop - top) > 2) list.scrollTo({ top, behavior: "smooth" })
+    }
+
+    /** The top of the table is the board's home, back there once a moment further down played */
+    const home = () => {
+      const list = root.current?.querySelector<HTMLElement>(".lb-list")
+      if (list && list.scrollTop > 2) list.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
+    const light = (moments: Moment[]) => {
+      const sums: Record<string, number> = {}
+      for (const moment of moments) for (const id of moment.managerIds) sums[id] = (sums[id] ?? 0) + moment.points
+      setLit(Object.fromEntries(Object.entries(sums).map(([id, points]) => [id, points < 0 ? -1 : 1])))
+    }
+
     const playFlash = async (moment: Moment) => {
       setFlash({ moment, leaving: false })
-      await sleep(FLASH_MS, signal)
+      await sleep(FLASH_MS - REVEAL_MS, signal)
+      reveal(moment.managerIds)
+      await sleep(REVEAL_MS, signal)
       setFlash({ moment, leaving: true })
+      light([moment])
       launch(moment)
-      await sleep(FLIGHT_MS - 100, signal)
+      await sleep(FLIGHT_MS - 120, signal)
       advance([moment], "shown")
       await sleep(MANAGER_COUNT_MS, signal)
       setFlash(null)
@@ -225,10 +273,13 @@ function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElem
       await sleep(CHIP_MOVE_MS * 0.6, signal)
       advance([moment], "row")
       await sleep(ROW_MOVE_MS + 300, signal)
+      setLit({})
+      home()
     }
 
     const playBadges = async (moments: Moment[]) => {
       setBadges(Object.fromEntries(moments.map((moment) => [moment.player.id, moment.points])))
+      light(moments)
       advance(moments, "shown")
       await sleep(BADGE_MS, signal)
       setBadges({})
@@ -236,6 +287,7 @@ function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElem
       await sleep(CHIP_MOVE_MS * 0.6, signal)
       advance(moments, "row")
       await sleep(ROW_MOVE_MS + 300, signal)
+      setLit({})
     }
 
     const nextStep = () =>
@@ -275,10 +327,11 @@ function useBoardEngine(live: Live | null, key: string, root: RefObject<HTMLElem
       setFlash(null)
       setBadges({})
       setFlights([])
+      setLit({})
     }
   }, [key, root])
 
-  return { view, flash, badges, flights, idle }
+  return { view, flash, badges, flights, lit, idle }
 }
 
 // ---------------------------------------------------------------------------
@@ -312,7 +365,7 @@ function useDemo(enabled: boolean, live: Live | undefined, idle: boolean): Live 
               steps: current.steps + 1,
             },
         ),
-      state.steps === 0 ? 1200 : 1800,
+      state.steps === 0 ? 1200 : 2400,
     )
     return () => clearTimeout(timer)
   }, [state, idle])
@@ -389,6 +442,13 @@ function Board({
   // Rows moving because the screen or the number of rows changed are not worth a slide
   useFlip(list, `${sourceKey}:${rowHeight}:${rows.length}`)
 
+  // Back to the top of the table once things calmed down
+  useEffect(() => {
+    if (!engine.idle) return
+    const timer = setTimeout(() => list.current?.scrollTo({ top: 0, behavior: "smooth" }), 8_000)
+    return () => clearTimeout(timer)
+  }, [engine.idle])
+
   return (
     <>
       <section className="lb-hero">
@@ -419,7 +479,7 @@ function Board({
       </div>
       <div ref={list} key={sourceKey} className="lb-list" style={{ "--row-h": `${rowHeight}px` } as CSSProperties}>
         {rows.map((row, index) => (
-          <ManagerRow key={row.manager.id} row={row} rank={index + 1} badges={engine.badges} />
+          <ManagerRow key={row.manager.id} row={row} rank={index + 1} badges={engine.badges} lit={engine.lit[row.manager.id]} />
         ))}
         {rows.length === 0 && <p className="lb-message">Noch keine Aufstellungen für diesen Spieltag.</p>}
       </div>
@@ -499,17 +559,19 @@ function useFlip(container: RefObject<HTMLElement | null>, layoutKey: string) {
     for (const { item, dx, dy } of moved) {
       item.dataset.flipToken = token
       item.style.transition = "none"
-      item.style.transform = `translate(${dx}px, ${dy}px)`
-      // Rows climbing the table stay on top while they pass the others
-      if (dy > 0 && item.dataset.flip!.startsWith("row:")) item.dataset.rising = ""
+      item.style.transform = `translate3d(${dx}px, ${dy}px, 0)`
+      // Its own layer while it moves, so the slide does not repaint the board
+      item.style.willChange = "transform"
     }
     node.getBoundingClientRect()
     requestAnimationFrame(() => {
-      for (const { item } of moved) {
+      for (const { item, dy } of moved) {
         if (item.dataset.flipToken !== token) continue
-        const duration = item.dataset.flip!.startsWith("row:") ? ROW_MOVE_MS : CHIP_MOVE_MS
-        item.style.transition = `transform ${duration}ms cubic-bezier(0.2, 0.9, 0.25, 1)`
+        const row = item.dataset.flip!.startsWith("row:")
+        item.style.transition = `transform ${row ? ROW_MOVE_MS : CHIP_MOVE_MS}ms ${MOVE_EASE}, box-shadow 500ms ease`
         item.style.transform = ""
+        // Rows climbing the table glow and stay on top while they pass the others
+        if (row && dy > 0) item.dataset.rising = ""
       }
     })
     const timer = window.setTimeout(() => {
@@ -517,24 +579,40 @@ function useFlip(container: RefObject<HTMLElement | null>, layoutKey: string) {
       for (const { item } of moved) {
         if (item.dataset.flipToken !== token) continue
         item.style.transition = ""
+        item.style.willChange = ""
         delete item.dataset.rising
         delete item.dataset.flipToken
       }
-    }, ROW_MOVE_MS + 100)
+    }, Math.max(ROW_MOVE_MS, CHIP_MOVE_MS) + 100)
     timers.current.add(timer)
   })
 }
 
-function ManagerRow({ row, rank, badges }: { row: RowModel; rank: number; badges: Record<string, number> }) {
+function ManagerRow({ row, rank, badges, lit }: { row: RowModel; rank: number; badges: Record<string, number>; lit: number | undefined }) {
   const { manager } = row
+  // The glow fades out in the color it had, so the last direction is kept after it ends
+  const [tone, setTone] = useState(1)
+  if (lit !== undefined && lit !== tone) setTone(lit)
   return (
-    <article data-flip={`row:${manager.id}`} className={cn("lb-row", manager.isSelf && "lb-row-self", rank === 1 && "lb-row-leader")}>
+    <article
+      data-flip={`row:${manager.id}`}
+      className={cn(
+        "lb-row",
+        tone < 0 && "lb-row-tone-down",
+        lit !== undefined && "lb-row-lit",
+        manager.isSelf && "lb-row-self",
+        rank <= 3 && `lb-rank-${rank}`,
+      )}
+    >
       <strong className="lb-row-rank">{rank}</strong>
       <div className="lb-row-photo">
         <ManagerPhoto name={manager.name} image={manager.image} />
       </div>
       <div className="lb-row-info">
-        <span className="lb-row-name">{manager.name}</span>
+        <span className="lb-row-name">
+          {manager.name}
+          {manager.isSelf && <em className="lb-row-you">Du</em>}
+        </span>
         <Count className="lb-row-total" value={row.shown} duration={MANAGER_COUNT_MS} />
         <span className="lb-row-status">
           {manager.playersStarted}/{manager.lineupSize} gespielt
@@ -614,7 +692,7 @@ function Marks({ player }: { player: LivePlayer }) {
     )),
     ...Array.from({ length: player.yellowCards }, (_, i) => <span key={`y${i}`} className="lb-mark-card bg-yellow-400" aria-label="Gelbe Karte" />),
     ...Array.from({ length: player.yellowRedCards }, (_, i) => (
-      <span key={`yr${i}`} className="lb-mark-card bg-gradient-to-br from-yellow-400 from-50% to-red-500 to-50%" aria-label="Gelb-Rote Karte" />
+      <span key={`yr${i}`} className="lb-mark-card bg-linear-to-br from-yellow-400 from-50% to-red-500 to-50%" aria-label="Gelb-Rote Karte" />
     )),
     ...Array.from({ length: player.redCards }, (_, i) => <span key={`r${i}`} className="lb-mark-card bg-red-500" aria-label="Rote Karte" />),
   ]
