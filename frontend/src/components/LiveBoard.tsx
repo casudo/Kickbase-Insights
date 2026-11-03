@@ -13,12 +13,12 @@ import "./live-board.css"
 import { FlaskConical, Loader2, Maximize, Minimize, Settings2, X } from "lucide-react"
 import { type CSSProperties, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useLive, useTeamMap } from "@/api/hooks"
-import type { Live, LiveManager, LivePlayer, Match } from "@/api/types"
+import type { Live, LiveEventKind, LiveManager, LivePlayer, Match } from "@/api/types"
 import { TeamLogo } from "@/components/kickbase"
 import { cn } from "@/lib/cn"
 import { number, signedNumber, time, weekdayTime } from "@/lib/format"
 import { useNow, useStoredState } from "@/lib/hooks"
-import { cdnUrl, initials, playerName, pointsGrade } from "@/lib/kickbase"
+import { cdnUrl, initials, playerName, pointsGrade, position } from "@/lib/kickbase"
 import { useLeague } from "@/lib/league"
 import { boardMatches, demoStep, diffLive, matchClock, type Moment, planSteps, startDemo, type Step } from "@/lib/liveBoard"
 
@@ -66,6 +66,9 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
   const [stored, setStored] = useStoredState<Partial<BoardSettings>>("kbi-board-settings", {})
   const settings = readSettings(stored)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  /** The player whose events are open, and how they are listed */
+  const [playerId, setPlayerId] = useState<string | null>(null)
+  const [eventOrder, setEventOrder] = useState<EventOrder>("time")
 
   const delayMs = settings.delay ? settings.delaySeconds * 1000 : 0
   const delayed = useDelayed(query.data, delayMs)
@@ -98,6 +101,7 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return
       if (settingsOpen) closeSettings()
+      else if (playerId) setPlayerId(null)
       else if (!document.fullscreenElement) onClose()
     }
     // The settings close when tapping anywhere outside the controls
@@ -110,7 +114,7 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
       document.removeEventListener("keydown", onKey)
       document.removeEventListener("pointerdown", onPointer)
     }
-  }, [onClose, settingsOpen])
+  }, [onClose, settingsOpen, playerId])
 
   const close = () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
@@ -120,7 +124,7 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
   return (
     <div
       ref={root}
-      className={cn("lb-root dark", !restless && !settingsOpen && "lb-calm")}
+      className={cn("lb-root dark", !restless && !settingsOpen && !playerId && "lb-calm")}
       role="dialog"
       aria-modal="true"
       aria-label="Live-Board"
@@ -172,6 +176,7 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
           engine={engine}
           picked={picked}
           onPick={setPicked}
+          onOpenPlayer={setPlayerId}
           lag={lag}
         />
       ) : query.error ? (
@@ -185,6 +190,11 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
         <div className="lb-message">
           <Loader2 className="size-6 animate-spin" />
         </div>
+      )}
+
+      {/* From the data the board shows, so the events wait for the delay like everything else */}
+      {playerId && engine.view.live && (
+        <PlayerEvents live={engine.view.live} playerId={playerId} order={eventOrder} onOrder={setEventOrder} onClose={() => setPlayerId(null)} />
       )}
 
       {/* Sideways and downwards move with different easings, so the points fly in an arc */}
@@ -617,6 +627,7 @@ function Board({
   engine,
   picked,
   onPick,
+  onOpenPlayer,
   lag,
 }: {
   live: Live
@@ -626,6 +637,7 @@ function Board({
   engine: Engine
   picked: string | null
   onPick: (id: string) => void
+  onOpenPlayer: (id: string) => void
   /** How far the board runs behind, in milliseconds */
   lag: number
 }) {
@@ -674,7 +686,14 @@ function Board({
       </div>
       <div ref={list} key={sourceKey} className="lb-list" style={{ "--row-h": `${rowHeight}px` } as CSSProperties}>
         {rows.map((row, index) => (
-          <ManagerRow key={row.manager.id} row={row} rank={index + 1} badges={engine.badges} lit={engine.lit[row.manager.id]} />
+          <ManagerRow
+            key={row.manager.id}
+            row={row}
+            rank={index + 1}
+            badges={engine.badges}
+            lit={engine.lit[row.manager.id]}
+            onOpenPlayer={onOpenPlayer}
+          />
         ))}
         {rows.length === 0 && <p className="lb-message">Noch keine Aufstellungen für diesen Spieltag.</p>}
       </div>
@@ -783,7 +802,19 @@ function useFlip(container: RefObject<HTMLElement | null>, layoutKey: string) {
   })
 }
 
-function ManagerRow({ row, rank, badges, lit }: { row: RowModel; rank: number; badges: Record<string, number>; lit: number | undefined }) {
+function ManagerRow({
+  row,
+  rank,
+  badges,
+  lit,
+  onOpenPlayer,
+}: {
+  row: RowModel
+  rank: number
+  badges: Record<string, number>
+  lit: number | undefined
+  onOpenPlayer: (id: string) => void
+}) {
   const { manager } = row
   // The glow fades out in the color it had, so the last direction is kept after it ends
   const [tone, setTone] = useState(1)
@@ -821,7 +852,7 @@ function ManagerRow({ row, rank, badges, lit }: { row: RowModel; rank: number; b
       </div>
       <div className="lb-track">
         {row.chips.map((chip) => (
-          <PlayerChip key={chip.player.id} chip={chip} managerId={manager.id} badge={badges[chip.player.id]} />
+          <PlayerChip key={chip.player.id} chip={chip} managerId={manager.id} badge={badges[chip.player.id]} onOpen={onOpenPlayer} />
         ))}
         {row.chips.length === 0 && <span className="lb-track-empty">Keine Aufstellung</span>}
       </div>
@@ -829,7 +860,17 @@ function ManagerRow({ row, rank, badges, lit }: { row: RowModel; rank: number; b
   )
 }
 
-function PlayerChip({ chip, managerId, badge }: { chip: ChipModel; managerId: string; badge: number | undefined }) {
+function PlayerChip({
+  chip,
+  managerId,
+  badge,
+  onOpen,
+}: {
+  chip: ChipModel
+  managerId: string
+  badge: number | undefined
+  onOpen: (id: string) => void
+}) {
   const { player } = chip
   const wide = player.onField
   const upcoming = player.matchState === "upcoming"
@@ -846,6 +887,15 @@ function PlayerChip({ chip, managerId, badge }: { chip: ChipModel; managerId: st
     <div
       data-flip={`chip:${managerId}:${player.id}`}
       title={`${playerName(player)}: ${number(chip.shown)} Punkte`}
+      role="button"
+      tabIndex={0}
+      aria-haspopup="dialog"
+      onClick={() => onOpen(player.id)}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return
+        event.preventDefault()
+        onOpen(player.id)
+      }}
       className={cn(
         "lb-chip",
         wide ? "lb-chip-wide" : "lb-chip-compact",
@@ -892,6 +942,169 @@ function Marks({ player }: { player: LivePlayer }) {
     ...Array.from({ length: player.redCards }, (_, i) => <span key={`r${i}`} className="lb-mark-card bg-red-500" aria-label="Rote Karte" />),
   ]
   return marks.length ? <span className="lb-chip-marks">{marks}</span> : null
+}
+
+// ---------------------------------------------------------------------------
+// A player's events
+
+type EventOrder = "time" | "type"
+
+/** Where the player is in their match */
+function playerStatus(player: LivePlayer): string {
+  const clock = player.matchMinute ? ` · ${player.matchMinute}'` : ""
+  if (player.onField) return `Auf dem Platz${clock}`
+  if (player.matchState === "running") {
+    if (player.redCards + player.yellowRedCards > 0) return `Platzverweis${clock}`
+    return player.role === "bench" ? `Auf der Bank${clock}` : `Live${clock}`
+  }
+  if (player.matchState === "finished") return player.role === "bench" ? "Nicht eingesetzt" : `Beendet${player.minute ? ` · ${player.minute} Min.` : ""}`
+  return "Noch nicht gespielt"
+}
+
+const minuteLabel = (minute: number | null) => (minute === null ? "–" : `${minute}'`)
+
+/**
+ * Everything a player did so far: in the order of the match, the newest on top as in a live ticker,
+ * or summed up per type, the most frequent first.
+ */
+function PlayerEvents({
+  live,
+  playerId,
+  order,
+  onOrder,
+  onClose,
+}: {
+  live: Live
+  playerId: string
+  order: EventOrder
+  onOrder: (order: EventOrder) => void
+  onClose: () => void
+}) {
+  const teams = useTeamMap()
+  const player = useMemo(() => live.managers.flatMap((manager) => manager.players).find((item) => item.id === playerId) ?? null, [live, playerId])
+  if (!player) return null
+
+  const timeline = player.timeline ?? []
+  const newestFirst = [...timeline].reverse()
+  // What each type of event is, and when it happened
+  const kinds = new Map<string, LiveEventKind>()
+  const minutes = new Map<string, (number | null)[]>()
+  for (const event of timeline) {
+    if (event.kind) kinds.set(event.name, event.kind)
+    minutes.set(event.name, [...(minutes.get(event.name) ?? []), event.minute])
+  }
+  const byType = [...player.events].sort((a, b) => b.count - a.count || Math.abs(b.points) - Math.abs(a.points))
+  const fieldedBy = live.managers.filter((manager) => manager.players.some((item) => item.id === playerId))
+  const team = teams.get(player.teamId ?? "")
+
+  return (
+    <div className="lb-sheet-backdrop" onClick={onClose}>
+      <section
+        className="lb-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Ereignisse von ${playerName(player)}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="lb-sheet-head">
+          <div className="lb-sheet-photo">
+            <Cutout image={player.image} teamId={player.teamId} className="lb-chip-img" />
+          </div>
+          <div className="lb-sheet-who">
+            <strong className="lb-sheet-name">{playerName(player)}</strong>
+            <span className="lb-sheet-meta">
+              <TeamLogo teamId={player.teamId} size={18} />
+              <span className="lb-sheet-clip">{[team?.name, position(player.position).long].filter(Boolean).join(" · ")}</span>
+            </span>
+            <span className={cn("lb-sheet-meta", player.onField && "lb-sheet-onfield")}>
+              {player.onField && <i aria-hidden />}
+              {playerStatus(player)}
+            </span>
+          </div>
+          <div className="lb-sheet-points">
+            <strong className={cn(player.points < 0 && "lb-event-down")}>{number(player.points)}</strong>
+            <span>Punkte</span>
+          </div>
+          <button type="button" onClick={onClose} className="lb-toolbar-button lb-sheet-close" aria-label="Schließen" autoFocus>
+            <X className="size-4" />
+          </button>
+        </header>
+
+        <div className="lb-sheet-tabs" role="tablist" aria-label="Sortierung">
+          <button type="button" role="tab" aria-selected={order === "time"} onClick={() => onOrder("time")}>
+            Chronologisch
+          </button>
+          <button type="button" role="tab" aria-selected={order === "type"} onClick={() => onOrder("type")}>
+            Nach Ereignis
+          </button>
+        </div>
+
+        {player.events.length === 0 ? (
+          <p className="lb-sheet-empty">{player.matchState === "upcoming" ? "Das Spiel hat noch nicht begonnen." : "Noch keine Ereignisse."}</p>
+        ) : order === "time" ? (
+          timeline.length ? (
+            <ol className="lb-sheet-list">
+              {newestFirst.map((event, index) => (
+                <li key={timeline.length - index} className={cn("lb-event", event.kind && "lb-event-marked")}>
+                  {/* The minute once, on the first event of a minute */}
+                  <span className="lb-event-lead">{index === 0 || newestFirst[index - 1].minute !== event.minute ? minuteLabel(event.minute) : ""}</span>
+                  <span className="lb-event-name">
+                    <EventMark kind={event.kind} />
+                    <span className="lb-event-text">{event.name}</span>
+                  </span>
+                  <span className={cn("lb-event-points", event.points < 0 ? "lb-event-down" : "lb-event-up")}>{signedNumber(event.points)}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="lb-sheet-empty">Für diesen Spieler sind keine Zeiten bekannt.</p>
+          )
+        ) : (
+          <ol className="lb-sheet-list">
+            {byType.map((event) => {
+              const kind = kinds.get(event.name) ?? null
+              const at = minutes.get(event.name) ?? []
+              return (
+                <li key={event.name} className={cn("lb-event", kind && "lb-event-marked")}>
+                  <span className="lb-event-lead">{event.count}×</span>
+                  <span className="lb-event-name">
+                    <EventMark kind={kind} />
+                    <span className="lb-event-text">
+                      {event.name}
+                      {at.length > 0 && <small>{at.map(minuteLabel).join(" · ")}</small>}
+                    </span>
+                  </span>
+                  <span className={cn("lb-event-points", event.points < 0 ? "lb-event-down" : "lb-event-up")}>{signedNumber(event.points)}</span>
+                </li>
+              )
+            })}
+          </ol>
+        )}
+
+        {fieldedBy.length > 0 && <footer className="lb-sheet-foot">In der Startelf von {fieldedBy.map((manager) => manager.name).join(", ")}</footer>}
+      </section>
+    </div>
+  )
+}
+
+/** Goals, assists and cards get their sign, as on the player tiles */
+function EventMark({ kind }: { kind: LiveEventKind | null }) {
+  switch (kind) {
+    case "goal":
+      return <span aria-label="Tor">⚽</span>
+    case "own_goal":
+      return <span className="lb-mark-own">ET</span>
+    case "assist":
+      return <span className="lb-mark-assist">A</span>
+    case "yellow":
+      return <span className="lb-mark-card bg-yellow-400" aria-label="Gelbe Karte" />
+    case "yellow_red":
+      return <span className="lb-mark-card bg-linear-to-br from-yellow-400 from-50% to-red-500 to-50%" aria-label="Gelb-Rote Karte" />
+    case "red":
+      return <span className="lb-mark-card bg-red-500" aria-label="Rote Karte" />
+    default:
+      return null
+  }
 }
 
 // ---------------------------------------------------------------------------

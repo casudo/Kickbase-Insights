@@ -3,7 +3,7 @@
  * the match to feature, and a simulation to watch the board without a running match.
  */
 
-import type { Live, LivePlayer, Match } from "@/api/types"
+import type { Live, LiveEventKind, LivePlayer, Match } from "@/api/types"
 
 export type MomentKind = "goal" | "ownGoal" | "red" | "yellowRed" | "assist" | "yellow" | "points"
 
@@ -161,6 +161,15 @@ export function matchClock(match: Match, updatedAt: string, now: number): string
 
 type DemoAction = { name: string; points: number; count?: (typeof COUNTED)[number]["key"] }
 
+const DEMO_KINDS: Record<(typeof COUNTED)[number]["key"], LiveEventKind> = {
+  goals: "goal",
+  ownGoals: "own_goal",
+  redCards: "red",
+  yellowRedCards: "yellow_red",
+  assists: "assist",
+  yellowCards: "yellow",
+}
+
 /** Big moments by position: goalkeeper, defender, midfielder, forward */
 const DEMO_BIG: Record<number, DemoAction[]> = {
   1: [
@@ -299,6 +308,11 @@ export function demoStep(live: Live, start: Live, big: boolean, startedAt: numbe
         } else {
           player.events.push({ name: action.name, count: 1, points: action.points })
         }
+        const minute = Number.parseInt(player.matchMinute ?? "", 10)
+        player.timeline = [
+          ...(player.timeline ?? []),
+          { name: action.name, points: action.points, minute: Number.isFinite(minute) ? minute : null, kind: action.count ? DEMO_KINDS[action.count] : null },
+        ]
         manager.matchdayPoints += action.points
       }
     }

@@ -716,7 +716,15 @@
   border-radius: calc(var(--chip-h) * 0.1);
   background: #303b49;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  cursor: pointer;
   transition: box-shadow 500ms ease;
+}
+
+/* A tap opens the player's events */
+.lb-chip:hover,
+.lb-chip:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.55);
+  outline-offset: -2px;
 }
 
 /* The player's points in Kickbase's colors */
@@ -830,6 +838,11 @@
 
 .lb-mark-assist {
   color: var(--lb-accent);
+  font-weight: 900;
+}
+
+.lb-mark-own {
+  color: var(--lb-down);
   font-weight: 900;
 }
 
@@ -1156,6 +1169,229 @@
 }
 
 /* ------------------------------------------------------------------------- */
+/* A player's events, over the board */
+
+.lb-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(8 12 18 / 0.6);
+  backdrop-filter: blur(4px);
+  animation: lb-enter 200ms ease-out;
+}
+
+.lb-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(580px, 100%);
+  max-height: min(780px, 100%);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #223140 0%, #18232e 100%);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.55);
+  animation: lb-sheet-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.lb-sheet-head {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.lb-sheet-photo {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 30%, #5d6b80, #34404e 72%);
+}
+
+.lb-sheet-who {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lb-sheet-name {
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lb-sheet-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.62);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lb-sheet-clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lb-sheet-onfield {
+  color: var(--lb-accent);
+}
+
+.lb-sheet-onfield i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: lb-blink 1.4s ease-in-out infinite;
+}
+
+.lb-sheet-points {
+  display: grid;
+  justify-items: end;
+}
+
+.lb-sheet-points strong {
+  font-size: 36px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.lb-sheet-points span {
+  color: rgb(255 255 255 / 0.55);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lb-sheet-close {
+  align-self: start;
+}
+
+.lb-sheet-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 16px 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.25);
+}
+
+.lb-sheet-tabs button {
+  flex: 1;
+  height: 34px;
+  border-radius: 999px;
+  color: rgb(255 255 255 / 0.7);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lb-sheet-tabs button[aria-selected="true"] {
+  background: var(--lb-accent);
+  color: var(--lb-accent-ink);
+}
+
+.lb-sheet-list {
+  flex: 1;
+  min-height: 0;
+  padding: 0 10px 10px;
+  overflow-y: auto;
+}
+
+.lb-event {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  font-size: 14px;
+}
+
+.lb-event:last-child {
+  border-bottom: none;
+}
+
+/* Goals, assists and cards stand out */
+.lb-event-marked {
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.07);
+  font-weight: 800;
+}
+
+.lb-event-lead {
+  color: rgb(255 255 255 / 0.55);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  text-align: right;
+}
+
+.lb-event-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lb-event-text {
+  display: grid;
+  min-width: 0;
+}
+
+.lb-event-text small {
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.5);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-event-points {
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+.lb-event-up {
+  color: var(--lb-up);
+}
+
+.lb-event-down {
+  color: var(--lb-down);
+}
+
+.lb-sheet-empty {
+  padding: 32px 16px;
+  color: rgb(255 255 255 / 0.55);
+  font-size: 14px;
+  text-align: center;
+}
+
+.lb-sheet-foot {
+  padding: 12px 18px 14px;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  color: rgb(255 255 255 / 0.6);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------------------- */
 /* Phones: the players get a line of their own below the manager */
 
 @media (max-width: 720px) {
@@ -1256,6 +1492,47 @@
   .lb-toolbar-stand {
     display: none;
   }
+
+  /* The events come up from the bottom */
+  .lb-sheet-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .lb-sheet {
+    width: 100%;
+    max-height: 88%;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .lb-sheet-head {
+    grid-template-columns: 56px minmax(0, 1fr) auto auto;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .lb-sheet-photo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .lb-sheet-name {
+    font-size: 16px;
+  }
+
+  .lb-sheet-points strong {
+    font-size: 26px;
+  }
+
+  .lb-sheet-tabs {
+    margin: 0 12px 6px;
+  }
+
+  .lb-event {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 8px;
+    font-size: 13px;
+  }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1263,6 +1540,13 @@
 @keyframes lb-enter {
   from {
     opacity: 0;
+  }
+}
+
+@keyframes lb-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
   }
 }
 
