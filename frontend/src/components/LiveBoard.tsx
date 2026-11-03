@@ -4,15 +4,15 @@
  * Every update of the live data is compared with the one before. A goal, an assist, a card or a big
  * jump in points takes over the scoreboard with a flash, then the points fly into the player's tile,
  * the scores count up and the players and managers slide into their new order. Smaller changes show
- * up as badges on the players. The demo plays made-up moments on top of the real lineups, to see the
- * board at work while no match runs. New data can be held back for a while, so the board does not
- * run ahead of the TV.
+ * up as badges on the players. On a demo server (KBI_DEMO=true) the board always plays made-up moments
+ * on top of the lineups, to see it at work without a running match. New data can be held back for a
+ * while, so the board does not run ahead of the TV.
  */
 
 import "./live-board.css"
-import { FlaskConical, Loader2, Maximize, Minimize, Settings2, X } from "lucide-react"
+import { Loader2, Maximize, Minimize, Settings2, X } from "lucide-react"
 import { type CSSProperties, type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useLive, useTeamMap } from "@/api/hooks"
+import { useLive, useStatus, useTeamMap } from "@/api/hooks"
 import type { Live, LiveEventKind, LiveManager, LivePlayer, Match } from "@/api/types"
 import { TeamLogo } from "@/components/kickbase"
 import { cn } from "@/lib/cn"
@@ -88,7 +88,8 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
   const { league } = useLeague()
   const root = useRef<HTMLDivElement>(null)
   const toolbar = useRef<HTMLDivElement>(null)
-  const [demo, setDemo] = useState(false)
+  // A demo server (KBI_DEMO=true) always plays the demo, a real one never: made-up points have no place next to real ones
+  const demo = useStatus().data?.demo === true
   const [picked, setPicked] = useState<string | null>(null)
   const [idle, setIdle] = useState(true)
   const [stored, setStored] = useStoredState<Partial<BoardSettings>>("kbi-board-settings", {})
@@ -165,16 +166,6 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
             {lag > 0 && ` · ${settings.delaySeconds} s verzögert`}
           </span>
         )}
-        <button
-          type="button"
-          onClick={() => setDemo(!demo)}
-          aria-pressed={demo}
-          title={demo ? "Demo beenden" : "Demo starten: ausgedachte Punkte auf den echten Aufstellungen"}
-          className={cn("lb-toolbar-button lb-toolbar-wide", demo && "lb-toolbar-active")}
-        >
-          <FlaskConical className="size-4" />
-          {demo ? "Demo beenden" : "Demo"}
-        </button>
         <button
           type="button"
           onClick={() => setSettingsOpen(!settingsOpen)}
