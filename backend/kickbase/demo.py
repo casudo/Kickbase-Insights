@@ -264,6 +264,8 @@ class DemoLeague:
             self.market.append(entry)
 
         self.budgets = {uid: rng.randint(-2_000_000, 12_000_000) for uid in member_ids}
+        ### manager id -> their watchlist, newest first
+        self.scouted = {OWN_ID: [entry["i"] for entry in self.market[:3]]}
         if self.id == LEAGUE_ID:
             self.budgets[OWN_ID] = 3_412_500
 
@@ -330,6 +332,38 @@ class DemoLeague:
             picked = options[:count]
             lineup.extend(picked + [None] * (count - len(picked)))
         return lineup
+
+    def scouted_for(self, user_id: str) -> dict:
+        """The watchlist of `user_id`, newest first, in the same form as Kickbase."""
+        listed = {entry["i"] for entry in self.market}
+        items = []
+        for player_id in self.scouted.get(user_id, []):
+            player = self.world.players[player_id]
+            items.append(
+                {
+                    "pi": player.id,
+                    "n": player.last_name,
+                    "pos": player.position,
+                    "st": player.status,
+                    "tid": player.team_id,
+                    "mv": float(player.market_value),
+                    "pim": player.image,
+                    "iotm": player.id in listed,
+                    "onm": "Kickbase",
+                }
+            )
+        return {"it": items, "spr": {"durl": "", "i": "", "lf": ""}}
+
+    def scout(self, method: str, user_id: str, player_id: str) -> httpx.Response:
+        """Adds or removes a player. Like at Kickbase, doing it twice is no error."""
+        if player_id not in self.world.players:
+            return httpx.Response(404, json={"err": "unknown player"})
+        scouted = self.scouted.setdefault(user_id, [])
+        if method == "POST" and player_id not in scouted:
+            scouted.insert(0, player_id)
+        if method == "DELETE" and player_id in scouted:
+            scouted.remove(player_id)
+        return httpx.Response(200, json={})
 
     def market_for(self, user_id: str) -> list[dict]:
         """The market as `user_id` sees it: with their own offers and nobody else's."""
@@ -549,6 +583,15 @@ class DemoWorld:
                 return httpx.Response(403, json={"err": "not a member"})
             body = json.loads(request.content or b"{}") if request.method == "POST" else {}
             return league.offer(request.method, user_id, offer.group(2), offer.group(3), body)
+
+        scouted = re.fullmatch(r"/v4/leagues/(\w+)/scoutedplayers(?:/(\w+))?", path)
+        if scouted:
+            league = self.leagues.get(scouted.group(1))
+            if league is None or user_id not in dict(league.managers):
+                return httpx.Response(403, json={"err": "not a member"})
+            if scouted.group(2) is None:
+                return httpx.Response(200, json=league.scouted_for(user_id))
+            return league.scout(request.method, user_id, scouted.group(2))
 
         for pattern, handler in self._routes():
             match = re.fullmatch(pattern, path)
