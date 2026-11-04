@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 from pydantic.alias_generators import to_camel
 
 from core import analytics
-from core.analytics import MatchState, PlayerRole
+from core.analytics import FairRating, MatchState, PlayerRole
 
 
 class Schema(BaseModel):
@@ -141,6 +141,26 @@ class WatchedPlayerOut(PlayerOut):
 
 class WatchOut(Schema):
     watched: bool
+
+
+class FairPlayerOut(PlayerOut):
+    games: int
+    fair_value: int
+    gap: float # Market value against the fair value, -0.3 means 30% below it
+    rating: FairRating
+
+
+class FairCurvePointOut(Schema):
+    points: int
+    value: int
+
+
+class FairValuesOut(Schema):
+    min_games: int # Players need this many games to get a fair value
+    band: float # A smaller gap counts as fair
+    typical_gap: float | None = None
+    players: list[FairPlayerOut] = []
+    curves: dict[int, list[FairCurvePointOut]] = {} # By position
 
 
 class TransferOut(Schema):

@@ -11,11 +11,20 @@ const ValueHistoryChartImpl = lazy(() => charts().then((m) => ({ default: m.Valu
 const DetailedValueChartImpl = lazy(() => charts().then((m) => ({ default: m.DetailedValueChart })))
 const DailyChangeChartImpl = lazy(() => charts().then((m) => ({ default: m.DailyChangeChart })))
 const MatchPointsChartImpl = lazy(() => charts().then((m) => ({ default: m.MatchPointsChart })))
+const FairValueChartImpl = lazy(() => charts().then((m) => ({ default: m.FairValueChart })))
 
 export function ManagerLineChart(props: ComponentProps<typeof ManagerLineChartImpl>) {
   return (
     <Suspense fallback={<Skeleton className="w-full" />}>
       <ManagerLineChartImpl {...props} />
+    </Suspense>
+  )
+}
+
+export function FairValueChart(props: ComponentProps<typeof FairValueChartImpl>) {
+  return (
+    <Suspense fallback={<Skeleton className="w-full" style={{ height: props.height ?? 380 }} />}>
+      <FairValueChartImpl {...props} />
     </Suspense>
   )
 }

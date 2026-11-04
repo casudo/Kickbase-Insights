@@ -13,6 +13,7 @@ const Market = lazy(() => import("./pages/Market"))
 const Players = lazy(() => import("./pages/Players"))
 const Watchlist = lazy(() => import("./pages/Watchlist"))
 const Compare = lazy(() => import("./pages/Compare"))
+const FairValue = lazy(() => import("./pages/FairValue"))
 const Planner = lazy(() => import("./pages/Planner"))
 const Transfers = lazy(() => import("./pages/Transfers"))
 const Live = lazy(() => import("./pages/Live"))
@@ -44,6 +45,7 @@ export function App() {
         <Route path="spieler" element={<Players />} />
         <Route path="merkliste" element={<Watchlist />} />
         <Route path="vergleich" element={<Compare />} />
+        <Route path="fair-value" element={<FairValue />} />
         <Route path="planer" element={<Planner />} />
         <Route path="transfers" element={<Transfers />} />
         <Route path="live" element={<Live />} />

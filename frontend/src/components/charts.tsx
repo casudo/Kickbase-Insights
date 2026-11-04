@@ -16,14 +16,16 @@ import {
   ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts"
-import type { ChartManager, ChartRow } from "@/api/types"
+import type { ChartManager, ChartRow, FairCurvePoint, FairRating } from "@/api/types"
 import { cn } from "@/lib/cn"
 import { compactMoney, dateLong, dateShort, money, number, percent } from "@/lib/format"
-import { pointsGrade, SERIES_COLORS } from "@/lib/kickbase"
+import { FAIR_COLORS, FAIR_LABELS, pointsGrade, SERIES_COLORS } from "@/lib/kickbase"
 import { dailyChanges, type HistoryPoint } from "@/lib/valueStats"
 
 export type ValueKind = "money" | "number" | "percent" | "rank"
@@ -196,6 +198,155 @@ export function ManagerLineChart({
           )
         })}
       </div>
+    </div>
+  )
+}
+
+export type FairDot = { id: string; name: string; points: number; value: number; fairValue: number; gap: number; rating: FairRating }
+
+const VALUE_TICKS = [250_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 20_000_000, 50_000_000, 100_000_000, 200_000_000, 500_000_000]
+
+type DotProps = { cx?: number; cy?: number; payload?: FairDot }
+
+/** A player in the chart. The large clear circle makes small dots easy to hit. */
+function FairShape({ cx = 0, cy = 0, payload, onPick }: DotProps & { onPick: (id: string) => void }) {
+  if (!payload) return null
+  const color = FAIR_COLORS[payload.rating]
+  return (
+    <g onClick={() => onPick(payload.id)} className="cursor-pointer">
+      <circle cx={cx} cy={cy} r={12} fill="transparent" />
+      {payload.rating === "expensive" ? (
+        <path
+          d={`M${cx} ${cy - 6}L${cx + 6} ${cy}L${cx} ${cy + 6}L${cx - 6} ${cy}Z`}
+          style={{ fill: color, stroke: "var(--surface)" }}
+          strokeWidth={1.5}
+        />
+      ) : (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={payload.rating === "cheap" ? 5 : 3}
+          style={{ fill: color, stroke: "var(--surface)" }}
+          strokeWidth={payload.rating === "cheap" ? 1.5 : 1}
+          fillOpacity={payload.rating === "fair" ? 0.55 : 1}
+        />
+      )}
+    </g>
+  )
+}
+
+function FairTooltip({ dot }: { dot: FairDot }) {
+  return (
+    <div className="rounded-xl border border-line bg-surface/95 px-3 py-2 text-xs shadow-lg backdrop-blur">
+      <div className="font-semibold text-fg">{dot.name}</div>
+      <div className="mt-1 grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 text-muted">
+        <span>Ø Punkte</span>
+        <span className="text-right font-medium text-fg tabular-nums">{number(dot.points)}</span>
+        <span>Marktwert</span>
+        <span className="text-right font-medium text-fg tabular-nums">{compactMoney(dot.value)}</span>
+        <span>Fair Value</span>
+        <span className="text-right font-medium text-fg tabular-nums">{compactMoney(dot.fairValue)}</span>
+        <span>{FAIR_LABELS[dot.rating]}</span>
+        <span className="text-right font-medium text-fg tabular-nums">{percent(dot.gap)}</span>
+      </div>
+    </div>
+  )
+}
+
+const noMark = () => <g />
+
+const VALUE_AXIS_WIDTH = 70
+
+/** Market value against points, one mark per player. The curve shows the fair value of one position. */
+export function FairValueChart({
+  players,
+  curve,
+  band,
+  onPick,
+  height = 380,
+}: {
+  players: FairDot[]
+  curve?: FairCurvePoint[]
+  band: number
+  onPick: (id: string) => void
+  height?: number
+}) {
+  const values = players.map((player) => player.value)
+  const lowest = Math.min(...values, ...(curve ?? []).map((point) => point.value))
+  const highest = Math.max(...values, ...(curve ?? []).map((point) => point.value))
+  const from = Math.max(VALUE_TICKS.findLastIndex((tick) => tick <= lowest), 0)
+  const to = VALUE_TICKS.findIndex((tick) => tick >= highest)
+  // A single value on a tick would leave an axis without height, so there are always two ticks
+  const ticks = VALUE_TICKS.slice(from, to === -1 ? undefined : Math.max(to, from + 1) + 1)
+  const topPoints = Math.max(...players.map((player) => player.points), ...(curve ?? []).map((point) => point.points))
+  const pointTicks = Array.from({ length: Math.ceil(topPoints / 50) + 1 }, (_, index) => index * 50)
+  const shape = (props: unknown) => <FairShape {...(props as DotProps)} onPick={onPick} />
+  const edge = (factor: number) => curve?.map((point) => ({ points: point.points, value: point.value * factor }))
+  const valueAxis = {
+    type: "number",
+    dataKey: "value",
+    scale: "log",
+    domain: [ticks[0], ticks[ticks.length - 1]],
+    ticks,
+    allowDataOverflow: true,
+  } as const
+
+  return (
+    <div className="text-muted">
+      <div className="flex" style={{ height }}>
+        <ScatterChart width={VALUE_AXIS_WIDTH} height={height} margin={{ top: 8, right: 0, bottom: 0, left: 0 }} className="shrink-0">
+          <XAxis type="number" dataKey="points" domain={[0, 1]} tick={false} axisLine={false} tickLine={false} />
+          <YAxis
+            {...valueAxis}
+            tickFormatter={(value: number) => axisMoney(value)}
+            tick={{ fill: "currentColor", fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+            width={VALUE_AXIS_WIDTH}
+          />
+          {/* An axis needs something to scale */}
+          <Scatter data={[{ points: 0, value: ticks[0] }]} shape={noMark} isAnimationActive={false} tooltipType="none" />
+        </ScatterChart>
+        <div className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain">
+          <div className="h-full min-w-[720px] md:min-w-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 8, right: 12, bottom: 0, left: 8 }}>
+                <CartesianGrid stroke="currentColor" strokeOpacity={0.15} />
+                <XAxis
+                  type="number"
+                  dataKey="points"
+                  domain={[0, pointTicks[pointTicks.length - 1]]}
+                  ticks={pointTicks}
+                  tick={{ fill: "currentColor", fontSize: 11 }}
+                  stroke="currentColor"
+                  strokeOpacity={0.3}
+                  tickLine={false}
+                />
+                <YAxis {...valueAxis} hide />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    const dot = active ? (payload?.[0]?.payload as FairDot | undefined) : undefined
+                    return dot?.id ? <FairTooltip dot={dot} /> : null
+                  }}
+                  cursor={false}
+                />
+                {curve && (
+                  <>
+                    <Scatter data={edge(1 + band)} line={{ stroke: "currentColor", strokeOpacity: 0.45, strokeDasharray: "4 4" }} shape={noMark} isAnimationActive={false} tooltipType="none" />
+                    <Scatter data={edge(1 - band)} line={{ stroke: "currentColor", strokeOpacity: 0.45, strokeDasharray: "4 4" }} shape={noMark} isAnimationActive={false} tooltipType="none" />
+                    <Scatter data={curve} line={{ stroke: "currentColor", strokeWidth: 2 }} shape={noMark} isAnimationActive={false} tooltipType="none" />
+                  </>
+                )}
+                <Scatter data={players.filter((player) => player.rating === "fair")} shape={shape} isAnimationActive={false} />
+                <Scatter data={players.filter((player) => player.rating !== "fair")} shape={shape} isAnimationActive={false} />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+      <p className="mt-1 text-center text-[11px]">
+        Ø Punkte<span className="md:hidden"> · zum Scrollen seitlich wischen</span>
+      </p>
     </div>
   )
 }

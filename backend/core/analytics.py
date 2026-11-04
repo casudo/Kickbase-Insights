@@ -397,6 +397,171 @@ def bid_advice(purchases: Sequence[Purchase], market_value: int) -> BidAdvice | 
 
 
 ### ===============================================================================
+### Fair value
+### ===============================================================================
+
+### The fair value answers one question: WHAT DO PLAYERS ACTUALLY COST?
+### It compares players with each other at one moment, so it is no forecast. It only knows points,
+### position and market value. It knows nothing about injuries, rivals for a place or trends.
+###
+### 1. Find the regular players (`games_played()`, `regular_games()`)
+###    Kickbase sends no number of games, so it is total points / average points. A player needs two
+###    thirds of the games of the busiest player, and at least 3. Rotation players cost far less than
+###    their average points suggest, so they would all look cheap.
+###
+###    Example: The busiest player has 8 games, so everyone needs ceil(8 * 2 / 3) = 6 games.
+###             717 total points / 120 average = 6 games: this player is rated.
+###             400 total points / 100 average = 4 games: this player gets no fair value.
+###
+### 2. Fit one curve through the regular players (`fair_curve()`, `least_squares()`)
+###    The curve gives the logarithm of the market value, because values grow by percent and not by a
+###    fixed amount:
+###
+###        log(value) = position offset + a * x + b * x^2 + c * x^3      with x = average points / 100
+###
+###    `least_squares()` finds the numbers that fit all regular players best. All positions share a, b
+###    and c, only the offset is different. One position alone can be too small for its own curve: in
+###    this league only 15 goalkeepers play regularly.
+###
+###    Example: a = 3.45, b = -1.26, c = 0.18
+###             Offsets: goalkeeper 13.90, defender 14.12, midfielder 14.20, forward 14.34
+###
+### 3. Stop the curve from falling (`fair_curve()`)
+###    There are few top players, so a curve can bend down at its end. But more points must never mean
+###    a lower value, so the curve may only go up or stay level.
+###
+### 4. Read the fair value (`FairCurve.value()`)
+###    Example: A midfielder with 100 average points, so x = 1:
+###             log(value) = 14.20 + 3.45 * 1 - 1.26 * 1 + 0.18 * 1 = 16.57
+###             value = e^16.57 = 15.7 million
+###
+###    The whole curve of this league, in millions:
+###
+###        Average points    Goalkeeper    Defender    Midfielder    Forward
+###                    50           4.5         5.7           6.1        7.0
+###                   100          11.6        14.5          15.7       18.0
+###                   150          20.8        26.0          28.1       32.2
+###                   200          29.9        37.3          40.3       46.3
+###
+### 5. Compare it with the market value (`fair_rating()`)
+###    gap = market value / fair value - 1. The curve is about 20% off for a typical player, so a small
+###    gap means nothing. Only a gap of at least 25% counts as cheap or expensive.
+###
+###    Example: A midfielder with a fair value of 15.7 million:
+###             Market value 10.0 million: 10.0 / 15.7 - 1 = -36%, cheap
+###             Market value 14.0 million: 14.0 / 15.7 - 1 = -11%, fair
+###             Market value 22.0 million: 22.0 / 15.7 - 1 = +40%, expensive
+###
+### A big gap is no buying advice. When a market value falls fast, the market often knows more than
+### the points do, for example that a player lost their place in the team.
+
+### A player must have played this share of the matchdays. Rotation players cost far less than their
+### average points suggest, so they would all look cheap.
+REGULAR_SHARE = 2 / 3
+MIN_GAMES = 3
+### Too few regular players to fit a curve
+MIN_FAIR_PLAYERS = 30
+### The curve is about 20% off for a typical player, so only a bigger gap means something
+FAIR_BAND = 0.25
+
+FairRating = Literal["cheap", "fair", "expensive"]
+
+
+@dataclass(frozen=True)
+class FairInput:
+    position: int
+    average_points: int
+    market_value: int
+
+
+@dataclass(frozen=True)
+class FairCurve:
+    """The usual market value for a number of points. One shape, moved up or down per position."""
+    offsets: dict[int, float] # By position, as a logarithm
+    low: int # The lowest points the curve knows
+    shape: list[float] # One value per point from `low` on, as a logarithm. It never falls.
+
+    def value(self, position: int, points: int) -> int:
+        index = min(max(points - self.low, 0), len(self.shape) - 1)
+        return round(math.exp(self.offsets[position] + self.shape[index]))
+
+    def line(self, position: int, step: int = 5) -> list[tuple[int, int]]:
+        """`(points, value)` pairs to draw the curve of a position."""
+        top = self.low + len(self.shape) - 1
+        return [(points, self.value(position, points)) for points in (*range(self.low, top, step), top)]
+
+
+def games_played(total_points: int | None, average_points: int | None) -> int:
+    """Kickbase sends no number of games, but it follows from the total and the average points."""
+    if not total_points or not average_points or average_points <= 0:
+        return 0
+    return round(total_points / average_points)
+
+
+def regular_games(games: Iterable[int]) -> int:
+    """How many games make a regular player, going by whoever played the most so far."""
+    return max(MIN_GAMES, math.ceil(max(games, default=0) * REGULAR_SHARE))
+
+
+def least_squares(rows: Sequence[Sequence[float]], targets: Sequence[float]) -> list[float] | None:
+    """The best fit of `rows` to `targets`. None when the data cannot decide it."""
+    size = len(rows[0])
+    matrix = [
+        [sum(row[i] * row[j] for row in rows) for j in range(size)]
+        + [sum(row[i] * target for row, target in zip(rows, targets, strict=True))]
+        for i in range(size)
+    ]
+    for column in range(size):
+        pivot = max(range(column, size), key=lambda index: abs(matrix[index][column]))
+        if abs(matrix[pivot][column]) < 1e-9:
+            return None
+        matrix[column], matrix[pivot] = matrix[pivot], matrix[column]
+        for index in range(size):
+            if index != column:
+                factor = matrix[index][column] / matrix[column][column]
+                for part in range(column, size + 1):
+                    matrix[index][part] -= factor * matrix[column][part]
+    return [matrix[index][size] / matrix[index][index] for index in range(size)]
+
+
+def _powers(points: int) -> list[float]:
+    x = points / 100
+    return [x, x**2, x**3]
+
+
+def fair_curve(players: Sequence[FairInput]) -> FairCurve | None:
+    """Fits the market value of regular players to their average points.
+
+    All positions share one shape, because a single position can be too small for it: only a few
+    goalkeepers play every match. None when there are too few players.
+    """
+    if len(players) < MIN_FAIR_PLAYERS:
+        return None
+    positions = sorted({player.position for player in players})
+    rows = [
+        [float(player.position == position) for position in positions] + _powers(player.average_points)
+        for player in players
+    ]
+    solution = least_squares(rows, [math.log(player.market_value) for player in players])
+    if solution is None:
+        return None
+    slopes = solution[len(positions) :]
+    low = min(player.average_points for player in players)
+    high = max(player.average_points for player in players)
+    ### More points must never mean a lower value, so the curve only ever goes up or stays
+    shape: list[float] = []
+    for points in range(low, high + 1):
+        value = sum(slope * power for slope, power in zip(slopes, _powers(points), strict=True))
+        shape.append(max(value, shape[-1]) if shape else value)
+    return FairCurve(dict(zip(positions, solution, strict=False)), low, shape)
+
+
+def fair_rating(gap: float) -> FairRating:
+    """`gap` is the market value against the fair value, -0.3 means 30% below it."""
+    return "cheap" if gap <= -FAIR_BAND else "expensive" if gap >= FAIR_BAND else "fair"
+
+
+### ===============================================================================
 ### Balances
 ### ===============================================================================
 

@@ -118,6 +118,25 @@ export type WatchedPlayer = Player & {
   expiresAt: string | null // End of the market listing, if there is one
 }
 
+export type FairRating = "cheap" | "fair" | "expensive"
+
+export type FairPlayer = Player & {
+  games: number
+  fairValue: number
+  gap: number // Market value against the fair value, -0.3 means 30 % below it
+  rating: FairRating
+}
+
+export type FairCurvePoint = { points: number; value: number }
+
+export type FairValues = {
+  minGames: number // Players need this many games to get a fair value
+  band: number // A smaller gap counts as fair
+  typicalGap: number | null
+  players: FairPlayer[]
+  curves: Record<string, FairCurvePoint[]> // By position
+}
+
 export type Transfer = {
   id: string
   date: string

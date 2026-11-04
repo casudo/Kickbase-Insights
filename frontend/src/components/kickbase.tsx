@@ -19,8 +19,9 @@ import {
 import { type ReactNode, useState } from "react"
 import { useTeamMap } from "@/api/hooks"
 import { cn } from "@/lib/cn"
+import type { FairRating } from "@/api/types"
 import { compactMoney, money, percent, signedMoney } from "@/lib/format"
-import { cdnUrl, initials, playerName, position, status as statusMeta } from "@/lib/kickbase"
+import { cdnUrl, FAIR_COLORS, initials, playerName, position, status as statusMeta } from "@/lib/kickbase"
 
 /**
  * The club's logo from Kickbase's CDN: its logo pool by team id, which needs no data to be loaded,
@@ -177,6 +178,20 @@ export function PercentDelta({ value, className, invert }: { value: number | nul
   const good = value != null && (invert ? value < 0 : value > 0)
   const bad = value != null && (invert ? value > 0 : value < 0)
   return <span className={cn("tabular-nums", good && "text-up", bad && "text-down", !good && !bad && "text-muted", className)}>{percent(value)}</span>
+}
+
+/** The mark of a rating, the same as in the chart */
+export function FairMarker({ rating, size = 10 }: { rating: FairRating; size?: number }) {
+  const color = FAIR_COLORS[rating]
+  return (
+    <svg width={size} height={size} viewBox="0 0 10 10" className="shrink-0" aria-hidden>
+      {rating === "expensive" ? (
+        <path d="M5 0.5 9.5 5 5 9.5 0.5 5Z" style={{ fill: color }} />
+      ) : (
+        <circle cx={5} cy={5} r={rating === "cheap" ? 4.5 : 2.5} style={{ fill: color }} />
+      )}
+    </svg>
+  )
 }
 
 /** Full amount on wide screens, compact on narrow ones */

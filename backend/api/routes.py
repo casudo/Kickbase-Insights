@@ -23,6 +23,7 @@ from api.schemas import (
     BidIn,
     BidOut,
     ChartOut,
+    FairValuesOut,
     FixturesOut,
     LeagueOut,
     LineupsOut,
@@ -374,6 +375,11 @@ def turnovers(state: StateDep, session: SessionDep, league: LeagueDep):
 @router.get("/overpay", response_model=OverpayOut)
 def overpay(state: StateDep, session: SessionDep, league: LeagueDep):
     return cached(state, league, ("overpay",), lambda: insights(state, session, league).overpay())
+
+
+@router.get("/fair-value", response_model=FairValuesOut)
+def fair_value(state: StateDep, session: SessionDep, league: LeagueDep):
+    return cached(state, league, ("fair-value",), lambda: insights(state, session, league).fair_values())
 
 
 @router.get("/charts/revenue", response_model=ChartOut)
