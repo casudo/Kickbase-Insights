@@ -33,6 +33,7 @@ from api.schemas import (
     TeamOut,
     TransferOut,
     TurnoverOut,
+    WatchedPlayerOut,
 )
 from core import analytics
 from core.config import Settings
@@ -52,6 +53,7 @@ from db.models import (
     Transfer,
     UserLeague,
 )
+from kickbase.models import ScoutedPlayer
 
 
 class Insights:
@@ -248,6 +250,45 @@ class Insights:
             )
         far_future = datetime.max.replace(tzinfo=UTC)
         result.sort(key=lambda p: (p.expires_at or far_future, -p.market_value))
+        return result
+
+    def watchlist(self, scouted: list[ScoutedPlayer]) -> list[WatchedPlayerOut]:
+        """Add players to the viewer's watchlist."""
+        player_ids = [entry.id for entry in scouted]
+        players = {p.id: p for p in self.session.exec(select(Player).where(Player.id.in_(player_ids)))}
+        histories = self._histories(player_ids)
+        squad = self._squad()
+        listings = self._market()
+        result = []
+        for entry in scouted:
+            player = players.get(entry.id)
+            if player is None:
+                ### Not synced yet, so we only know what Kickbase sent
+                result.append(
+                    WatchedPlayerOut(
+                        id=entry.id,
+                        last_name=entry.last_name,
+                        team_id=entry.team_id,
+                        image=entry.image,
+                        position=entry.position,
+                        status=entry.status,
+                        market_value=round(entry.market_value),
+                        trend=0,
+                        on_market=entry.on_market,
+                    )
+                )
+                continue
+            listing = listings.get(player.id)
+            result.append(
+                self._player_out(
+                    player,
+                    histories.get(player.id),
+                    squad,
+                    set(listings),
+                    WatchedPlayerOut,
+                    expires_at=listing.expires_at if listing else None,
+                )
+            )
         return result
 
     def _transfer_out(self, t: Transfer, name_to_id: dict[str, str]) -> TransferOut:
