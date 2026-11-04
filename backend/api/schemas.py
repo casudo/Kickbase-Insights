@@ -135,6 +135,14 @@ class MarketPlayerOut(PlayerOut):
     bid_advice: BidAdviceOut | None = None # Only for Kickbase's own listings
 
 
+class WatchedPlayerOut(PlayerOut):
+    expires_at: datetime | None = None # End of the market listing, if there is one
+
+
+class WatchOut(Schema):
+    watched: bool
+
+
 class TransferOut(Schema):
     id: str
     date: datetime

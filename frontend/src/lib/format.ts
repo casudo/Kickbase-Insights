@@ -35,6 +35,9 @@ export function signedMoney(value: Maybe, compact = false): string {
 
 export const number = (value: Maybe) => (value == null ? "–" : integer.format(value))
 
+/** 12,3 - one digit after the comma */
+export const decimal = (value: Maybe) => (value == null ? "–" : oneDecimal.format(value))
+
 export const signedNumber = (value: Maybe) => (value == null ? "–" : value > 0 ? `+${integer.format(value)}` : integer.format(value))
 
 /** 0.123 -> +12,3 % */

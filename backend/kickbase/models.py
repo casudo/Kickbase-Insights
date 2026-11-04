@@ -253,6 +253,23 @@ class Market(KBModel):
     day: int | None = None
 
 
+class ScoutedPlayer(KBModel):
+    """An entry of `/v4/leagues/{leagueId}/scoutedplayers`."""
+    id: Id = Field("", alias="pi")
+    last_name: str = Field("", alias="n")
+    team_id: Id | None = Field(None, alias="tid")
+    position: int = Field(0, alias="pos")
+    status: int = Field(0, alias="st")
+    market_value: float = Field(0, alias="mv")
+    image: str | None = Field(None, alias="pim")
+    on_market: bool = Field(False, alias="iotm")
+
+
+class ScoutedPlayers(KBModel):
+    """The watchlist of the Kickbase app, newest first. Kickbase keeps no date for an entry."""
+    players: list[ScoutedPlayer] = Field(default_factory=list, alias="it")
+
+
 class FeedItem(KBModel):
     """An entry of `/v4/leagues/{leagueId}/activitiesFeed`.
 

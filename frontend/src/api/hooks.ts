@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useMemo } from "react"
 import { useLeagueId } from "@/lib/league"
 import { api } from "./client"
@@ -24,6 +24,7 @@ import type {
   Team,
   Transfer,
   Turnover,
+  WatchedPlayer,
 } from "./types"
 
 /** Adds the selected league to an API path */
@@ -138,15 +139,22 @@ export function useRefreshLive() {
   })
 }
 
+const playerMatchesQuery = (id: string | null, leagueId: string | null) => ({
+  queryKey: ["player-matches", id, leagueId],
+  queryFn: () => api<PlayerMatches>(withLeague(`/players/${id}/matches`, leagueId)),
+  enabled: id !== null && leagueId !== null,
+  staleTime: 5 * 60_000,
+})
+
 /** A player's matches of the current season, fetched from Kickbase when the player screen opens */
 export function usePlayerMatches(id: string | null) {
+  return useQuery(playerMatchesQuery(id, useLeagueId()))
+}
+
+/** The matches of several players at once, for the comparison */
+export function usePlayerMatchesList(ids: string[]) {
   const leagueId = useLeagueId()
-  return useQuery({
-    queryKey: ["player-matches", id, leagueId],
-    queryFn: () => api<PlayerMatches>(withLeague(`/players/${id}/matches`, leagueId)),
-    enabled: id !== null && leagueId !== null,
-    staleTime: 5 * 60_000,
-  })
+  return useQueries({ queries: ids.map((id) => playerMatchesQuery(id, leagueId)) })
 }
 
 /** Places, changes and withdraws offers at Kickbase, in the name of whoever is logged in */
@@ -186,13 +194,34 @@ export function useLivePlayer(id: string | null, matchRunning: boolean) {
   })
 }
 
+const playerQuery = (id: string | null, leagueId: string | null) => ({
+  queryKey: ["player", id, leagueId],
+  queryFn: () => api<PlayerDetail>(withLeague(`/players/${id}`, leagueId)),
+  enabled: id !== null && leagueId !== null,
+})
+
 export function usePlayer(id: string | null) {
+  return useQuery(playerQuery(id, useLeagueId()))
+}
+
+/** The details of several players at once, for the comparison */
+export function usePlayerDetails(ids: string[]) {
   const leagueId = useLeagueId()
-  return useQuery({
-    queryKey: ["player", id, leagueId],
-    queryFn: () => api<PlayerDetail>(withLeague(`/players/${id}`, leagueId)),
-    enabled: id !== null && leagueId !== null,
-  })
+  return useQueries({ queries: ids.map((id) => playerQuery(id, leagueId)) })
+}
+
+export const useWatchlist = () => useLeagueQuery<WatchedPlayer[]>(["watchlist"], "/watchlist")
+
+/** Marks a player for the logged in user, or removes the mark */
+export function useWatch() {
+  const client = useQueryClient()
+  const leagueId = useLeagueId()
+  const refresh = () => client.invalidateQueries({ queryKey: ["watchlist"] })
+  const change = (method: "PUT" | "DELETE") => (playerId: string) =>
+    api<{ watched: boolean }>(withLeague(`/watchlist/${playerId}`, leagueId), { method })
+  const add = useMutation({ mutationFn: change("PUT"), onSuccess: refresh })
+  const remove = useMutation({ mutationFn: change("DELETE"), onSuccess: refresh })
+  return { add, remove }
 }
 
 export function useTriggerSync() {

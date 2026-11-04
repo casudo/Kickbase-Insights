@@ -45,6 +45,8 @@ from api.schemas import (
     TransferOut,
     TurnoverOut,
     UserOut,
+    WatchedPlayerOut,
+    WatchOut,
 )
 from auth.accounts import Accounts, LoginError, Viewer
 from core.config import Settings
@@ -480,6 +482,36 @@ async def withdraw_bid(
     await ask_kickbase(state, viewer, call)
     forget_private(state, league_id, viewer)
     return BidOut(own_bid=None)
+
+
+@router.get("/watchlist", response_model=list[WatchedPlayerOut])
+async def watchlist(state: StateDep, league: LeagueDep, viewer: ViewerDep) -> list[WatchedPlayerOut]:
+    """The viewer's watchlist. Same as the app, data retrieved by Kickbase API."""
+    scouted = await ask_kickbase(state, viewer, lambda client: client.scouted_players(league.id))
+
+    def build() -> list[WatchedPlayerOut]:
+        with Session(state.engine) as session:
+            return insights(state, session, league, viewer).watchlist(scouted.players)
+
+    return await asyncio.to_thread(build)
+
+
+@router.put("/watchlist/{player_id}", response_model=WatchOut)
+async def watch(
+    state: StateDep, league_id: LeagueIdDep, viewer: ViewerDep, player_id: PlayerIdPath
+) -> WatchOut:
+    """Adds a player to the viewer's watchlist at Kickbase."""
+    await ask_kickbase(state, viewer, lambda client: client.add_scouted_player(league_id, player_id))
+    return WatchOut(watched=True)
+
+
+@router.delete("/watchlist/{player_id}", response_model=WatchOut)
+async def unwatch(
+    state: StateDep, league_id: LeagueIdDep, viewer: ViewerDep, player_id: PlayerIdPath
+) -> WatchOut:
+    """Removes a player from the viewer's watchlist at Kickbase."""
+    await ask_kickbase(state, viewer, lambda client: client.remove_scouted_player(league_id, player_id))
+    return WatchOut(watched=False)
 
 
 @router.get("/live/players/{player_id}", response_model=LivePlayerOut)
