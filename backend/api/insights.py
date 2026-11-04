@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from dataclasses import asdict
 from datetime import UTC, datetime
+from statistics import median
 
 from sqlmodel import Session, select
 
@@ -19,6 +20,9 @@ from api.schemas import (
     BidAdviceOut,
     ChartManager,
     ChartOut,
+    FairCurvePointOut,
+    FairPlayerOut,
+    FairValuesOut,
     FixturesOut,
     ManagerOut,
     MarketPlayerOut,
@@ -290,6 +294,59 @@ class Insights:
                 )
             )
         return result
+
+    def fair_values(self) -> FairValuesOut:
+        ### Only this competition: the player table can hold more than one
+        team_ids = self.session.exec(
+            select(Team.id).where(Team.competition_id == self.league.competition_id)
+        ).all()
+        players = self.session.exec(
+            select(Player).where(Player.active, Player.team_id.in_(team_ids), Player.market_value > 0)
+        ).all()
+        games = {p.id: analytics.games_played(p.total_points, p.average_points) for p in players}
+        needed = analytics.regular_games(games.values())
+        regulars = [
+            p
+            for p in players
+            if games[p.id] >= needed and p.average_points and p.position in analytics.POSITIONS
+        ]
+        curve = analytics.fair_curve(
+            [analytics.FairInput(p.position, p.average_points, p.market_value) for p in regulars]
+        )
+        if curve is None:
+            return FairValuesOut(min_games=needed, band=analytics.FAIR_BAND)
+
+        squad = self._squad()
+        market = set(self._market())
+        histories = self._histories([p.id for p in regulars])
+        result = []
+        for player in regulars:
+            fair_value = curve.value(player.position, player.average_points)
+            gap = player.market_value / fair_value - 1
+            result.append(
+                self._player_out(
+                    player,
+                    histories.get(player.id),
+                    squad,
+                    market,
+                    FairPlayerOut,
+                    games=games[player.id],
+                    fair_value=fair_value,
+                    gap=gap,
+                    rating=analytics.fair_rating(gap),
+                )
+            )
+        result.sort(key=lambda p: p.gap)
+        return FairValuesOut(
+            min_games=needed,
+            band=analytics.FAIR_BAND,
+            typical_gap=median(abs(p.gap) for p in result),
+            players=result,
+            curves={
+                position: [FairCurvePointOut(points=x, value=y) for x, y in curve.line(position)]
+                for position in curve.offsets
+            },
+        )
 
     def _transfer_out(self, t: Transfer, name_to_id: dict[str, str]) -> TransferOut:
         return TransferOut(
