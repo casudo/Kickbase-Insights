@@ -30,6 +30,8 @@ type Entry = {
   matches: PlayerMatch[] | undefined // undefined while loading or if Kickbase did not answer
 }
 
+const MAX_CHIPS = 8 // only show the newest N watchlist entries
+
 const RANGES: { value: ValueRange; label: string }[] = [
   { value: "30", label: "30 T." },
   { value: "90", label: "90 T." },
@@ -127,6 +129,7 @@ function PlayerPicker({ ids, onAdd }: { ids: string[]; onAdd: (id: string) => vo
   const results = needle
     ? players.filter((player) => !ids.includes(player.id) && playerName(player).toLowerCase().includes(needle)).slice(0, 6)
     : []
+  const watched = watchlist.filter((player) => !ids.includes(player.id))  
   const pick = (id: string) => {
     onAdd(id)
     setSearch("")
@@ -154,6 +157,25 @@ function PlayerPicker({ ids, onAdd }: { ids: string[]; onAdd: (id: string) => vo
           ))}
           {results.length === 0 && <li className="p-3 text-sm text-muted">Kein Spieler gefunden.</li>}
         </ul>
+      )}
+      {watched.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 text-xs text-muted">
+            <Star className="size-3.5" /> Merkliste:
+          </span>
+          {watched.slice(0, MAX_CHIPS).map((player) => (
+            <button
+              key={player.id}
+              type="button"
+              onClick={() => pick(player.id)}
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-line px-2.5 text-xs hover:bg-surface-2"
+            >
+              <Plus className="size-3" />
+              {playerName(player, true)}
+            </button>
+          ))}
+          {watched.length > MAX_CHIPS && <span className="text-xs text-muted">und {watched.length - MAX_CHIPS} weitere</span>}
+        </div>
       )}
     </Card>
   )
