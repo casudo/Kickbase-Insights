@@ -99,7 +99,7 @@ export default function Compare() {
         {ids.length === 0 ? (
           <Card>
             <EmptyState title="Noch niemand im Vergleich" icon={<Scale className="size-5" />}>
-              Suche oben nach Spielern oder wähle sie aus deiner Merkliste.
+              Suche oben nach Spielern oder wähle sie aus deiner Watchlist.
             </EmptyState>
           </Card>
         ) : loading && entries.length === 0 ? (
@@ -161,7 +161,7 @@ function PlayerPicker({ ids, onAdd }: { ids: string[]; onAdd: (id: string) => vo
       {watched.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="inline-flex items-center gap-1 text-xs text-muted">
-            <Star className="size-3.5" /> Merkliste:
+            <Star className="size-3.5" /> Watchlist:
           </span>
           {watched.slice(0, MAX_CHIPS).map((player) => (
             <button
