@@ -228,8 +228,16 @@ export type LivePlayer = {
   yellowCards: number
   yellowRedCards: number
   redCards: number
+  /** The events summed up per type, the biggest first */
   events: { name: string; count: number; points: number }[]
+  /** Every single event in the order of the match */
+  timeline: LiveTimelineEvent[]
 }
+
+/** Goals, assists and cards. Everything else has no kind. */
+export type LiveEventKind = "goal" | "assist" | "own_goal" | "yellow" | "yellow_red" | "red"
+
+export type LiveTimelineEvent = { name: string; points: number; minute: number | null; kind: LiveEventKind | null }
 
 export type LiveManager = {
   id: string

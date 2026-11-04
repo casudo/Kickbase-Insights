@@ -25,6 +25,7 @@ from api.schemas import (
     LiveManagerOut,
     LiveOut,
     LivePlayerOut,
+    LiveTimelineEventOut,
     MatchOut,
     PlayerMatchesOut,
     PlayerMatchOut,
@@ -347,10 +348,14 @@ class LiveService:
     ) -> LivePlayerOut:
         kinds: Counter[str] = Counter()
         grouped: dict[str, list[int]] = defaultdict(list)
+        timeline: list[LiveTimelineEventOut] = []
         if center:
             for event in analytics.effective_events(center.events):
                 name, kind = self._event_types.get(event.type or -1, (f"Ereignis {event.type}", None))
                 grouped[name].append(event.points)
+                timeline.append(
+                    LiveTimelineEventOut(name=name, points=event.points, minute=event.minute, kind=kind)
+                )
                 if kind:
                     kinds[kind] += 1
 
@@ -358,6 +363,8 @@ class LiveService:
             LiveEventOut(name=name, count=len(points), points=sum(points)) for name, points in grouped.items()
         ]
         events.sort(key=lambda e: abs(e.points), reverse=True)
+        ### Stable, so events of the same minute keep Kickbase's order. Without a minute at the start
+        timeline.sort(key=lambda e: e.minute if e.minute is not None else -1)
 
         team_id = (player.team_id if player else None) or (center.team_id if center else None)
         if center:
@@ -389,6 +396,7 @@ class LiveService:
             yellow_red_cards=kinds["yellow_red"],
             red_cards=kinds["red"],
             events=events,
+            timeline=timeline,
         )
 
 

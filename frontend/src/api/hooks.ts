@@ -113,14 +113,15 @@ export const useLineups = () => useLeagueQuery<Lineups>(["lineups"], "/lineups",
 /**
  * Live points. Kickbase only has new ones while a match runs, so only then the page refreshes every minute.
  * Otherwise the server keeps its last answer without asking Kickbase, and is only checked now and then to notice the kick-off.
+ * `runningIntervalMs` is how often to ask while a match runs, the server still asks Kickbase at most every `cacheSeconds`.
  */
-export function useLive(autoRefresh: boolean) {
+export function useLive(autoRefresh: boolean, runningIntervalMs = 60_000) {
   const leagueId = useLeagueId()
   return useQuery({
     queryKey: ["live", leagueId],
     queryFn: () => api<Live>(withLeague("/live", leagueId)),
     enabled: leagueId !== null,
-    refetchInterval: (query) => (!autoRefresh ? false : query.state.data?.matchRunning ? 60_000 : 5 * 60_000),
+    refetchInterval: (query) => (!autoRefresh ? false : query.state.data?.matchRunning ? runningIntervalMs : 5 * 60_000),
     staleTime: 30_000,
   })
 }

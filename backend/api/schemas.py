@@ -251,6 +251,15 @@ class LiveEventOut(Schema):
     points: int
 
 
+class LiveTimelineEventOut(Schema):
+    """One scoring event of a player, as it happened"""
+    name: str
+    points: int
+    minute: int | None = None
+    ### Goals, assists and cards, for an icon. None for everything else
+    kind: analytics.EventKind | None = None
+
+
 class LivePlayerOut(Schema):
     id: str
     first_name: str | None = None
@@ -271,7 +280,10 @@ class LivePlayerOut(Schema):
     yellow_cards: int = 0
     yellow_red_cards: int = 0
     red_cards: int = 0
+    ### The events summed up per type, the biggest first
     events: list[LiveEventOut] = []
+    ### Every single event in the order of the match
+    timeline: list[LiveTimelineEventOut] = []
 
 
 class LiveManagerOut(Schema):

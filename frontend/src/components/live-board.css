@@ -1,0 +1,2159 @@
+/*
+ * The animated live board (LiveBoard.tsx). A dark slate with lit-up spots, sized by the screen, made for a
+ * TV or a second screen. Durations fit the timings at the top of LiveBoard.tsx: the flash stays 5.6 s, the player's name
+ * shows until 2.3 s, then the action and the points.
+ */
+
+.lb-root {
+  /* The theme, set by the board from its settings. These are the defaults ("Grün"):
+     the accent and the text on it, a second glow, the live dot, and hue and saturation of all surfaces */
+  --lb-accent: #34d399;
+  --lb-accent-rgb: 52 211 153;
+  --lb-accent-ink: #03241a;
+  --lb-glow-rgb: 56 189 248;
+  --lb-live: #e11d48;
+  --lb-hue: 212;
+  --lb-sat: 1;
+  /* Gains and losses keep their colors in every theme */
+  --lb-up: #34d399;
+  --lb-up-rgb: 52 211 153;
+  --lb-down: #fb7185;
+  /* The surfaces, from dark to light, all in the theme's hue */
+  --lb-bg-top: hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 15%);
+  --lb-bg-bottom: hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 11%);
+  --lb-hero-top: hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 19%);
+  --lb-hero-bottom: hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 14%);
+  --lb-row-1: hsl(var(--lb-hue) calc(var(--lb-sat) * 24%) 22%);
+  --lb-row-2: hsl(var(--lb-hue) calc(var(--lb-sat) * 25%) 18%);
+  --lb-row-3: hsl(var(--lb-hue) calc(var(--lb-sat) * 24%) 15%);
+  --lb-row-photo: hsl(var(--lb-hue) calc(var(--lb-sat) * 22%) 22%);
+  --lb-chip: hsl(var(--lb-hue) calc(var(--lb-sat) * 21%) 24%);
+  --lb-chip-wide-1: hsl(var(--lb-hue) calc(var(--lb-sat) * 17%) 35%);
+  --lb-chip-wide-2: hsl(var(--lb-hue) calc(var(--lb-sat) * 19%) 27%);
+  --lb-chip-wide-3: hsl(var(--lb-hue) calc(var(--lb-sat) * 21%) 23%);
+  --lb-photo-1: hsl(var(--lb-hue) calc(var(--lb-sat) * 16%) 43%);
+  --lb-photo-2: hsl(var(--lb-hue) calc(var(--lb-sat) * 20%) 26%);
+  --lb-tile-top: hsl(var(--lb-hue) calc(var(--lb-sat) * 25%) 22%);
+  --lb-tile-bottom: hsl(var(--lb-hue) calc(var(--lb-sat) * 27%) 17%);
+  --lb-control: hsl(var(--lb-hue) calc(var(--lb-sat) * 29%) 16% / 0.78);
+  --lb-control-hover: hsl(var(--lb-hue) calc(var(--lb-sat) * 25%) 27% / 0.92);
+  --lb-panel: hsl(var(--lb-hue) calc(var(--lb-sat) * 30%) 12% / 0.95);
+  --lb-backdrop: hsl(var(--lb-hue) calc(var(--lb-sat) * 38%) 5% / 0.6);
+  --lb-pad: clamp(4px, 0.45vw, 8px);
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    radial-gradient(1400px 520px at 50% -8%, rgb(var(--lb-accent-rgb) / 0.2), transparent 65%),
+    radial-gradient(900px 600px at 105% 105%, rgb(var(--lb-glow-rgb) / 0.12), transparent 60%),
+    radial-gradient(700px 500px at -5% 100%, rgb(var(--lb-accent-rgb) / 0.08), transparent 60%),
+    linear-gradient(180deg, var(--lb-bg-top) 0%, var(--lb-bg-bottom) 100%);
+  color: #f5f7fa;
+  user-select: none;
+  animation: lb-enter 400ms ease-out;
+}
+
+/* Keyboard focus in the theme's accent, not the app's */
+.lb-root :focus-visible {
+  outline-color: var(--lb-accent);
+}
+
+.lb-root.lb-calm {
+  cursor: none;
+}
+
+.lb-message {
+  display: grid;
+  flex: 1;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: rgb(255 255 255 / 0.7);
+  font-size: 15px;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Controls, fading out while the mouse rests */
+
+.lb-toolbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 400ms ease;
+}
+
+.lb-calm .lb-toolbar {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lb-toolbar-stand {
+  padding: 0 6px;
+  color: rgb(255 255 255 / 0.65);
+  font-size: 12px;
+  text-shadow: 0 1px 4px #000;
+}
+
+.lb-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  min-width: 38px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 999px;
+  background: var(--lb-control);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+.lb-toolbar-button:hover {
+  background: var(--lb-control-hover);
+}
+
+.lb-toolbar-wide {
+  padding: 0 14px;
+}
+
+.lb-toolbar-active,
+.lb-toolbar-active:hover {
+  border-color: transparent;
+  background: var(--lb-accent);
+  color: var(--lb-accent-ink);
+}
+
+/* The settings, opening below the controls */
+.lb-settings {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 14px;
+  width: min(300px, calc(100vw - 24px));
+  padding: 14px 16px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: 16px;
+  background: var(--lb-panel);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.45);
+  color-scheme: dark;
+  font-size: 13px;
+  backdrop-filter: blur(12px);
+  animation: lb-enter 150ms ease-out;
+}
+
+.lb-settings-section {
+  display: grid;
+  gap: 8px;
+}
+
+.lb-settings-section + .lb-settings-section {
+  padding-top: 14px;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.lb-settings-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* The kinds for the big animation, two per line */
+.lb-settings-kinds {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.lb-settings-check.lb-settings-kind {
+  gap: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lb-settings-kind .lb-mark-card {
+  font-size: 13px;
+}
+
+.lb-settings-wide {
+  grid-column: 1 / -1;
+}
+
+/* The color themes, three per line. Each button carries its theme's variables */
+.lb-settings-themes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.lb-theme {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 6px 5px 5px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: rgb(255 255 255 / 0.72);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lb-theme:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+
+.lb-theme[aria-checked="true"] {
+  border-color: var(--lb-accent);
+  background: rgb(var(--lb-accent-rgb) / 0.12);
+  color: #fff;
+}
+
+/* A small board: the surface in the theme's hue, the light from above, the band in the accent. The
+   surface is computed here, the --lb-hero-* variables already carry the board's own theme */
+.lb-theme-swatch {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 34px;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 90% at 50% -20%, rgb(var(--lb-accent-rgb) / 0.35), transparent 70%),
+    linear-gradient(180deg, hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 21%), hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 11%));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+
+.lb-theme-swatch i {
+  position: absolute;
+  right: 0;
+  bottom: 7px;
+  left: 0;
+  height: 7px;
+  background: var(--lb-accent);
+}
+
+.lb-settings-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lb-settings-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--lb-accent);
+  cursor: pointer;
+}
+
+.lb-settings-seconds {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.lb-settings-seconds input,
+.lb-settings-step {
+  height: 34px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.lb-settings-seconds input {
+  width: 60px;
+  padding: 0 8px;
+  text-align: center;
+}
+
+.lb-settings-seconds input:focus {
+  border-color: var(--lb-accent);
+  outline: none;
+}
+
+.lb-settings-step {
+  width: 34px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lb-settings-step:hover:not(:disabled) {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.lb-settings-step:disabled {
+  cursor: default;
+}
+
+.lb-settings-off {
+  opacity: 0.45;
+}
+
+.lb-settings-hint {
+  color: rgb(255 255 255 / 0.55);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Scoreboard */
+
+.lb-hero {
+  position: relative;
+  flex: none;
+  height: clamp(170px, 27vh, 330px);
+  overflow: hidden;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  background:
+    radial-gradient(rgb(255 255 255 / 0.13) 1.3px, transparent 1.5px) 0 0 / 18px 18px,
+    linear-gradient(180deg, var(--lb-hero-top) 0%, var(--lb-hero-bottom) 100%);
+}
+
+/* Two floodlight beams, slowly swaying */
+.lb-hero::before {
+  position: absolute;
+  inset: -40% -15%;
+  background:
+    linear-gradient(115deg, transparent 36%, rgb(255 255 255 / 0.08) 45%, transparent 54%),
+    linear-gradient(65deg, transparent 40%, rgb(255 255 255 / 0.06) 48%, transparent 56%);
+  content: "";
+  pointer-events: none;
+  animation: lb-sway 16s ease-in-out infinite alternate;
+}
+
+.lb-hero::after {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgb(0 0 0 / 0.3));
+  content: "";
+  pointer-events: none;
+}
+
+.lb-scoreboard {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 3vw;
+  height: 100%;
+  padding: 0 5vw;
+}
+
+/* A soft light behind the score, breathing */
+.lb-scoreboard::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  width: min(80vh, 70vw);
+  aspect-ratio: 1.7;
+  background: radial-gradient(ellipse at center, rgb(var(--lb-accent-rgb) / 0.3), rgb(var(--lb-accent-rgb) / 0.08) 45%, transparent 70%);
+  content: "";
+  transform: translate(-50%, -50%);
+  animation: lb-breathe 6s ease-in-out infinite alternate;
+}
+
+.lb-scoreboard-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.lb-team {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+}
+
+.lb-team-logo {
+  width: clamp(80px, 19vh, 230px);
+  height: clamp(80px, 19vh, 230px);
+  filter: drop-shadow(0 8px 22px rgb(0 0 0 / 0.4)) drop-shadow(0 0 28px rgb(255 255 255 / 0.14));
+}
+
+.lb-team-logo > *,
+.lb-parallel-logo > *,
+.lb-flash-club > *,
+.lb-cutout-fallback > * {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.lb-score-center {
+  display: grid;
+  justify-items: center;
+  gap: 1.6vh;
+}
+
+.lb-score {
+  display: flex;
+  align-items: center;
+  font-size: clamp(64px, 14vh, 190px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 0.82;
+  text-shadow:
+    0 0 40px rgb(var(--lb-accent-rgb) / 0.35),
+    0 10px 30px rgb(0 0 0 / 0.45);
+}
+
+.lb-digit {
+  display: inline-block;
+  min-width: 0.62em;
+  text-align: center;
+  animation: lb-digit 650ms cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+.lb-score-separator {
+  padding: 0 0.12em;
+  font-size: 0.7em;
+  opacity: 0.4;
+  transform: translateY(-0.08em);
+}
+
+.lb-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.12em 0.8em;
+  clip-path: polygon(0.45em 0, 100% 0, calc(100% - 0.45em) 100%, 0 100%);
+  background: var(--lb-accent);
+  color: var(--lb-accent-ink);
+  font-size: clamp(20px, 3.8vh, 50px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  filter: drop-shadow(0 0 18px rgb(var(--lb-accent-rgb) / 0.45));
+}
+
+.lb-clock i,
+.lb-band-live i,
+.lb-row-onfield i {
+  border-radius: 50%;
+  background: currentColor;
+  animation: lb-blink 1.4s ease-in-out infinite;
+}
+
+.lb-clock i {
+  width: 0.3em;
+  height: 0.3em;
+}
+
+.lb-eyebrow {
+  color: var(--lb-accent);
+  font-size: clamp(12px, 2vh, 22px);
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.lb-eyebrow-dim {
+  color: rgb(255 255 255 / 0.55);
+  letter-spacing: 0.08em;
+}
+
+.lb-countdown {
+  font-size: clamp(44px, 10vh, 130px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.lb-final {
+  font-size: clamp(28px, 6vh, 80px);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
+.lb-final span {
+  display: block;
+  margin-top: 0.3em;
+  color: var(--lb-accent);
+  font-size: 0.5em;
+  font-weight: 800;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Other running matches and the band */
+
+/* A tile per match, sharing the width. The last row's tiles stretch to fill it */
+.lb-parallel {
+  /* Height of a tile, and the crests' size relative to it */
+  --ph: clamp(64px, 9.5vh, 116px);
+  --logo: 1.4;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  background: rgb(255 255 255 / 0.03);
+}
+
+/* Two rows of matches leave less room for the table */
+.lb-parallel[data-rows="2"] {
+  --ph: clamp(56px, 7.5vh, 92px);
+}
+
+.lb-parallel-match {
+  position: relative;
+  display: grid;
+  flex: 1 1 calc(100% / var(--cols, 1) - 8px);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* One row as high as the tile: the bigger crests overflow it instead of stretching it */
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  height: var(--ph);
+  padding: 0 calc(var(--ph) * 0.14);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 14px;
+  background:
+    radial-gradient(ellipse 60% 90% at 50% 115%, rgb(var(--lb-accent-rgb) / 0.2), transparent 70%),
+    linear-gradient(180deg, var(--lb-tile-top) 0%, var(--lb-tile-bottom) 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  color: #fff;
+  cursor: pointer;
+  transition: border-color 200ms ease;
+}
+
+.lb-parallel-match:hover,
+.lb-parallel-match:focus-visible {
+  border-color: rgb(255 255 255 / 0.4);
+  outline: none;
+}
+
+/* The crests big at both ends, centered in the tile. Kickbase's images have a wide transparent margin:
+   the box is bigger than the tile so the crest itself nearly fills its height, and the negative margins
+   pull that margin past the tile's edge */
+.lb-parallel-logo {
+  width: calc(var(--ph) * var(--logo));
+  height: calc(var(--ph) * var(--logo));
+  margin-left: calc(var(--ph) * -0.22);
+  filter: drop-shadow(0 4px 12px rgb(0 0 0 / 0.45));
+}
+
+.lb-parallel-logo-away {
+  justify-self: end;
+  margin-right: calc(var(--ph) * -0.22);
+  margin-left: 0;
+}
+
+.lb-parallel-center {
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--ph) * 0.04);
+  padding: 0 calc(var(--ph) * 0.12);
+}
+
+.lb-parallel-score {
+  display: flex;
+  align-items: center;
+  font-size: calc(var(--ph) * 0.52);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 0.9;
+  text-shadow: 0 4px 16px rgb(0 0 0 / 0.45);
+}
+
+.lb-parallel-separator {
+  padding: 0 0.06em;
+  font-size: 0.8em;
+  opacity: 0.45;
+}
+
+.lb-parallel-clock {
+  color: var(--lb-accent);
+  font-size: calc(var(--ph) * 0.2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.lb-band {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  flex: none;
+  overflow: hidden;
+  box-shadow: 0 0 34px rgb(var(--lb-accent-rgb) / 0.4);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  height: clamp(28px, 4.2vh, 46px);
+  padding: 0 2vw;
+  background: var(--lb-accent);
+  color: var(--lb-accent-ink);
+  font-size: clamp(12px, 2vh, 22px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.lb-band-side {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-band-right {
+  text-align: right;
+}
+
+.lb-band-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1.1em;
+  letter-spacing: 0.28em;
+}
+
+.lb-band-live i {
+  width: 0.55em;
+  height: 0.55em;
+  background: var(--lb-live);
+  box-shadow: 0 0 0 0.18em color-mix(in srgb, var(--lb-live) 25%, transparent);
+}
+
+/* ------------------------------------------------------------------------- */
+/* Managers */
+
+.lb-list {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.lb-list::-webkit-scrollbar {
+  display: none;
+}
+
+.lb-row {
+  --chip-h: calc(var(--row-h) - 2 * var(--lb-pad));
+  --lb-row-bg: linear-gradient(90deg, var(--lb-row-1) 0%, var(--lb-row-2) 45%, var(--lb-row-3) 100%);
+  position: relative;
+  display: grid;
+  flex: none;
+  grid-template-columns: calc(var(--row-h) * 0.62) var(--row-h) clamp(170px, 16vw, 300px) minmax(0, 1fr);
+  height: var(--row-h);
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--lb-row-bg);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 4px 14px rgb(0 0 0 / 0.18);
+  transition: box-shadow 500ms ease;
+}
+
+.lb-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The row lights up while its points come in, and fades back afterwards */
+.lb-row::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(90deg, rgb(var(--lb-up-rgb) / 0.42) 0%, rgb(var(--lb-up-rgb) / 0.12) 55%, transparent 85%);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms ease;
+}
+
+.lb-row-tone-down::before {
+  background: linear-gradient(90deg, rgb(244 63 94 / 0.4) 0%, rgb(244 63 94 / 0.1) 55%, transparent 85%);
+}
+
+.lb-row-lit::before {
+  opacity: 1;
+  transition-duration: 450ms;
+}
+
+/* A gleam running over the row once, when it lights up while its points come in */
+.lb-row::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.14) 50%, transparent 65%);
+  content: "";
+  pointer-events: none;
+  transform: translateX(-110%);
+}
+
+.lb-row-lit::after {
+  animation: lb-shine 1.4s ease-out 150ms both;
+}
+
+/* A warm light on the leader, a green one on your own row */
+.lb-rank-1 {
+  background: linear-gradient(90deg, rgb(251 191 36 / 0.2) 0%, rgb(251 191 36 / 0.06) 40%, transparent 70%), var(--lb-row-bg);
+}
+
+.lb-row-self {
+  background: linear-gradient(90deg, rgb(var(--lb-accent-rgb) / 0.22) 0%, rgb(var(--lb-accent-rgb) / 0.06) 40%, transparent 70%), var(--lb-row-bg);
+}
+
+/* Climbing the table, glowing and on top of the rows it passes */
+.lb-row[data-rising] {
+  z-index: 3;
+  box-shadow:
+    0 18px 44px rgb(0 0 0 / 0.45),
+    0 0 0 2px var(--lb-accent),
+    0 0 30px rgb(var(--lb-accent-rgb) / 0.45);
+}
+
+.lb-row-rank {
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 0.06);
+  color: rgb(255 255 255 / 0.92);
+  font-size: calc(var(--row-h) * 0.4);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+/* Gold, silver and bronze for the first three */
+.lb-rank-1 .lb-row-rank {
+  background: linear-gradient(160deg, #fde68a, #f59e0b);
+  color: #3b2300;
+}
+
+.lb-rank-2 .lb-row-rank {
+  background: linear-gradient(160deg, #f8fafc, #94a3b8);
+  color: #1e293b;
+}
+
+.lb-rank-3 .lb-row-rank {
+  background: linear-gradient(160deg, #fed7aa, #c2410c);
+  color: #3b1405;
+}
+
+.lb-row-photo {
+  overflow: hidden;
+  background: var(--lb-row-photo);
+}
+
+.lb-row-photo img,
+.lb-flash-manager img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lb-initials {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, hsl(var(--hue, 210) 38% 46%), hsl(var(--hue, 210) 42% 30%));
+  color: #fff;
+  font-size: calc(var(--row-h, 64px) * 0.32);
+  font-weight: 800;
+}
+
+.lb-row-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--row-h) * 0.03);
+  min-width: 0;
+  padding: 0 calc(var(--row-h) * 0.18);
+}
+
+.lb-row-name {
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.92);
+  font-size: clamp(13px, calc(var(--row-h) * 0.17), 24px);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-row-you {
+  margin-left: 0.5em;
+  padding: 0.1em 0.45em;
+  border-radius: 0.35em;
+  background: var(--lb-accent);
+  color: var(--lb-accent-ink);
+  font-size: 0.72em;
+  font-style: normal;
+  font-weight: 800;
+  vertical-align: 0.12em;
+}
+
+.lb-row-total {
+  font-size: calc(var(--row-h) * 0.4);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.lb-row-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgb(255 255 255 / 0.62);
+  font-size: clamp(10px, calc(var(--row-h) * 0.12), 16px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lb-row-onfield {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--lb-accent);
+}
+
+.lb-row-onfield i {
+  width: 6px;
+  height: 6px;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Players */
+
+.lb-track {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: calc(var(--row-h) * 0.07);
+  min-width: 0;
+  padding: var(--lb-pad);
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
+
+.lb-track-empty {
+  align-self: center;
+  padding-left: 12px;
+  color: rgb(255 255 255 / 0.4);
+  font-size: 14px;
+}
+
+.lb-chip {
+  position: relative;
+  display: flex;
+  flex: none;
+  height: var(--chip-h);
+  overflow: hidden;
+  border-radius: calc(var(--chip-h) * 0.1);
+  background: var(--lb-chip);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+  cursor: pointer;
+  transition: box-shadow 500ms ease;
+}
+
+/* A tap opens the player's events */
+.lb-chip:hover,
+.lb-chip:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.55);
+  outline-offset: -2px;
+}
+
+/* The player's points in Kickbase's colors */
+.lb-chip::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  height: 3px;
+  background: var(--grade);
+  content: "";
+}
+
+.lb-chip-wide {
+  flex: 0 1 auto;
+  width: calc(var(--chip-h) * 2.7);
+  min-width: calc(var(--chip-h) * 1.6);
+  background: linear-gradient(105deg, var(--lb-chip-wide-1) 0%, var(--lb-chip-wide-2) 55%, var(--lb-chip-wide-3) 100%);
+  box-shadow:
+    inset 0 0 0 2px rgb(var(--lb-accent-rgb) / 0.85),
+    0 0 18px rgb(var(--lb-accent-rgb) / 0.25);
+}
+
+.lb-chip-compact {
+  flex-direction: column;
+  width: calc(var(--chip-h) * 0.86);
+}
+
+.lb-chip-upcoming {
+  opacity: 0.6;
+}
+
+.lb-chip-photo {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, var(--lb-photo-1), var(--lb-photo-2) 72%);
+}
+
+.lb-chip-wide .lb-chip-photo {
+  width: calc(var(--chip-h) * 0.9);
+  height: 100%;
+}
+
+.lb-chip-compact .lb-chip-photo {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+/* Kickbase's cut-outs have the head in the upper middle: scaled up and shifted, head and shoulders fill the box */
+.lb-chip-img {
+  position: absolute;
+  top: -13%;
+  left: 50%;
+  max-width: none;
+  height: 165%;
+  transform: translateX(-50%);
+}
+
+.lb-cutout-fallback {
+  position: absolute;
+  inset: 20%;
+  display: grid;
+  place-items: center;
+}
+
+.lb-chip-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 calc(var(--chip-h) * 0.14) 0 calc(var(--chip-h) * 0.1);
+}
+
+.lb-chip-name {
+  overflow: hidden;
+  font-size: clamp(11px, calc(var(--chip-h) * 0.17), 20px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lb-chip-points {
+  font-size: calc(var(--chip-h) * 0.36);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.lb-chip-marks {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: calc(var(--chip-h) * 0.14);
+  line-height: 1;
+}
+
+.lb-mark-card {
+  display: inline-block;
+  width: 0.62em;
+  height: 0.9em;
+  border-radius: 2px;
+}
+
+.lb-mark-assist {
+  color: var(--lb-accent);
+  font-weight: 900;
+}
+
+.lb-mark-own {
+  color: var(--lb-down);
+  font-weight: 900;
+}
+
+.lb-chip-foot {
+  display: grid;
+  flex: none;
+  place-items: center;
+  height: calc(var(--chip-h) * 0.3);
+  background: rgb(0 0 0 / 0.25);
+}
+
+.lb-chip-foot .lb-chip-points {
+  font-size: calc(var(--chip-h) * 0.2);
+}
+
+.lb-chip-kickoff {
+  color: rgb(255 255 255 / 0.75);
+  font-size: max(9px, calc(var(--chip-h) * 0.17));
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* A small moment: the tile lights up and the points sit on the photo for a moment */
+.lb-chip-hit-up {
+  box-shadow:
+    inset 0 0 0 3px var(--lb-up),
+    0 0 22px rgb(var(--lb-up-rgb) / 0.55);
+}
+
+.lb-chip-hit-down {
+  box-shadow:
+    inset 0 0 0 3px var(--lb-down),
+    0 0 22px rgb(251 113 133 / 0.5);
+}
+
+.lb-chip-badge {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: calc(var(--chip-h) * 0.34);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  text-shadow: 0 2px 10px rgb(0 0 0 / 0.4);
+  animation: lb-badge 2400ms cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+.lb-chip-hit-up .lb-chip-badge {
+  background: radial-gradient(circle at 50% 40%, rgb(16 185 129 / 0.95), rgb(4 120 87 / 0.95));
+}
+
+.lb-chip-hit-down .lb-chip-badge {
+  background: radial-gradient(circle at 50% 40%, rgb(244 63 94 / 0.95), rgb(159 18 57 / 0.95));
+}
+
+/* Counting numbers pulse in the direction they go */
+.lb-count {
+  display: inline-block;
+  transform-origin: left center;
+  transition: color 500ms ease;
+}
+
+.lb-chip-foot .lb-count {
+  transform-origin: center;
+}
+
+.lb-count[data-trend="up"] {
+  color: var(--lb-up);
+  animation: lb-count 1100ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.lb-count[data-trend="down"] {
+  color: var(--lb-down);
+  animation: lb-count 1100ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* ------------------------------------------------------------------------- */
+/* The flash over the scoreboard */
+
+.lb-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  clip-path: inset(0 100% 0 0);
+  color: #fff;
+  animation: lb-wipe-in 600ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+.lb-flash-positive {
+  background: linear-gradient(112deg, #065f46 0%, #059669 45%, #10b981 70%, #047857 100%);
+}
+
+.lb-flash-negative {
+  background: linear-gradient(112deg, #7f1d1d 0%, #be123c 45%, #e11d48 70%, #881337 100%);
+}
+
+.lb-flash-leaving {
+  clip-path: inset(0 0 0 0);
+  animation: lb-wipe-out 600ms cubic-bezier(0.6, 0, 0.35, 1) forwards;
+}
+
+.lb-flash-stripes {
+  position: absolute;
+  inset: -50% -20%;
+  background: repeating-linear-gradient(-62deg, rgb(255 255 255 / 0.07) 0 6vh, transparent 6vh 12vh);
+  animation: lb-stripes 6s linear infinite;
+}
+
+.lb-flash-negative .lb-flash-stripes {
+  animation-direction: reverse;
+}
+
+.lb-flash-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lb-flash-burst span {
+  position: absolute;
+  bottom: -12%;
+  left: var(--x);
+  color: rgb(255 255 255 / 0.55);
+  font-size: var(--s);
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0;
+  animation: lb-rise 4.8s cubic-bezier(0.12, 0.7, 0.3, 1) var(--d) both;
+}
+
+.lb-flash-negative .lb-flash-burst span {
+  top: -12%;
+  bottom: auto;
+  animation-name: lb-fall;
+}
+
+.lb-flash-content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr) auto;
+  align-items: center;
+  gap: 2.5vw;
+  height: 100%;
+  padding: 0 4vw 0 2vw;
+}
+
+.lb-flash-portrait {
+  position: relative;
+  align-self: stretch;
+}
+
+.lb-flash-club {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 85%;
+  aspect-ratio: 1;
+  opacity: 0.22;
+  transform: translateY(-50%);
+}
+
+.lb-flash-player {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  max-width: none;
+  height: 140%;
+  filter: drop-shadow(0 12px 30px rgb(0 0 0 / 0.45));
+  transform: translateX(-50%);
+  animation: lb-player-in 700ms cubic-bezier(0.2, 0.9, 0.3, 1) 150ms both;
+}
+
+.lb-flash-managers {
+  position: absolute;
+  bottom: 8%;
+  left: 4%;
+  z-index: 2;
+  display: flex;
+}
+
+.lb-flash-manager {
+  display: grid;
+  place-items: center;
+  width: clamp(40px, 7vh, 88px);
+  height: clamp(40px, 7vh, 88px);
+  margin-right: -12px;
+  overflow: hidden;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #111;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+  font-size: clamp(14px, 2.4vh, 26px);
+  font-weight: 800;
+  animation: lb-pop 500ms cubic-bezier(0.2, 1.4, 0.4, 1) 400ms both;
+}
+
+.lb-flash-manager:nth-child(2) { animation-delay: 480ms; }
+.lb-flash-manager:nth-child(3) { animation-delay: 560ms; }
+.lb-flash-manager:nth-child(4) { animation-delay: 640ms; }
+.lb-flash-manager:nth-child(5) { animation-delay: 720ms; }
+.lb-flash-manager:nth-child(6) { animation-delay: 800ms; }
+
+.lb-flash-manager .lb-initials {
+  font-size: inherit;
+}
+
+.lb-flash-text {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.lb-flash-name,
+.lb-flash-action {
+  grid-area: 1 / 1;
+  max-width: 100%;
+  font-weight: 900;
+  line-height: 0.92;
+  overflow-wrap: break-word;
+  text-shadow: 0 6px 30px rgb(0 0 0 / 0.25);
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.lb-flash-name {
+  font-size: clamp(30px, 8.5vh, 120px);
+  animation: lb-name 2.3s cubic-bezier(0.16, 0.84, 0.22, 1) 150ms both;
+}
+
+.lb-flash-action {
+  font-size: clamp(34px, 10vh, 140px);
+  opacity: 0;
+  animation: lb-action 800ms cubic-bezier(0.16, 0.84, 0.22, 1) 2.4s both;
+}
+
+.lb-flash-goal .lb-flash-action {
+  font-size: clamp(48px, 15vh, 210px);
+  animation: lb-goal 1.6s cubic-bezier(0.16, 0.84, 0.22, 1) 2.4s both;
+}
+
+.lb-flash-badges {
+  display: grid;
+}
+
+.lb-flash-circle {
+  display: grid;
+  grid-area: 1 / 1;
+  place-content: center;
+  justify-items: center;
+  gap: 0.4vh;
+  width: clamp(96px, 17vh, 210px);
+  aspect-ratio: 1;
+  border: clamp(3px, 0.45vh, 6px) solid #fff;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.14);
+}
+
+.lb-flash-circle strong {
+  font-size: clamp(28px, 6.2vh, 80px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 0.9;
+}
+
+.lb-flash-circle span {
+  font-size: clamp(10px, 1.6vh, 20px);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lb-flash-minute {
+  animation: lb-minute 2.3s cubic-bezier(0.16, 0.84, 0.22, 1) 200ms both;
+}
+
+.lb-flash-points {
+  opacity: 0;
+  animation: lb-pop 600ms cubic-bezier(0.2, 1.5, 0.4, 1) 2.5s both;
+}
+
+/* The points on their way from the flash into the player's tile: sideways eased out, downwards eased
+   in after a little lift, together an arc */
+.lb-flight {
+  position: fixed;
+  top: var(--y);
+  left: var(--x);
+  z-index: 80;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation:
+    lb-fly-x 950ms cubic-bezier(0.3, 0.6, 0.35, 1) forwards,
+    lb-fly-fade 950ms linear forwards;
+}
+
+.lb-flight-y {
+  display: block;
+  will-change: transform;
+  animation: lb-fly-y 950ms cubic-bezier(0.5, -0.45, 0.75, 1) forwards;
+}
+
+.lb-flight-text {
+  display: block;
+  color: #fff;
+  font-size: clamp(28px, 6vh, 80px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  text-shadow:
+    0 0 18px rgb(var(--lb-up-rgb) / 0.9),
+    0 6px 18px rgb(0 0 0 / 0.45);
+  transform: translate(-50%, -50%);
+  animation: lb-fly-scale 950ms ease-in forwards;
+}
+
+.lb-flight-negative .lb-flight-text {
+  text-shadow:
+    0 0 18px rgb(244 63 94 / 0.9),
+    0 6px 18px rgb(0 0 0 / 0.45);
+}
+
+/* ------------------------------------------------------------------------- */
+/* A player's events, over the board */
+
+.lb-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--lb-backdrop);
+  backdrop-filter: blur(4px);
+  animation: lb-enter 200ms ease-out;
+}
+
+.lb-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(580px, 100%);
+  max-height: min(780px, 100%);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 20px;
+  background: linear-gradient(180deg, var(--lb-hero-top) 0%, var(--lb-hero-bottom) 100%);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.55);
+  animation: lb-sheet-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.lb-sheet-head {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+}
+
+.lb-sheet-photo {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 30%, var(--lb-photo-1), var(--lb-photo-2) 72%);
+}
+
+.lb-sheet-who {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lb-sheet-name {
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.lb-sheet-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.62);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lb-sheet-clip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lb-sheet-onfield {
+  color: var(--lb-accent);
+}
+
+.lb-sheet-onfield i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: lb-blink 1.4s ease-in-out infinite;
+}
+
+.lb-sheet-points {
+  display: grid;
+  justify-items: end;
+}
+
+.lb-sheet-points strong {
+  font-size: 36px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.lb-sheet-points span {
+  color: rgb(255 255 255 / 0.55);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lb-sheet-close {
+  align-self: start;
+}
+
+.lb-sheet-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 16px 8px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.25);
+}
+
+.lb-sheet-tabs button {
+  flex: 1;
+  height: 34px;
+  border-radius: 999px;
+  color: rgb(255 255 255 / 0.7);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lb-sheet-tabs button[aria-selected="true"] {
+  background: var(--lb-accent);
+  color: var(--lb-accent-ink);
+}
+
+.lb-sheet-list {
+  flex: 1;
+  min-height: 0;
+  padding: 0 10px 10px;
+  overflow-y: auto;
+}
+
+.lb-event {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  font-size: 14px;
+}
+
+.lb-event:last-child {
+  border-bottom: none;
+}
+
+/* Goals, assists and cards stand out */
+.lb-event-marked {
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.07);
+  font-weight: 800;
+}
+
+.lb-event-lead {
+  color: rgb(255 255 255 / 0.55);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  text-align: right;
+}
+
+.lb-event-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lb-event-text {
+  display: grid;
+  min-width: 0;
+}
+
+.lb-event-text small {
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.5);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-event-points {
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+.lb-event-up {
+  color: var(--lb-up);
+}
+
+.lb-event-down {
+  color: var(--lb-down);
+}
+
+.lb-sheet-empty {
+  padding: 32px 16px;
+  color: rgb(255 255 255 / 0.55);
+  font-size: 14px;
+  text-align: center;
+}
+
+.lb-sheet-foot {
+  padding: 12px 18px 14px;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  color: rgb(255 255 255 / 0.6);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Phones: the players get a line of their own below the manager */
+
+@media (max-width: 720px) {
+  .lb-hero {
+    height: clamp(150px, 21vh, 190px);
+  }
+
+  /* Room for the controls at the top */
+  .lb-scoreboard {
+    gap: 3vw;
+    padding: 40px 3vw 0;
+  }
+
+  .lb-team-logo {
+    width: 68px;
+    height: 68px;
+  }
+
+  .lb-score-center {
+    gap: 8px;
+  }
+
+  .lb-score {
+    font-size: 46px;
+  }
+
+  .lb-clock {
+    font-size: 15px;
+  }
+
+  .lb-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+  }
+
+  .lb-countdown {
+    font-size: 30px;
+  }
+
+  .lb-final {
+    font-size: 22px;
+  }
+
+  /* Two matches per row, an odd last one takes the whole row */
+  .lb-parallel,
+  .lb-parallel[data-rows="2"] {
+    --ph: 48px;
+    --logo: 1.3;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .lb-parallel-match {
+    flex-basis: calc(50% - 3px);
+    border-radius: 12px;
+  }
+
+  .lb-band {
+    gap: 10px;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  .lb-band-live {
+    letter-spacing: 0.2em;
+  }
+
+  .lb-list {
+    --row-h: 54px !important;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .lb-row {
+    --chip-h: 46px;
+    grid-template-columns: 34px 54px minmax(0, 1fr);
+    grid-template-rows: 54px auto;
+    height: auto;
+    border-radius: 10px;
+  }
+
+  /* Name, points and status tight enough for the manager's line */
+  .lb-row-info {
+    gap: 1px;
+    padding: 0 10px;
+  }
+
+  .lb-row-name {
+    font-size: 13px;
+    line-height: 1.15;
+  }
+
+  .lb-row-total {
+    font-size: 20px;
+  }
+
+  .lb-row-status {
+    gap: 6px;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .lb-track {
+    grid-column: 1 / -1;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  /* The players scroll sideways instead of squeezing */
+  .lb-chip-wide {
+    flex-shrink: 0;
+    width: calc(var(--chip-h) * 2.4);
+  }
+
+  .lb-chip-name {
+    font-size: 10px;
+  }
+
+  .lb-chip-marks {
+    font-size: 9px;
+  }
+
+  .lb-chip-kickoff {
+    font-size: 9px;
+  }
+
+  .lb-flight-text {
+    font-size: 30px;
+  }
+
+  .lb-flash-content {
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.6fr);
+    gap: 2vw;
+    padding: 0 76px 0 0;
+  }
+
+  .lb-flash-name {
+    font-size: 7vw;
+  }
+
+  .lb-flash-action {
+    font-size: 8.5vw;
+  }
+
+  .lb-flash-goal .lb-flash-action {
+    font-size: 12vw;
+  }
+
+  .lb-flash-badges {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+
+  .lb-flash-circle {
+    width: 62px;
+    border-width: 3px;
+  }
+
+  .lb-flash-circle strong {
+    font-size: 19px;
+  }
+
+  .lb-flash-circle span {
+    font-size: 8px;
+  }
+
+  .lb-flash-managers {
+    bottom: 10%;
+  }
+
+  .lb-flash-manager {
+    width: 32px;
+    height: 32px;
+    margin-right: -8px;
+    border-width: 2px;
+    font-size: 11px;
+  }
+
+  .lb-toolbar-stand {
+    display: none;
+  }
+
+  /* The events come up from the bottom */
+  .lb-sheet-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .lb-sheet {
+    width: 100%;
+    max-height: 88%;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .lb-sheet-head {
+    grid-template-columns: 56px minmax(0, 1fr) auto auto;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .lb-sheet-photo {
+    width: 56px;
+    height: 56px;
+  }
+
+  .lb-sheet-name {
+    font-size: 16px;
+  }
+
+  .lb-sheet-points strong {
+    font-size: 26px;
+  }
+
+  .lb-sheet-tabs {
+    margin: 0 12px 6px;
+  }
+
+  .lb-event {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 8px;
+    font-size: 13px;
+  }
+}
+
+/* ------------------------------------------------------------------------- */
+/* Phones on their side: little height, so the scoreboard shrinks and the table stays in sight */
+
+@media (max-height: 500px) {
+  .lb-hero {
+    height: 128px;
+  }
+
+  .lb-scoreboard {
+    gap: 2vw;
+    padding: 0 3vw;
+  }
+
+  .lb-team-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .lb-score-center {
+    gap: 6px;
+  }
+
+  .lb-score {
+    font-size: 46px;
+  }
+
+  .lb-clock {
+    font-size: 14px;
+  }
+
+  .lb-eyebrow {
+    font-size: 10px;
+  }
+
+  .lb-countdown {
+    font-size: 30px;
+  }
+
+  .lb-final {
+    font-size: 22px;
+  }
+
+  .lb-parallel,
+  .lb-parallel[data-rows="2"] {
+    --ph: 44px;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .lb-band {
+    height: 24px;
+    font-size: 11px;
+  }
+
+  /* A narrower name column, and the players scroll sideways instead of squeezing */
+  .lb-row {
+    grid-template-columns: calc(var(--row-h) * 0.62) var(--row-h) clamp(120px, 18vw, 200px) minmax(0, 1fr);
+  }
+
+  .lb-track {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .lb-chip-wide {
+    flex-shrink: 0;
+  }
+
+  .lb-flash-name {
+    font-size: 28px;
+  }
+
+  .lb-flash-action {
+    font-size: 32px;
+  }
+
+  .lb-flash-goal .lb-flash-action {
+    font-size: 44px;
+  }
+
+  .lb-flash-circle {
+    width: 70px;
+    border-width: 3px;
+  }
+
+  .lb-flash-circle strong {
+    font-size: 20px;
+  }
+
+  .lb-flash-circle span {
+    font-size: 8px;
+  }
+
+  .lb-flash-manager {
+    width: 32px;
+    height: 32px;
+    margin-right: -8px;
+    border-width: 2px;
+    font-size: 11px;
+  }
+
+  .lb-flight-text {
+    font-size: 30px;
+  }
+
+  .lb-toolbar-stand {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------------- */
+
+@keyframes lb-enter {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lb-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+@keyframes lb-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes lb-digit {
+  from {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes lb-count {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes lb-badge {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  16% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  28% {
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes lb-sway {
+  from {
+    transform: translateX(-6%) rotate(-2deg);
+  }
+  to {
+    transform: translateX(6%) rotate(2deg);
+  }
+}
+
+@keyframes lb-breathe {
+  from {
+    opacity: 0.65;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes lb-shine {
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes lb-wipe-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes lb-wipe-out {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+/* One stripe period along the x axis: 12vh / sin(62deg) */
+@keyframes lb-stripes {
+  to {
+    transform: translateX(13.59vh);
+  }
+}
+
+@keyframes lb-rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(var(--r)) scale(0.3);
+  }
+  8% {
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift), calc(var(--h) * -1)) rotate(calc(var(--r) + 50deg)) scale(1.05);
+  }
+}
+
+@keyframes lb-fall {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(var(--r)) scale(0.3);
+  }
+  8% {
+    opacity: 0.95;
+  }
+  70% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--drift), var(--h)) rotate(calc(var(--r) - 50deg)) scale(1.05);
+  }
+}
+
+@keyframes lb-player-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10%);
+  }
+}
+
+@keyframes lb-name {
+  0% {
+    opacity: 0;
+    transform: translateY(30%);
+  }
+  14%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30%);
+  }
+}
+
+@keyframes lb-action {
+  0% {
+    filter: blur(8px);
+    opacity: 0;
+    transform: scale(1.5);
+  }
+  100% {
+    filter: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lb-goal {
+  0% {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(0.94);
+  }
+  30% {
+    transform: scale(1.12);
+  }
+  44% {
+    transform: scale(1);
+  }
+  58% {
+    transform: scale(1.08);
+  }
+  72%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lb-minute {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  14%,
+  85% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes lb-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes lb-fly-x {
+  to {
+    transform: translateX(var(--dx));
+  }
+}
+
+@keyframes lb-fly-y {
+  to {
+    transform: translateY(var(--dy));
+  }
+}
+
+@keyframes lb-fly-scale {
+  from {
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  to {
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+}
+
+@keyframes lb-fly-fade {
+  0%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

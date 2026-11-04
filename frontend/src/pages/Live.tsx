@@ -1,5 +1,6 @@
-import { AlertTriangle, ChevronDown, RefreshCw, X } from "lucide-react"
-import { type ReactNode, useEffect, useMemo, useState } from "react"
+import { AlertTriangle, ChevronDown, MonitorPlay, RefreshCw, X } from "lucide-react"
+import { lazy, type ReactNode, Suspense, useCallback, useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "react-router"
 import { useLive, useLivePlayer, usePlayers, useRefreshLive, useTeamMap } from "@/api/hooks"
 import type { Live as LiveData, LiveManager, LivePlayer, Player } from "@/api/types"
 import { Avatar, PlayerAvatar, PlayerCell, PositionBadge, TeamLogo } from "@/components/kickbase"
@@ -11,6 +12,9 @@ import { number, relativeTime, signedNumber, time } from "@/lib/format"
 import { useNow, useStoredState } from "@/lib/hooks"
 import { playerName, position } from "@/lib/kickbase"
 
+// Only loaded when opened, it brings its own stylesheet
+const LiveBoard = lazy(() => import("@/components/LiveBoard"))
+
 export default function Live() {
   const [autoRefresh, setAutoRefresh] = useStoredState("kbi-live-refresh", true)
   const query = useLive(autoRefresh)
@@ -18,6 +22,13 @@ export default function Live() {
   const now = useNow(15_000)
   const [notice, setNotice] = useState<string | null>(null)
   const [searched, setSearched] = useState<string | null>(null)
+  const [params, setParams] = useSearchParams()
+
+  // Indicator whether the live board is open in the address bar
+  const boardOpen = params.has("board")
+  // Opens in the window, the board's own button switches to fullscreen
+  const openBoard = () => setParams({ board: "" })
+  const closeBoard = useCallback(() => setParams({}, { replace: true }), [setParams])
 
   // The notice about unchanged data goes away by itself
   useEffect(() => {
@@ -71,9 +82,18 @@ export default function Live() {
               {!query.isFetching && !refreshLive.isPending && <RefreshCw className="size-4" />}
               <span className="hidden sm:inline">Aktualisieren</span>
             </Button>
+            <Button variant="primary" onClick={openBoard} aria-label="Animated Fullscreen" title="Die Live-Punkte animiert im Vollbild, z. B. für den Fernseher">
+              <MonitorPlay className="size-4" />
+              <span className="hidden sm:inline">Animated Fullscreen</span>
+            </Button>
           </div>
         }
       />
+      {boardOpen && (
+        <Suspense fallback={null}>
+          <LiveBoard onClose={closeBoard} />
+        </Suspense>
+      )}
       {notice && (
         <p
           role="status"
