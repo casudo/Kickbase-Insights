@@ -184,7 +184,9 @@ export type OverpayStats = {
   purchases: number
   /** Paid on top of the market value */
   median: number
+  average: number
   total: number
+  averageAmount: number // per purchase
   highest: number
 }
 

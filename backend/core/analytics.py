@@ -7,7 +7,7 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
-from statistics import median
+from statistics import mean, median
 from typing import Literal
 from zoneinfo import ZoneInfo
 
@@ -337,7 +337,9 @@ class Purchase:
 class OverpayStats:
     purchases: int
     median: float
+    average: float
     total: int
+    average_amount: int # per purchase
     highest: float
 
 
@@ -365,7 +367,15 @@ def kickbase_purchases(
 def overpay_stats(purchases: Sequence[Purchase]) -> OverpayStats:
     """Summarizes at least one purchase."""
     shares = [p.overpay_share for p in purchases]
-    return OverpayStats(len(shares), median(shares), sum(p.overpay for p in purchases), max(shares))
+    total = sum(p.overpay for p in purchases)
+    return OverpayStats(
+        purchases=len(shares),
+        median=median(shares),
+        average=mean(shares),
+        total=total,
+        average_amount=round(total / len(shares)),
+        highest=max(shares),
+    )
 
 
 def bid_advice(purchases: Sequence[Purchase], market_value: int) -> BidAdvice | None:

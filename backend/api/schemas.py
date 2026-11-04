@@ -213,7 +213,9 @@ class TurnoverOut(Schema):
 class OverpayStatsOut(Schema):
     purchases: int
     median: float # Paid on top of the market value
+    average: float
     total: int
+    average_amount: int # per purchase
     highest: float
 
 
