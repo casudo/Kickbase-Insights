@@ -5,10 +5,40 @@
  */
 
 .lb-root {
+  /* The theme, set by the board from its settings. These are the defaults ("Grün"):
+     the accent and the text on it, a second glow, the live dot, and hue and saturation of all surfaces */
   --lb-accent: #34d399;
+  --lb-accent-rgb: 52 211 153;
   --lb-accent-ink: #03241a;
+  --lb-glow-rgb: 56 189 248;
+  --lb-live: #e11d48;
+  --lb-hue: 212;
+  --lb-sat: 1;
+  /* Gains and losses keep their colors in every theme */
   --lb-up: #34d399;
+  --lb-up-rgb: 52 211 153;
   --lb-down: #fb7185;
+  /* The surfaces, from dark to light, all in the theme's hue */
+  --lb-bg-top: hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 15%);
+  --lb-bg-bottom: hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 11%);
+  --lb-hero-top: hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 19%);
+  --lb-hero-bottom: hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 14%);
+  --lb-row-1: hsl(var(--lb-hue) calc(var(--lb-sat) * 24%) 22%);
+  --lb-row-2: hsl(var(--lb-hue) calc(var(--lb-sat) * 25%) 18%);
+  --lb-row-3: hsl(var(--lb-hue) calc(var(--lb-sat) * 24%) 15%);
+  --lb-row-photo: hsl(var(--lb-hue) calc(var(--lb-sat) * 22%) 22%);
+  --lb-chip: hsl(var(--lb-hue) calc(var(--lb-sat) * 21%) 24%);
+  --lb-chip-wide-1: hsl(var(--lb-hue) calc(var(--lb-sat) * 17%) 35%);
+  --lb-chip-wide-2: hsl(var(--lb-hue) calc(var(--lb-sat) * 19%) 27%);
+  --lb-chip-wide-3: hsl(var(--lb-hue) calc(var(--lb-sat) * 21%) 23%);
+  --lb-photo-1: hsl(var(--lb-hue) calc(var(--lb-sat) * 16%) 43%);
+  --lb-photo-2: hsl(var(--lb-hue) calc(var(--lb-sat) * 20%) 26%);
+  --lb-tile-top: hsl(var(--lb-hue) calc(var(--lb-sat) * 25%) 22%);
+  --lb-tile-bottom: hsl(var(--lb-hue) calc(var(--lb-sat) * 27%) 17%);
+  --lb-control: hsl(var(--lb-hue) calc(var(--lb-sat) * 29%) 16% / 0.78);
+  --lb-control-hover: hsl(var(--lb-hue) calc(var(--lb-sat) * 25%) 27% / 0.92);
+  --lb-panel: hsl(var(--lb-hue) calc(var(--lb-sat) * 30%) 12% / 0.95);
+  --lb-backdrop: hsl(var(--lb-hue) calc(var(--lb-sat) * 38%) 5% / 0.6);
   --lb-pad: clamp(4px, 0.45vw, 8px);
   position: fixed;
   inset: 0;
@@ -17,13 +47,18 @@
   flex-direction: column;
   overflow: hidden;
   background:
-    radial-gradient(1400px 520px at 50% -8%, rgb(52 211 153 / 0.2), transparent 65%),
-    radial-gradient(900px 600px at 105% 105%, rgb(56 189 248 / 0.12), transparent 60%),
-    radial-gradient(700px 500px at -5% 100%, rgb(52 211 153 / 0.08), transparent 60%),
-    linear-gradient(180deg, #1a2531 0%, #141d26 100%);
+    radial-gradient(1400px 520px at 50% -8%, rgb(var(--lb-accent-rgb) / 0.2), transparent 65%),
+    radial-gradient(900px 600px at 105% 105%, rgb(var(--lb-glow-rgb) / 0.12), transparent 60%),
+    radial-gradient(700px 500px at -5% 100%, rgb(var(--lb-accent-rgb) / 0.08), transparent 60%),
+    linear-gradient(180deg, var(--lb-bg-top) 0%, var(--lb-bg-bottom) 100%);
   color: #f5f7fa;
   user-select: none;
   animation: lb-enter 400ms ease-out;
+}
+
+/* Keyboard focus in the theme's accent, not the app's */
+.lb-root :focus-visible {
+  outline-color: var(--lb-accent);
 }
 
 .lb-root.lb-calm {
@@ -77,7 +112,7 @@
   min-width: 38px;
   border: 1px solid rgb(255 255 255 / 0.2);
   border-radius: 999px;
-  background: rgb(30 41 54 / 0.78);
+  background: var(--lb-control);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -86,7 +121,7 @@
 }
 
 .lb-toolbar-button:hover {
-  background: rgb(51 65 85 / 0.92);
+  background: var(--lb-control-hover);
 }
 
 .lb-toolbar-wide {
@@ -111,7 +146,7 @@
   padding: 14px 16px;
   border: 1px solid rgb(255 255 255 / 0.16);
   border-radius: 16px;
-  background: rgb(22 31 41 / 0.95);
+  background: var(--lb-panel);
   box-shadow: 0 18px 44px rgb(0 0 0 / 0.45);
   color-scheme: dark;
   font-size: 13px;
@@ -153,6 +188,60 @@
 
 .lb-settings-wide {
   grid-column: 1 / -1;
+}
+
+/* The color themes, three per line. Each button carries its theme's variables */
+.lb-settings-themes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.lb-theme {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 6px 5px 5px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: rgb(255 255 255 / 0.72);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lb-theme:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+
+.lb-theme[aria-checked="true"] {
+  border-color: var(--lb-accent);
+  background: rgb(var(--lb-accent-rgb) / 0.12);
+  color: #fff;
+}
+
+/* A small board: the surface in the theme's hue, the light from above, the band in the accent. The
+   surface is computed here, the --lb-hero-* variables already carry the board's own theme */
+.lb-theme-swatch {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 34px;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 90% at 50% -20%, rgb(var(--lb-accent-rgb) / 0.35), transparent 70%),
+    linear-gradient(180deg, hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 21%), hsl(var(--lb-hue) calc(var(--lb-sat) * 31%) 11%));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+
+.lb-theme-swatch i {
+  position: absolute;
+  right: 0;
+  bottom: 7px;
+  left: 0;
+  height: 7px;
+  background: var(--lb-accent);
 }
 
 .lb-settings-check {
@@ -235,7 +324,7 @@
   border-bottom: 1px solid rgb(255 255 255 / 0.1);
   background:
     radial-gradient(rgb(255 255 255 / 0.13) 1.3px, transparent 1.5px) 0 0 / 18px 18px,
-    linear-gradient(180deg, #223140 0%, #18232e 100%);
+    linear-gradient(180deg, var(--lb-hero-top) 0%, var(--lb-hero-bottom) 100%);
 }
 
 /* Two floodlight beams, slowly swaying */
@@ -277,7 +366,7 @@
   z-index: -1;
   width: min(80vh, 70vw);
   aspect-ratio: 1.7;
-  background: radial-gradient(ellipse at center, rgb(52 211 153 / 0.3), rgb(52 211 153 / 0.08) 45%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgb(var(--lb-accent-rgb) / 0.3), rgb(var(--lb-accent-rgb) / 0.08) 45%, transparent 70%);
   content: "";
   transform: translate(-50%, -50%);
   animation: lb-breathe 6s ease-in-out infinite alternate;
@@ -322,7 +411,7 @@
   letter-spacing: -0.02em;
   line-height: 0.82;
   text-shadow:
-    0 0 40px rgb(52 211 153 / 0.35),
+    0 0 40px rgb(var(--lb-accent-rgb) / 0.35),
     0 10px 30px rgb(0 0 0 / 0.45);
 }
 
@@ -351,7 +440,7 @@
   font-size: clamp(20px, 3.8vh, 50px);
   font-variant-numeric: tabular-nums;
   font-weight: 900;
-  filter: drop-shadow(0 0 18px rgb(52 211 153 / 0.45));
+  filter: drop-shadow(0 0 18px rgb(var(--lb-accent-rgb) / 0.45));
 }
 
 .lb-clock i,
@@ -439,8 +528,8 @@
   border: 1px solid rgb(255 255 255 / 0.1);
   border-radius: 14px;
   background:
-    radial-gradient(ellipse 60% 90% at 50% 115%, rgb(52 211 153 / 0.2), transparent 70%),
-    linear-gradient(180deg, #2b3847 0%, #1f2a36 100%);
+    radial-gradient(ellipse 60% 90% at 50% 115%, rgb(var(--lb-accent-rgb) / 0.2), transparent 70%),
+    linear-gradient(180deg, var(--lb-tile-top) 0%, var(--lb-tile-bottom) 100%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
   color: #fff;
   cursor: pointer;
@@ -506,7 +595,7 @@
   display: grid;
   flex: none;
   overflow: hidden;
-  box-shadow: 0 0 34px rgb(52 211 153 / 0.4);
+  box-shadow: 0 0 34px rgb(var(--lb-accent-rgb) / 0.4);
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 16px;
@@ -541,8 +630,8 @@
 .lb-band-live i {
   width: 0.55em;
   height: 0.55em;
-  background: #e11d48;
-  box-shadow: 0 0 0 0.18em rgb(225 29 72 / 0.25);
+  background: var(--lb-live);
+  box-shadow: 0 0 0 0.18em color-mix(in srgb, var(--lb-live) 25%, transparent);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -567,7 +656,7 @@
 
 .lb-row {
   --chip-h: calc(var(--row-h) - 2 * var(--lb-pad));
-  --lb-row-bg: linear-gradient(90deg, #2a3644 0%, #222d39 45%, #1e2731 100%);
+  --lb-row-bg: linear-gradient(90deg, var(--lb-row-1) 0%, var(--lb-row-2) 45%, var(--lb-row-3) 100%);
   position: relative;
   display: grid;
   flex: none;
@@ -592,7 +681,7 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(90deg, rgb(52 211 153 / 0.42) 0%, rgb(52 211 153 / 0.12) 55%, transparent 85%);
+  background: linear-gradient(90deg, rgb(var(--lb-up-rgb) / 0.42) 0%, rgb(var(--lb-up-rgb) / 0.12) 55%, transparent 85%);
   content: "";
   opacity: 0;
   pointer-events: none;
@@ -629,7 +718,7 @@
 }
 
 .lb-row-self {
-  background: linear-gradient(90deg, rgb(52 211 153 / 0.22) 0%, rgb(52 211 153 / 0.06) 40%, transparent 70%), var(--lb-row-bg);
+  background: linear-gradient(90deg, rgb(var(--lb-accent-rgb) / 0.22) 0%, rgb(var(--lb-accent-rgb) / 0.06) 40%, transparent 70%), var(--lb-row-bg);
 }
 
 /* Climbing the table, glowing and on top of the rows it passes */
@@ -638,7 +727,7 @@
   box-shadow:
     0 18px 44px rgb(0 0 0 / 0.45),
     0 0 0 2px var(--lb-accent),
-    0 0 30px rgb(52 211 153 / 0.45);
+    0 0 30px rgb(var(--lb-accent-rgb) / 0.45);
 }
 
 .lb-row-rank {
@@ -669,7 +758,7 @@
 
 .lb-row-photo {
   overflow: hidden;
-  background: #2b3644;
+  background: var(--lb-row-photo);
 }
 
 .lb-row-photo img,
@@ -777,7 +866,7 @@
   height: var(--chip-h);
   overflow: hidden;
   border-radius: calc(var(--chip-h) * 0.1);
-  background: #303b49;
+  background: var(--lb-chip);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
   cursor: pointer;
   transition: box-shadow 500ms ease;
@@ -806,10 +895,10 @@
   flex: 0 1 auto;
   width: calc(var(--chip-h) * 2.7);
   min-width: calc(var(--chip-h) * 1.6);
-  background: linear-gradient(105deg, #4a5869 0%, #384453 55%, #2e3946 100%);
+  background: linear-gradient(105deg, var(--lb-chip-wide-1) 0%, var(--lb-chip-wide-2) 55%, var(--lb-chip-wide-3) 100%);
   box-shadow:
-    inset 0 0 0 2px rgb(52 211 153 / 0.85),
-    0 0 18px rgb(52 211 153 / 0.25);
+    inset 0 0 0 2px rgb(var(--lb-accent-rgb) / 0.85),
+    0 0 18px rgb(var(--lb-accent-rgb) / 0.25);
 }
 
 .lb-chip-compact {
@@ -825,7 +914,7 @@
   position: relative;
   flex: none;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 30%, #5d6b80, #34404e 72%);
+  background: radial-gradient(circle at 50% 30%, var(--lb-photo-1), var(--lb-photo-2) 72%);
 }
 
 .lb-chip-wide .lb-chip-photo {
@@ -932,7 +1021,7 @@
 .lb-chip-hit-up {
   box-shadow:
     inset 0 0 0 3px var(--lb-up),
-    0 0 22px rgb(52 211 153 / 0.55);
+    0 0 22px rgb(var(--lb-up-rgb) / 0.55);
 }
 
 .lb-chip-hit-down {
@@ -1219,7 +1308,7 @@
   font-variant-numeric: tabular-nums;
   font-weight: 900;
   text-shadow:
-    0 0 18px rgb(52 211 153 / 0.9),
+    0 0 18px rgb(var(--lb-up-rgb) / 0.9),
     0 6px 18px rgb(0 0 0 / 0.45);
   transform: translate(-50%, -50%);
   animation: lb-fly-scale 950ms ease-in forwards;
@@ -1241,7 +1330,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgb(8 12 18 / 0.6);
+  background: var(--lb-backdrop);
   backdrop-filter: blur(4px);
   animation: lb-enter 200ms ease-out;
 }
@@ -1254,7 +1343,7 @@
   overflow: hidden;
   border: 1px solid rgb(255 255 255 / 0.14);
   border-radius: 20px;
-  background: linear-gradient(180deg, #223140 0%, #18232e 100%);
+  background: linear-gradient(180deg, var(--lb-hero-top) 0%, var(--lb-hero-bottom) 100%);
   box-shadow: 0 30px 80px rgb(0 0 0 / 0.55);
   animation: lb-sheet-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1);
 }
@@ -1273,7 +1362,7 @@
   height: 76px;
   overflow: hidden;
   border-radius: 14px;
-  background: radial-gradient(circle at 50% 30%, #5d6b80, #34404e 72%);
+  background: radial-gradient(circle at 50% 30%, var(--lb-photo-1), var(--lb-photo-2) 72%);
 }
 
 .lb-sheet-who {

@@ -49,18 +49,42 @@ const VISIBLE_ROWS = 6
 /** Poll a bit faster than the live page while a match runs, the server still asks Kickbase at most every 45 seconds */
 const RUNNING_REFRESH_MS = 30_000
 
-/** What the viewer set up for the board, kept in the browser */
+/** localStorage settings of board preferences */
 type BoardSettings = {
-  /** Holds new data back, so the board does not show a goal before the TV does */
-  delay: boolean
+  delay: boolean // delay for events
   delaySeconds: number
-  /** The kinds of moments that take over the scoreboard, the others show as a badge on the player */
-  flash: Record<MomentKind, boolean>
+  flash: Record<MomentKind, boolean> // big animations for the events
+  theme: string // board theme
 }
 const DEFAULT_SETTINGS: BoardSettings = {
   delay: true,
   delaySeconds: 30,
   flash: { goal: true, ownGoal: true, assist: true, yellow: true, yellowRed: true, red: true, points: true },
+  theme: "green",
+}
+
+// Collection of themes for the whole live board
+type Theme = { id: string; label: string; accent: string; accentRgb: string; ink: string; glowRgb: string; live: string; hue: number; sat: number }
+const THEMES: Theme[] = [
+  { id: "green", label: "Grün", accent: "#34d399", accentRgb: "52 211 153", ink: "#03241a", glowRgb: "56 189 248", live: "#e11d48", hue: 212, sat: 1 },
+  { id: "orange", label: "Orange", accent: "#ff7a1a", accentRgb: "255 122 26", ink: "#2b1100", glowRgb: "251 191 36", live: "#2b1100", hue: 220, sat: 0.15 },
+  { id: "blue", label: "Blau", accent: "#38bdf8", accentRgb: "56 189 248", ink: "#04263a", glowRgb: "129 140 248", live: "#e11d48", hue: 222, sat: 1.4 },
+  { id: "red", label: "Rot", accent: "#f43f5e", accentRgb: "244 63 94", ink: "#2b0710", glowRgb: "251 146 60", live: "#2b0710", hue: 345, sat: 0.45 },
+  { id: "gold", label: "Gold", accent: "#fbbf24", accentRgb: "251 191 36", ink: "#2b1d00", glowRgb: "167 139 250", live: "#e11d48", hue: 262, sat: 0.6 },
+  { id: "silver", label: "Silber", accent: "#e2e8f0", accentRgb: "226 232 240", ink: "#0f172a", glowRgb: "148 163 184", live: "#e11d48", hue: 220, sat: 0.2 },
+]
+
+// Theme colors, defined in live-board.css as CSS variables
+function themeStyle(theme: Theme): CSSProperties {
+  return {
+    "--lb-accent": theme.accent,
+    "--lb-accent-rgb": theme.accentRgb,
+    "--lb-accent-ink": theme.ink,
+    "--lb-glow-rgb": theme.glowRgb,
+    "--lb-live": theme.live,
+    "--lb-hue": theme.hue,
+    "--lb-sat": theme.sat,
+  } as CSSProperties
 }
 
 /** The choices for the big animation, in the settings' order. `mark` is the sign shown next to it. */
@@ -80,7 +104,12 @@ const DELAY_STEP_SECONDS = 5
 function readSettings(stored: Partial<BoardSettings>): BoardSettings {
   const settings = { ...DEFAULT_SETTINGS, ...stored, flash: { ...DEFAULT_SETTINGS.flash, ...stored.flash } }
   const seconds = Math.round(Number(settings.delaySeconds))
-  return { ...settings, delaySeconds: Number.isFinite(seconds) ? Math.min(MAX_DELAY_SECONDS, Math.max(0, seconds)) : DEFAULT_SETTINGS.delaySeconds }
+  return {
+    ...settings,
+    delaySeconds: Number.isFinite(seconds) ? Math.min(MAX_DELAY_SECONDS, Math.max(0, seconds)) : DEFAULT_SETTINGS.delaySeconds,
+    // A theme that does not exist (anymore) falls back to the default
+    theme: THEMES.some((theme) => theme.id === settings.theme) ? settings.theme : DEFAULT_SETTINGS.theme,
+  }
 }
 
 export default function LiveBoard({ onClose }: { onClose: () => void }) {
@@ -155,6 +184,7 @@ export default function LiveBoard({ onClose }: { onClose: () => void }) {
     <div
       ref={root}
       className={cn("lb-root dark", !restless && !settingsOpen && !playerId && "lb-calm")}
+      style={themeStyle(THEMES.find((theme) => theme.id === settings.theme) ?? THEMES[0])}
       role="dialog"
       aria-modal="true"
       aria-label="Live-Board"
@@ -361,6 +391,27 @@ function SettingsPanel({ settings, onChange }: { settings: BoardSettings; onChan
           ))}
         </div>
         <p className="lb-settings-hint">Alles andere zählt klein auf dem Spieler hoch.</p>
+      </section>
+      <section className="lb-settings-section">
+        <h3 className="lb-settings-title">Themes</h3>
+        <div className="lb-settings-themes" role="radiogroup" aria-label="Themes">
+          {THEMES.map((theme) => (
+            <button
+              key={theme.id}
+              type="button"
+              role="radio"
+              aria-checked={settings.theme === theme.id}
+              onClick={() => onChange({ ...settings, theme: theme.id })}
+              className="lb-theme"
+              style={themeStyle(theme)}
+            >
+              <span className="lb-theme-swatch" aria-hidden>
+                <i />
+              </span>
+              {theme.label}
+            </button>
+          ))}
+        </div>
       </section>
     </div>
   )
