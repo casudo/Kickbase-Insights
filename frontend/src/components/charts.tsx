@@ -22,14 +22,24 @@ import {
 } from "recharts"
 import type { ChartManager, ChartRow } from "@/api/types"
 import { cn } from "@/lib/cn"
-import { compactMoney, dateLong, dateShort, money, number } from "@/lib/format"
+import { compactMoney, dateLong, dateShort, money, number, percent } from "@/lib/format"
 import { pointsGrade, SERIES_COLORS } from "@/lib/kickbase"
 import { dailyChanges, type HistoryPoint } from "@/lib/valueStats"
 
-export type ValueKind = "money" | "number" | "rank"
+export type ValueKind = "money" | "number" | "percent" | "rank"
 
 const formatValue = (kind: ValueKind, value: number | null | undefined, compact = false) =>
-  value == null ? "–" : kind === "money" ? (compact ? compactMoney(value) : money(value)) : kind === "rank" ? `${value}.` : number(value)
+  value == null
+    ? "–"
+    : kind === "money"
+      ? compact
+        ? compactMoney(value)
+        : money(value)
+      : kind === "percent"
+        ? percent(value)
+        : kind === "rank"
+          ? `${value}.`
+          : number(value)
 
 /** Axis labels have little room: "140 Mio.", "850 Tsd." */
 function axisMoney(value: number): string {
@@ -90,6 +100,7 @@ export function ManagerLineChart({
   highlight,
   height = 300,
   step,
+  colors: fixedColors,
 }: {
   managers: ChartManager[]
   rows: ChartRow[]
@@ -98,11 +109,15 @@ export function ManagerLineChart({
   highlight?: string | null
   height?: number
   step?: boolean
+  colors?: Map<string, string>
 }) {
   const [hidden, setHidden] = useState<string[]>([])
   const colors = useMemo(
-    () => new Map(managers.map((manager, index) => [manager.id, SERIES_COLORS[index % SERIES_COLORS.length]])),
-    [managers],
+    () =>
+      new Map(
+        managers.map((manager, index) => [manager.id, fixedColors?.get(manager.id) ?? SERIES_COLORS[index % SERIES_COLORS.length]]),
+      ),
+    [managers, fixedColors],
   )
 
   return (
@@ -125,9 +140,9 @@ export function ManagerLineChart({
               tick={{ fill: "currentColor", fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              width={kind === "money" ? 78 : 40}
+              width={kind === "money" ? 78 : kind === "percent" ? 56 : 40}
               reversed={kind === "rank"}
-              allowDecimals={false}
+              allowDecimals={kind === "percent"}
               domain={kind === "rank" ? [1, "dataMax"] : ["auto", "auto"]}
             />
             <Tooltip
@@ -142,6 +157,7 @@ export function ManagerLineChart({
               )}
               cursor={{ stroke: "currentColor", strokeOpacity: 0.25 }}
             />
+            {kind === "percent" && <ReferenceLine y={0} stroke="currentColor" strokeOpacity={0.35} />}
             {managers.map((manager) => (
               <Line
                 key={manager.id}
