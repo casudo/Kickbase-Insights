@@ -131,17 +131,17 @@ export function DataTable<T>({
                           onClick={header.column.getToggleSortingHandler()}
                           className={cn(
                             "inline-flex items-center gap-1 hover:text-fg",
-                            meta?.align === "right" && "flex-row-reverse",
+                            meta?.align === "right" && "flex-row-reverse text-right",
                             sorted && "text-fg",
                           )}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {sorted === "asc" ? (
-                            <ArrowUp className="size-3.5" />
+                            <ArrowUp className="size-3.5 shrink-0" />
                           ) : sorted === "desc" ? (
-                            <ArrowDown className="size-3.5" />
+                            <ArrowDown className="size-3.5 shrink-0" />
                           ) : (
-                            <ArrowDownUp className="size-3.5 opacity-40" />
+                            <ArrowDownUp className="size-3.5 shrink-0 opacity-40" />
                           )}
                         </button>
                       ) : (
