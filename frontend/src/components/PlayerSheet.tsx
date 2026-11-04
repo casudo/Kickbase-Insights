@@ -2,10 +2,10 @@
  * Player sheet component for displaying detailed player information.
 */
 
-import { ArrowRight, Store } from "lucide-react"
+import { ArrowRight, Star, Store } from "lucide-react"
 import { type ReactNode, useCallback, useMemo, useState } from "react"
 import { useSearchParams } from "react-router"
-import { useManagerMap, usePlayer, usePlayerMatches, useTeamMap } from "@/api/hooks"
+import { useManagerMap, usePlayer, usePlayerMatches, useTeamMap, useWatch, useWatchlist } from "@/api/hooks"
 import type { Manager, PlayerDetail, PlayerMatch } from "@/api/types"
 import { cn } from "@/lib/cn"
 import { compactMoney, dateLong, dateShort, money, number, share, weekdayTime } from "@/lib/format"
@@ -121,6 +121,29 @@ function purchaseOf(player: PlayerDetail, owner: Manager) {
     gainPct: player.purchasePrice ? player.marketValue / player.purchasePrice - 1 : null,
     best,
   }
+}
+
+/** Marks the player for the watchlist, or removes the mark */
+function WatchButton({ playerId }: { playerId: string }) {
+  const { data: watchlist, isPending } = useWatchlist()
+  const { add, remove } = useWatch()
+  const watched = watchlist?.some((player) => player.id === playerId) ?? false
+  const failed = add.isError || remove.isError
+  return (
+    <button
+      type="button"
+      aria-pressed={watched}
+      disabled={isPending || add.isPending || remove.isPending}
+      onClick={() => (watched ? remove : add).mutate(playerId)}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60",
+        watched ? "border-accent bg-accent-soft" : "border-line hover:bg-surface-2",
+      )}
+    >
+      <Star className={cn("size-3.5", watched && "fill-current text-accent")} />
+      {failed ? "Nicht gespeichert" : watched ? "Gescoutet" : "Scouten"}
+    </button>
+  )
 }
 
 function Row({ label, children, hint }: { label: string; children: ReactNode; hint?: ReactNode }) {
@@ -322,6 +345,7 @@ function PlayerScreen({ player }: { player: PlayerDetail }) {
                 {owner.name}
               </span>
             )}
+            <WatchButton playerId={player.id} />
           </div>
         </div>
         <div className="grid shrink-0 grid-cols-2 gap-x-10 gap-y-3">
@@ -442,6 +466,9 @@ function PlayerDetails({ player }: { player: PlayerDetail }) {
             <span>{position(player.position).long}</span>
             <span>·</span>
             <span>{teams.get(player.teamId ?? "")?.name ?? "Vereinslos"}</span>
+          </div>
+          <div className="mt-2">
+            <WatchButton playerId={player.id} />
           </div>
         </div>
       </div>
