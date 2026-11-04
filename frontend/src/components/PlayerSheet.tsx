@@ -359,8 +359,8 @@ function PlayerScreen({ player }: { player: PlayerDetail }) {
                 {owner.name}
               </span>
             )}
-            <WatchButton playerId={player.id} />
             <FairValueChip playerId={player.id} />
+            <WatchButton playerId={player.id} />
           </div>
         </div>
         <div className="grid shrink-0 grid-cols-2 gap-x-10 gap-y-3">
