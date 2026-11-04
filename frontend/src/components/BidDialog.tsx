@@ -6,16 +6,16 @@
 import { AlertTriangle, Gavel } from "lucide-react"
 import { type FormEvent, type ReactNode, useState } from "react"
 import { useBid, useManagers, useTeamMap } from "@/api/hooks"
-import type { MarketPlayer } from "@/api/types"
+import type { BidAdvice, MarketPlayer } from "@/api/types"
 import { cn } from "@/lib/cn"
-import { compactMoney, money } from "@/lib/format"
+import { compactMoney, money, percent } from "@/lib/format"
 import { playerName, position } from "@/lib/kickbase"
 import { Dialog } from "./Dialog"
 import { PlayerAvatar, PositionBadge } from "./kickbase"
 import { Button } from "./ui"
 
-/** Market value plus these shares, as one tap amounts */
-const STEPS = [0, 0.02, 0.05, 0.1]
+const STEPS = [0, 0.02, 0.05, 0.1] // Suggested bid steps (%) -> 2%, 5%, 10%
+const ADVICE_LABELS = ["Wenig", "Solide", "Deutlich"] // suggested bids names, lowest first
 
 const roundUp = (value: number) => Math.ceil(value / 1000) * 1000
 
@@ -63,6 +63,7 @@ function BidForm({ player, onDone }: { player: MarketPlayer; onDone: () => void 
 
   return (
     <form onSubmit={submit} className="space-y-4 p-5 sm:p-6">
+      {/* Player info section (Name, Image, Position, Team) */}
       <div className="flex items-center gap-3 pr-10">
         <PlayerAvatar image={player.image} teamId={player.teamId} size={48} />
         <div className="min-w-0">
@@ -76,6 +77,7 @@ function BidForm({ player, onDone }: { player: MarketPlayer; onDone: () => void 
         </div>
       </div>
 
+      {/* More facts: MV, Seller, Budget, Max Bid */}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-xl bg-surface-2 p-3 text-sm">
         <Fact label="Marktwert">{money(player.marketValue)}</Fact>
         <Fact label={player.isFreeAgent ? "Verkäufer" : `Preis von ${player.sellerName ?? "?"}`}>
@@ -85,6 +87,7 @@ function BidForm({ player, onDone }: { player: MarketPlayer; onDone: () => void 
         <Fact label="Dein Max. Gebot">{me ? compactMoney(me.maxBid) : "–"}</Fact>
       </dl>
 
+      {/* Bid input section */}
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium">{player.ownBid != null ? "Dein neues Gebot" : "Dein Gebot"}</span>
         <div className="relative">
@@ -98,6 +101,8 @@ function BidForm({ player, onDone }: { player: MarketPlayer; onDone: () => void 
           <span className="absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted">€</span>
         </div>
       </label>
+
+      {/* Suggested bid steps */}
       <div className="grid grid-cols-4 gap-1.5">
         {STEPS.map((step) => {
           const value = roundUp(base * (1 + step))
@@ -117,12 +122,20 @@ function BidForm({ player, onDone }: { player: MarketPlayer; onDone: () => void 
         })}
       </div>
 
+      {/* Bid advice section */}
+      {player.bidAdvice && (
+        <Advice advice={player.bidAdvice} marketValue={player.marketValue} amount={amount} onPick={(value) => setInput(String(value))} />
+      )}
+
+      {/* Warnings & Errors: Only shown if condition is met */}
       {belowValue && <Notice>Kickbase nimmt für seine Spieler nur Gebote ab dem Marktwert an.</Notice>}
       {overMax && <Notice>Das ist mehr als dein Max. Gebot. Kickbase lehnt Gebote ab, die du dir nicht leisten kannst.</Notice>}
       {error && <p className="rounded-xl bg-down/10 px-3 py-2 text-sm text-down">{error.message}</p>}
 
+      {/* Infot Text */}
       <p className="text-xs text-muted">Das Gebot wird in deinem Namen bei Kickbase abgegeben, genau wie in der App.</p>
 
+      {/* Footer buttons to place/reject bid */}
       <div className="flex flex-wrap items-center justify-end gap-2">
         {player.ownBid != null && (
           <Button variant="ghost" className="mr-auto text-down" onClick={retract} loading={withdraw.isPending} disabled={busy}>
@@ -138,6 +151,61 @@ function BidForm({ player, onDone }: { player: MarketPlayer; onDone: () => void 
         </Button>
       </div>
     </form>
+  )
+}
+
+// =====================================================================================================================================================
+// Functions for BidDialog.tsx
+// =====================================================================================================================================================
+
+
+function Advice({
+  advice,
+  marketValue,
+  amount,
+  onPick,
+}: {
+  advice: BidAdvice
+  marketValue: number
+  amount: number
+  onPick: (value: number) => void
+}) {
+  const total = advice.comparable.length
+  const beaten = advice.comparable.filter((share) => share < amount / marketValue - 1).length
+  return (
+    <div className="space-y-1.5">
+      {/* Header */}
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm font-medium">Gebotsvorschlag</span>
+        <span className="text-xs text-muted">{advice.similar ? `${total} ähnlich teure Käufe` : `${total} Käufe der Liga`}</span>
+      </div>
+
+      {/* Suggested bid buttons */}
+      <div className="grid grid-cols-3 gap-1.5">
+        {advice.amounts.map((value, index) => (
+          <button
+            key={ADVICE_LABELS[index]}
+            type="button"
+            onClick={() => onPick(value)}
+            className={cn(
+              "rounded-lg border px-1 py-1.5 text-center transition-colors",
+              amount === value ? "border-accent bg-accent-soft" : "border-line bg-surface hover:bg-surface-2",
+            )}
+          >
+            <span className="block text-xs text-muted">{ADVICE_LABELS[index]}</span>
+            <span className="block text-sm font-semibold tabular-nums">{compactMoney(value)}</span>
+            <span className="block text-xs text-muted tabular-nums">{percent(value / marketValue - 1)}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Info Paragraph */}
+      {amount > 0 && (
+        <p className="text-xs text-muted">
+          Dein Gebot hätte {beaten} von {total} Käufen der anderen Manager überboten.
+        </p>
+      )}
+    </div>
   )
 }
 
