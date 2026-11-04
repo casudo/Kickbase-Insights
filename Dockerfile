@@ -1,6 +1,6 @@
 ### ---------------------------------------------------------------------------
 ### Frontend: build the static single page app
-FROM node:22-alpine AS frontend
+FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
