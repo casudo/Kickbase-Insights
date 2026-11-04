@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import {
   Activity,
   ArrowLeftRight,
+  BadgeEuro,
   Check,
   ChevronsUpDown,
   ClipboardList,
@@ -46,6 +47,7 @@ const NAV: NavItem[] = [
   { to: "/spieler", label: "Spieler", icon: Users },
   { to: "/merkliste", label: "Watchlist", icon: Star },
   { to: "/vergleich", label: "Vergleich", icon: Scale },
+  { to: "/fair-value", label: "Fair Value", icon: BadgeEuro },
   { to: "/transfers", label: "Transfers", icon: ArrowLeftRight },
   { to: "/planer", label: "Aufstellungsplaner", short: "Planer", icon: ClipboardList },
   { to: "/status", label: "Status", icon: Activity },
