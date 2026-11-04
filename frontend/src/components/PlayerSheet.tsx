@@ -5,15 +5,15 @@
 import { ArrowRight, Star, Store } from "lucide-react"
 import { type ReactNode, useCallback, useMemo, useState } from "react"
 import { useSearchParams } from "react-router"
-import { useManagerMap, usePlayer, usePlayerMatches, useTeamMap, useWatch, useWatchlist } from "@/api/hooks"
+import { useFairValues, useManagerMap, usePlayer, usePlayerMatches, useTeamMap, useWatch, useWatchlist } from "@/api/hooks"
 import type { Manager, PlayerDetail, PlayerMatch } from "@/api/types"
 import { cn } from "@/lib/cn"
-import { compactMoney, dateLong, dateShort, money, number, share, weekdayTime } from "@/lib/format"
+import { compactMoney, dateLong, dateShort, money, number, percent, share, weekdayTime } from "@/lib/format"
 import { useMediaQuery } from "@/lib/hooks"
 import { playerName, POINT_GRADES, pointsGrade, position, status } from "@/lib/kickbase"
 import { dailyChanges, type HistoryPoint, valueStats, type ValueStats } from "@/lib/valueStats"
 import { Dialog } from "./Dialog"
-import { Avatar, Delta, PercentDelta, PlayerAvatar, PositionBadge, StatusIcon, TeamLogo, TrendIcon } from "./kickbase"
+import { Avatar, Delta, FairMarker, PercentDelta, PlayerAvatar, PositionBadge, StatusIcon, TeamLogo, TrendIcon } from "./kickbase"
 import { DailyChangeChart, DetailedValueChart, MatchPointsChart, ValueHistoryChart } from "./LazyCharts"
 import { Sheet } from "./Sheet"
 import { Badge, ErrorState, Segmented, Skeleton } from "./ui"
@@ -143,6 +143,20 @@ function WatchButton({ playerId }: { playerId: string }) {
       <Star className={cn("size-3.5", watched && "fill-current text-accent")} />
       {failed ? "Nicht gespeichert" : watched ? "Gescoutet" : "Scouten"}
     </button>
+  )
+}
+
+/** Players who play too little have no fair value, show nothing instead */
+function FairValueChip({ playerId }: { playerId: string }) {
+  const { data } = useFairValues()
+  const fair = data?.players.find((player) => player.id === playerId)
+  if (!fair) return null
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs font-medium">
+      <FairMarker rating={fair.rating} />
+      Fair Value {compactMoney(fair.fairValue)}
+      <span className="font-normal text-muted tabular-nums">{percent(fair.gap)}</span>
+    </span>
   )
 }
 
@@ -346,6 +360,7 @@ function PlayerScreen({ player }: { player: PlayerDetail }) {
               </span>
             )}
             <WatchButton playerId={player.id} />
+            <FairValueChip playerId={player.id} />
           </div>
         </div>
         <div className="grid shrink-0 grid-cols-2 gap-x-10 gap-y-3">
@@ -469,6 +484,9 @@ function PlayerDetails({ player }: { player: PlayerDetail }) {
           </div>
           <div className="mt-2">
             <WatchButton playerId={player.id} />
+          </div>
+          <div className="mt-2">
+            <FairValueChip playerId={player.id} />
           </div>
         </div>
       </div>
