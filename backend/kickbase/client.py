@@ -307,6 +307,16 @@ class KickbaseClient:
             "DELETE", f"/v4/leagues/{league_id}/market/{player_id}/offers/{offer_id}", retries=0
         )
 
+    async def scouted_players(self, league_id: str) -> models.ScoutedPlayers:
+        return await self._get(models.ScoutedPlayers, f"/v4/leagues/{league_id}/scoutedplayers")
+
+    ### Kickbase answers 200 even when nothing changes, so sending these twice does no harm
+    async def add_scouted_player(self, league_id: str, player_id: str) -> dict:
+        return await self.request("POST", f"/v4/leagues/{league_id}/scoutedplayers/{player_id}")
+
+    async def remove_scouted_player(self, league_id: str, player_id: str) -> dict:
+        return await self.request("DELETE", f"/v4/leagues/{league_id}/scoutedplayers/{player_id}")
+
     async def feed_page(self, league_id: str, start: int, size: int = 50) -> list[models.FeedItem]:
         page = await self._get(
             models.FeedPage, f"/v4/leagues/{league_id}/activitiesFeed", {"start": start, "max": size}
