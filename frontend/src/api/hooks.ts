@@ -13,6 +13,7 @@ import type {
   MarketPlayer,
   MatchdayCharts,
   Me,
+  Overpay,
   Player,
   PlayerDetail,
   PlayerMatches,
@@ -104,6 +105,7 @@ export const useManagers = () => useLeagueQuery<Manager[]>(["managers"], "/manag
 export const useBattles = () => useLeagueQuery<Battle[]>(["battles"], "/battles")
 export const useTransfers = () => useLeagueQuery<Transfer[]>(["transfers"], "/transfers")
 export const useTurnovers = () => useLeagueQuery<Turnover[]>(["turnovers"], "/turnovers")
+export const useOverpay = () => useLeagueQuery<Overpay>(["overpay"], "/overpay")
 export const useRevenueChart = () => useLeagueQuery<RevenueChart>(["charts", "revenue"], "/charts/revenue")
 export const useMatchdayCharts = () => useLeagueQuery<MatchdayCharts>(["charts", "matchdays"], "/charts/matchdays")
 export const useSyncRuns = () => useLeagueQuery<SyncRun[]>(["sync-runs"], "/sync/runs", { refetchInterval: 30_000 })

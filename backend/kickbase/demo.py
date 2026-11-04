@@ -18,7 +18,7 @@ from datetime import UTC, datetime, timedelta
 
 import httpx
 
-from core.analytics import day_number
+from core.analytics import day_number, market_value_day
 
 TEAMS = [
     ("2", "Bayern", "FCB"),
@@ -118,6 +118,21 @@ EVENT_TYPES = [
     (11, "Played Minutes Bonus"),
     (12, "Goal conceded"),
 ]
+### How far above the market value each manager tends to bid, as a share of it
+BID_HABITS = {
+    "1001": 0.06,
+    "1002": 0.03,
+    "1003": 0.22,
+    "1004": 0.12,
+    "1005": 0.05,
+    "1006": 0.17,
+    "1007": 0.09,
+    "1008": 0.14,
+    "2001": 0.04,
+    "2002": 0.19,
+    "2003": 0.1,
+    "2004": 0.07,
+}
 ### Squad composition per position: goalkeeper, defender, midfielder, forward
 SQUAD_QUOTA = {1: 2, 2: 5, 3: 5, 4: 3}
 TEAM_QUOTA = {1: 3, 2: 7, 3: 7, 4: 5}
@@ -190,7 +205,7 @@ class DemoLeague:
                         when = world.season_start + timedelta(
                             days=rng.uniform(2, 50), minutes=rng.randint(0, 600)
                         )
-                        price = int(world.value_on(player, day_number(when)) * rng.uniform(1.0, 1.15))
+                        price = self._winning_bid(player, when, manager_id, rng)
                         squad.append((player.id, price, when))
                         self._transfer(when, player, price, buyer=manager_name)
             self.squads[manager_id] = squad
@@ -203,7 +218,7 @@ class DemoLeague:
                     bought = world.season_start + timedelta(
                         days=rng.uniform(1, (sold - world.season_start).days)
                     )
-                    buy_price = int(world.value_on(player, day_number(bought)) * rng.uniform(1.0, 1.1))
+                    buy_price = self._winning_bid(player, bought, manager_id, rng)
                     self._transfer(bought, player, buy_price, buyer=manager_name)
                 sell_price = int(world.value_on(player, day_number(sold)) * rng.uniform(0.95, 1.0))
                 self._transfer(sold, player, sell_price, seller=manager_name)
@@ -292,6 +307,10 @@ class DemoLeague:
         self.battle_values = {
             battle_type: {mid: rng.randint(400, 3200) for mid in member_ids} for battle_type, _, _ in BATTLES
         }
+
+    def _winning_bid(self, player: DemoPlayer, when: datetime, manager_id: str, rng: random.Random) -> int:
+        value = self.world.value_on(player, market_value_day(when))
+        return int(value * (1 + BID_HABITS[manager_id] * rng.uniform(0, 2)))
 
     def _transfer(self, when: datetime, player: DemoPlayer, price: int, *, buyer=None, seller=None) -> None:
         data = {"pi": player.id, "pn": player.last_name, "tid": player.team_id, "trp": price}

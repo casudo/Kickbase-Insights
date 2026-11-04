@@ -117,6 +117,12 @@ class PlayerOut(Schema):
     on_market: bool = False
 
 
+class BidAdviceOut(Schema):
+    amounts: list[int] # The suggested bids, lowest first
+    comparable: list[float] # What the others paid on top, lowest first
+    similar: bool # comparable purchases of a similar market value
+
+
 class MarketPlayerOut(PlayerOut):
     seller_id: str | None = None
     seller_name: str | None = None
@@ -126,6 +132,7 @@ class MarketPlayerOut(PlayerOut):
     expires_at: datetime | None = None
     listed_at: datetime | None = None
     is_free_agent: bool = True
+    bid_advice: BidAdviceOut | None = None # Only for Kickbase's own listings
 
 
 class TransferOut(Schema):
@@ -201,6 +208,43 @@ class TurnoverOut(Schema):
     sold_to: str | None = None
     profit: int | None = None
     days_held: int | None = None
+
+
+class OverpayStatsOut(Schema):
+    purchases: int
+    median: float # Paid on top of the market value
+    average: float
+    total: int
+    average_amount: int # per purchase
+    highest: float
+
+
+class OverpayManagerOut(OverpayStatsOut):
+    manager: str
+    manager_id: str | None = None
+
+
+class OverpayPurchaseOut(Schema):
+    id: str
+    date: datetime
+    manager: str
+    manager_id: str | None = None
+    player_id: str
+    player_name: str | None = None
+    first_name: str | None = None
+    image: str | None = None
+    team_id: str | None = None
+    position: int | None = None
+    price: int
+    market_value: int
+    overpay: int
+    overpay_share: float
+
+
+class OverpayOut(Schema):
+    league: OverpayStatsOut | None = None # None until the first purchase
+    managers: list[OverpayManagerOut] = []
+    purchases: list[OverpayPurchaseOut] = []
 
 
 class ChartManager(Schema):
