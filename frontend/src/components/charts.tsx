@@ -255,6 +255,8 @@ function FairTooltip({ dot }: { dot: FairDot }) {
 
 const noMark = () => <g />
 
+const VALUE_AXIS_WIDTH = 70
+
 /** Market value against points, one mark per player. The curve shows the fair value of one position. */
 export function FairValueChart({
   players,
@@ -280,54 +282,71 @@ export function FairValueChart({
   const pointTicks = Array.from({ length: Math.ceil(topPoints / 50) + 1 }, (_, index) => index * 50)
   const shape = (props: unknown) => <FairShape {...(props as DotProps)} onPick={onPick} />
   const edge = (factor: number) => curve?.map((point) => ({ points: point.points, value: point.value * factor }))
+  const valueAxis = {
+    type: "number",
+    dataKey: "value",
+    scale: "log",
+    domain: [ticks[0], ticks[ticks.length - 1]],
+    ticks,
+    allowDataOverflow: true,
+  } as const
 
   return (
-    <div className="text-muted" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 8, right: 12, bottom: 16, left: 0 }}>
-          <CartesianGrid stroke="currentColor" strokeOpacity={0.15} />
-          <XAxis
-            type="number"
-            dataKey="points"
-            domain={[0, pointTicks[pointTicks.length - 1]]}
-            ticks={pointTicks}
-            tick={{ fill: "currentColor", fontSize: 11 }}
-            stroke="currentColor"
-            strokeOpacity={0.3}
-            tickLine={false}
-            label={{ value: "Ø Punkte", position: "bottom", offset: 0, fill: "currentColor", fontSize: 11 }}
-          />
+    <div className="text-muted">
+      <div className="flex" style={{ height }}>
+        <ScatterChart width={VALUE_AXIS_WIDTH} height={height} margin={{ top: 8, right: 0, bottom: 0, left: 0 }} className="shrink-0">
+          <XAxis type="number" dataKey="points" domain={[0, 1]} tick={false} axisLine={false} tickLine={false} />
           <YAxis
-            type="number"
-            dataKey="value"
-            scale="log"
-            domain={[ticks[0], ticks[ticks.length - 1]]}
-            ticks={ticks}
-            allowDataOverflow
+            {...valueAxis}
             tickFormatter={(value: number) => axisMoney(value)}
             tick={{ fill: "currentColor", fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            width={70}
+            width={VALUE_AXIS_WIDTH}
           />
-          <Tooltip
-            content={({ active, payload }) => {
-              const dot = active ? (payload?.[0]?.payload as FairDot | undefined) : undefined
-              return dot?.id ? <FairTooltip dot={dot} /> : null
-            }}
-            cursor={false}
-          />
-          {curve && (
-            <>
-              <Scatter data={edge(1 + band)} line={{ stroke: "currentColor", strokeOpacity: 0.45, strokeDasharray: "4 4" }} shape={noMark} isAnimationActive={false} tooltipType="none" />
-              <Scatter data={edge(1 - band)} line={{ stroke: "currentColor", strokeOpacity: 0.45, strokeDasharray: "4 4" }} shape={noMark} isAnimationActive={false} tooltipType="none" />
-              <Scatter data={curve} line={{ stroke: "currentColor", strokeWidth: 2 }} shape={noMark} isAnimationActive={false} tooltipType="none" />
-            </>
-          )}
-          <Scatter data={players.filter((player) => player.rating === "fair")} shape={shape} isAnimationActive={false} />
-          <Scatter data={players.filter((player) => player.rating !== "fair")} shape={shape} isAnimationActive={false} />
+          {/* An axis needs something to scale */}
+          <Scatter data={[{ points: 0, value: ticks[0] }]} shape={noMark} isAnimationActive={false} tooltipType="none" />
         </ScatterChart>
-      </ResponsiveContainer>
+        <div className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain">
+          <div className="h-full min-w-[720px] md:min-w-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 8, right: 12, bottom: 0, left: 8 }}>
+                <CartesianGrid stroke="currentColor" strokeOpacity={0.15} />
+                <XAxis
+                  type="number"
+                  dataKey="points"
+                  domain={[0, pointTicks[pointTicks.length - 1]]}
+                  ticks={pointTicks}
+                  tick={{ fill: "currentColor", fontSize: 11 }}
+                  stroke="currentColor"
+                  strokeOpacity={0.3}
+                  tickLine={false}
+                />
+                <YAxis {...valueAxis} hide />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    const dot = active ? (payload?.[0]?.payload as FairDot | undefined) : undefined
+                    return dot?.id ? <FairTooltip dot={dot} /> : null
+                  }}
+                  cursor={false}
+                />
+                {curve && (
+                  <>
+                    <Scatter data={edge(1 + band)} line={{ stroke: "currentColor", strokeOpacity: 0.45, strokeDasharray: "4 4" }} shape={noMark} isAnimationActive={false} tooltipType="none" />
+                    <Scatter data={edge(1 - band)} line={{ stroke: "currentColor", strokeOpacity: 0.45, strokeDasharray: "4 4" }} shape={noMark} isAnimationActive={false} tooltipType="none" />
+                    <Scatter data={curve} line={{ stroke: "currentColor", strokeWidth: 2 }} shape={noMark} isAnimationActive={false} tooltipType="none" />
+                  </>
+                )}
+                <Scatter data={players.filter((player) => player.rating === "fair")} shape={shape} isAnimationActive={false} />
+                <Scatter data={players.filter((player) => player.rating !== "fair")} shape={shape} isAnimationActive={false} />
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+      <p className="mt-1 text-center text-[11px]">
+        Ø Punkte<span className="md:hidden"> · zum Scrollen seitlich wischen</span>
+      </p>
     </div>
   )
 }
