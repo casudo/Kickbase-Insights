@@ -2,16 +2,23 @@
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from statistics import median
 from typing import Literal
+from zoneinfo import ZoneInfo
 
 POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
 
 ### Kickbase counts market value days from the unix epoch
 EPOCH = date(1970, 1, 1)
+
+### Kickbase sets the market values at 22:00 CEST time and files them under that day
+MARKET_VALUE_TIMEZONE = ZoneInfo("Europe/Berlin")
+MARKET_VALUE_UPDATE_HOUR = 22
 
 ### ===============================================================================
 ### Helper functions
@@ -63,6 +70,15 @@ def value_on_day(points: Sequence[Sequence[int]], day: int) -> int | None:
             break
         result = value
     return result
+
+
+def market_value_day(moment: datetime) -> int:
+    """The history day whose market value is in force at `moment`.
+
+    A day's entry only takes effect with that evening's update, until then the one before still counts.
+    """
+    local = moment.astimezone(MARKET_VALUE_TIMEZONE).replace(tzinfo=None)
+    return day_number((local - timedelta(hours=MARKET_VALUE_UPDATE_HOUR)).date())
 
 
 def merge_history(
@@ -287,6 +303,87 @@ def cumulative_profit_rows(
     if rows[-1]["date"] != end.isoformat():
         rows.append({"date": end.isoformat(), **totals})
     return rows
+
+
+### ===============================================================================
+### Overpay
+### ===============================================================================
+
+### The suggested bids outbid these shares of the comparable purchases
+BID_QUANTILES = (0.5, 0.75, 0.9)
+### Fewer purchases than this are too little to suggest a bid from
+MIN_COMPARABLE = 8
+### Two players are comparable up to this factor between their market values
+SIMILAR_VALUE_FACTOR = 2
+BID_STEP = 1000
+
+
+@dataclass(frozen=True)
+class Purchase:
+    """A purchase from Kickbase."""
+    transfer: TransferRecord
+    market_value: int
+
+    @property
+    def overpay(self) -> int:
+        return self.transfer.price - self.market_value
+
+    @property
+    def overpay_share(self) -> float:
+        return self.overpay / self.market_value
+
+
+@dataclass(frozen=True)
+class OverpayStats:
+    purchases: int
+    median: float
+    total: int
+    highest: float
+
+
+@dataclass(frozen=True)
+class BidAdvice:
+    amounts: list[int] # The suggested bids, lowest first
+    comparable: list[float] # The overpay shares they come from, lowest first
+    similar: bool # players of a similar market value
+
+
+def kickbase_purchases(
+    transfers: Iterable[TransferRecord], history: Callable[[str], Sequence[Sequence[int]]]
+) -> list[Purchase]:
+    """Every purchase from Kickbase, only sales where the highest bid wins."""
+    purchases = []
+    for transfer in transfers:
+        if not transfer.buyer or transfer.seller or not transfer.price:
+            continue
+        value = value_on_day(history(transfer.player_id), market_value_day(transfer.date))
+        if value:
+            purchases.append(Purchase(transfer, value))
+    return purchases
+
+
+def overpay_stats(purchases: Sequence[Purchase]) -> OverpayStats:
+    """Summarizes at least one purchase."""
+    shares = [p.overpay_share for p in purchases]
+    return OverpayStats(len(shares), median(shares), sum(p.overpay for p in purchases), max(shares))
+
+
+def bid_advice(purchases: Sequence[Purchase], market_value: int) -> BidAdvice | None:
+    """Suggests bids for a player of `market_value` based on comparable purchases."""
+    if market_value <= 0:
+        return None
+    lowest, highest = market_value / SIMILAR_VALUE_FACTOR, market_value * SIMILAR_VALUE_FACTOR
+    similar = [p.overpay_share for p in purchases if lowest <= p.market_value <= highest]
+    enough_similar = len(similar) >= MIN_COMPARABLE
+    shares = sorted(similar if enough_similar else (p.overpay_share for p in purchases))
+    if len(shares) < MIN_COMPARABLE:
+        return None
+    ### Kickbase takes no bids below the market value
+    amounts = [
+        math.ceil(market_value * (1 + max(0, shares[int(q * len(shares))])) / BID_STEP) * BID_STEP
+        for q in BID_QUANTILES
+    ]
+    return BidAdvice(amounts, shares, enough_similar)
 
 
 ### ===============================================================================

@@ -7,7 +7,8 @@ see: their real budget and their own bids.
 
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
+from dataclasses import asdict
 from datetime import UTC, datetime
 
 from sqlmodel import Session, select
@@ -15,6 +16,7 @@ from sqlmodel import Session, select
 from api.schemas import (
     BattleEntryOut,
     BattleOut,
+    BidAdviceOut,
     ChartManager,
     ChartOut,
     FixturesOut,
@@ -22,6 +24,10 @@ from api.schemas import (
     MarketPlayerOut,
     MatchdayChartsOut,
     MatchOut,
+    OverpayManagerOut,
+    OverpayOut,
+    OverpayPurchaseOut,
+    OverpayStatsOut,
     PlayerDetailOut,
     PlayerOut,
     TeamOut,
@@ -99,6 +105,11 @@ class Insights:
         ### Only an explicit KBI_KICKBASE__START_DATE cuts transfers off, a guessed start drops nothing
         start = self.settings.kickbase.start_date
         return analytics.transfers_since(records, start.astimezone(UTC) if start else None)
+
+    def _purchases(self) -> list[analytics.Purchase]:
+        records = self._transfer_records()
+        histories = self._histories(list({t.player_id for t in records}))
+        return analytics.kickbase_purchases(records, lambda player_id: histories.get(player_id) or [])
 
     def _player_out(
         self,
@@ -207,11 +218,16 @@ class Insights:
             if self.viewer_id
             else {}
         )
+        ### Advice comes from others only
+        name_to_id = self._name_to_id()
+        rival_purchases = [p for p in self._purchases() if name_to_id.get(p.transfer.buyer) != self.viewer_id]
         result = []
         for listing in listings.values():
             player = players.get(listing.player_id)
             if player is None:
                 continue
+            is_free_agent = listing.seller_id is None
+            advice = analytics.bid_advice(rival_purchases, player.market_value) if is_free_agent else None
             result.append(
                 self._player_out(
                     player,
@@ -226,7 +242,8 @@ class Insights:
                     own_bid=own_bids.get(listing.player_id),
                     expires_at=listing.expires_at,
                     listed_at=listing.listed_at,
-                    is_free_agent=listing.seller_id is None,
+                    is_free_agent=is_free_agent,
+                    bid_advice=BidAdviceOut.model_validate(advice) if advice else None,
                 )
             )
         far_future = datetime.max.replace(tzinfo=UTC)
@@ -304,6 +321,55 @@ class Insights:
             )
         result.sort(key=lambda t: t.sell_date, reverse=True)
         return result
+
+    def overpay(self) -> OverpayOut:
+        purchases = self._purchases()
+        if not purchases:
+            return OverpayOut()
+        name_to_id = self._name_to_id()
+        player_ids = list({p.transfer.player_id for p in purchases})
+        players = {p.id: p for p in self.session.exec(select(Player).where(Player.id.in_(player_ids)))}
+
+        by_manager: dict[str, list[analytics.Purchase]] = defaultdict(list)
+        for purchase in purchases:
+            by_manager[purchase.transfer.buyer].append(purchase)
+        managers = [
+            OverpayManagerOut(
+                manager=manager,
+                manager_id=name_to_id.get(manager),
+                **asdict(analytics.overpay_stats(own)),
+            )
+            for manager, own in by_manager.items()
+        ]
+        managers.sort(key=lambda m: m.median, reverse=True)
+
+        rows = []
+        for purchase in sorted(purchases, key=lambda p: p.transfer.date, reverse=True):
+            t = purchase.transfer
+            player = players.get(t.player_id)
+            rows.append(
+                OverpayPurchaseOut(
+                    id=t.id,
+                    date=t.date,
+                    manager=t.buyer,
+                    manager_id=name_to_id.get(t.buyer),
+                    player_id=t.player_id,
+                    player_name=(player.last_name if player else None) or t.player_name,
+                    first_name=player.first_name if player else None,
+                    image=player.image if player else None,
+                    team_id=t.team_id or (player.team_id if player else None),
+                    position=player.position if player else None,
+                    price=t.price,
+                    market_value=purchase.market_value,
+                    overpay=purchase.overpay,
+                    overpay_share=purchase.overpay_share,
+                )
+            )
+        return OverpayOut(
+            league=OverpayStatsOut.model_validate(analytics.overpay_stats(purchases)),
+            managers=managers,
+            purchases=rows,
+        )
 
     def managers(self, balances: bool = True) -> list[ManagerOut]:
         """Without `balances` the estimated balances and max bids of the others stay empty, the

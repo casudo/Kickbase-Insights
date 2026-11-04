@@ -33,6 +33,7 @@ from api.schemas import (
     MarketPlayerOut,
     MatchdayChartsOut,
     MeOut,
+    OverpayOut,
     PlayerDetailOut,
     PlayerMatchesOut,
     PlayerOut,
@@ -366,6 +367,11 @@ def transfers(state: StateDep, session: SessionDep, league: LeagueDep):
 @router.get("/turnovers", response_model=list[TurnoverOut])
 def turnovers(state: StateDep, session: SessionDep, league: LeagueDep):
     return cached(state, league, ("turnovers",), lambda: insights(state, session, league).turnovers())
+
+
+@router.get("/overpay", response_model=OverpayOut)
+def overpay(state: StateDep, session: SessionDep, league: LeagueDep):
+    return cached(state, league, ("overpay",), lambda: insights(state, session, league).overpay())
 
 
 @router.get("/charts/revenue", response_model=ChartOut)
