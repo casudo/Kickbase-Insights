@@ -96,6 +96,12 @@ export type Player = {
   onMarket: boolean
 }
 
+export type BidAdvice = {
+  amounts: number[] // suggested bids, lowest first
+  comparable: number[] // what other managers paid on top of the mv
+  similar: boolean // comparable purchases of a similar market value
+}
+
 export type MarketPlayer = Player & {
   sellerId: string | null
   sellerName: string | null
@@ -105,6 +111,7 @@ export type MarketPlayer = Player & {
   expiresAt: string | null
   listedAt: string | null
   isFreeAgent: boolean
+  bidAdvice: BidAdvice | null // Only for Kickbase's own listings
 }
 
 export type Transfer = {
@@ -171,6 +178,40 @@ export type Turnover = {
   soldTo: string | null
   profit: number | null
   daysHeld: number | null
+}
+
+export type OverpayStats = {
+  purchases: number
+  /** Paid on top of the market value */
+  median: number
+  total: number
+  highest: number
+}
+
+export type OverpayManager = OverpayStats & { manager: string; managerId: string | null }
+
+export type OverpayPurchase = {
+  id: string
+  date: string
+  manager: string
+  managerId: string | null
+  playerId: string
+  playerName: string | null
+  firstName: string | null
+  image: string | null
+  teamId: string | null
+  position: number | null
+  price: number
+  marketValue: number
+  overpay: number
+  overpayShare: number
+}
+
+export type Overpay = {
+  /** Null until the first purchase */
+  league: OverpayStats | null
+  managers: OverpayManager[]
+  purchases: OverpayPurchase[]
 }
 
 export type ChartManager = { id: string; name: string }
