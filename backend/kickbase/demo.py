@@ -11,6 +11,7 @@ like Kickbase does.
 from __future__ import annotations
 
 import json
+import math
 import random
 import re
 from dataclasses import dataclass, field
@@ -133,6 +134,8 @@ BID_HABITS = {
     "2003": 0.1,
     "2004": 0.07,
 }
+### How many of the seven matches so far a player took part in
+GAMES_PLAYED = (7, 7, 7, 7, 7, 6, 6, 5, 3, 1)
 ### Squad composition per position: goalkeeper, defender, midfielder, forward
 SQUAD_QUOTA = {1: 2, 2: 5, 3: 5, 4: 3}
 TEAM_QUOTA = {1: 3, 2: 7, 3: 7, 4: 5}
@@ -424,7 +427,9 @@ class DemoWorld:
                     value = int(min(max(base, 500_000), 70_000_000))
                     history = self._history(rng, value, today)
                     status = rng.choices([0, 1, 2, 4, 256], weights=[86, 5, 5, 2, 2])[0]
-                    average = rng.randint(20, 160) if value > 2_000_000 else rng.randint(0, 60)
+                    form = rng.randint(20, 160) if value > 2_000_000 else rng.randint(0, 60)
+                    ### Better players score more, with some luck on top
+                    average = max(0, round(38 * (math.log(value) - 13.1) + (form - 60) / 2))
                     trend = (
                         1 if history[-1][1] > history[-2][1] else 2 if history[-1][1] < history[-2][1] else 0
                     )
@@ -439,7 +444,7 @@ class DemoWorld:
                         trend=trend,
                         history=history,
                         average_points=average,
-                        total_points=average * (CURRENT_DAY - 1),
+                        total_points=average * GAMES_PLAYED[next_id % len(GAMES_PLAYED)],
                         goals=rng.randint(0, 6) if position >= 3 else rng.randint(0, 1),
                         assists=rng.randint(0, 5) if position >= 2 else 0,
                     )
