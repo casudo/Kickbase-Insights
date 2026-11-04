@@ -24,7 +24,7 @@ import {
 } from "recharts"
 import type { ChartManager, ChartRow, FairCurvePoint, FairRating } from "@/api/types"
 import { cn } from "@/lib/cn"
-import { compactMoney, dateLong, dateShort, money, number, percent, percent } from "@/lib/format"
+import { compactMoney, dateLong, dateShort, money, number, percent } from "@/lib/format"
 import { FAIR_COLORS, FAIR_LABELS, pointsGrade, SERIES_COLORS } from "@/lib/kickbase"
 import { dailyChanges, type HistoryPoint } from "@/lib/valueStats"
 
