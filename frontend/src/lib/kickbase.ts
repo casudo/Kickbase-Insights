@@ -99,6 +99,9 @@ export const SERIES_COLORS = [
   "#ec4899", "#84cc16", "#f97316", "#64748b", "#14b8a6", "#a855f7",
 ]
 
+/** Colors of the comparison charts. */
+export const COMPARE_COLORS = ["#059669", "#8b5cf6", "#d97706", "#0284c7", "#ec4899"]
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return "?"

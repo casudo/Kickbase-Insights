@@ -11,6 +11,7 @@ import { LeagueProvider } from "./lib/league"
 const Dashboard = lazy(() => import("./pages/Dashboard"))
 const Market = lazy(() => import("./pages/Market"))
 const Players = lazy(() => import("./pages/Players"))
+const Compare = lazy(() => import("./pages/Compare"))
 const Planner = lazy(() => import("./pages/Planner"))
 const Transfers = lazy(() => import("./pages/Transfers"))
 const Live = lazy(() => import("./pages/Live"))
@@ -40,6 +41,7 @@ export function App() {
         <Route index element={<Dashboard />} />
         <Route path="markt" element={<Market />} />
         <Route path="spieler" element={<Players />} />
+        <Route path="vergleich" element={<Compare />} />
         <Route path="planer" element={<Planner />} />
         <Route path="transfers" element={<Transfers />} />
         <Route path="live" element={<Live />} />
