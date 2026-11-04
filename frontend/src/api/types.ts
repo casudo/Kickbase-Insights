@@ -114,6 +114,10 @@ export type MarketPlayer = Player & {
   bidAdvice: BidAdvice | null // Only for Kickbase's own listings
 }
 
+export type WatchedPlayer = Player & {
+  expiresAt: string | null // End of the market listing, if there is one
+}
+
 export type Transfer = {
   id: string
   date: string
