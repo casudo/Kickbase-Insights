@@ -102,6 +102,10 @@ export const SERIES_COLORS = [
 /** Colors of the comparison charts. */
 export const COMPARE_COLORS = ["#059669", "#8b5cf6", "#d97706", "#0284c7", "#ec4899"]
 
+/** Colors for the fair value indicators */
+export const FAIR_COLORS = { cheap: "#0284c7", expensive: "#ea580c", fair: "var(--muted)" }
+export const FAIR_LABELS = { cheap: "Günstig", fair: "Fair", expensive: "Teuer" }
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return "?"

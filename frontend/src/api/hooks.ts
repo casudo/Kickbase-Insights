@@ -5,6 +5,7 @@ import { api } from "./client"
 import type {
   BidResult,
   Battle,
+  FairValues,
   Fixtures,
   Lineups,
   Live,
@@ -107,6 +108,7 @@ export const useBattles = () => useLeagueQuery<Battle[]>(["battles"], "/battles"
 export const useTransfers = () => useLeagueQuery<Transfer[]>(["transfers"], "/transfers")
 export const useTurnovers = () => useLeagueQuery<Turnover[]>(["turnovers"], "/turnovers")
 export const useOverpay = () => useLeagueQuery<Overpay>(["overpay"], "/overpay")
+export const useFairValues = () => useLeagueQuery<FairValues>(["fair-value"], "/fair-value")
 export const useRevenueChart = () => useLeagueQuery<RevenueChart>(["charts", "revenue"], "/charts/revenue")
 export const useMatchdayCharts = () => useLeagueQuery<MatchdayCharts>(["charts", "matchdays"], "/charts/matchdays")
 export const useSyncRuns = () => useLeagueQuery<SyncRun[]>(["sync-runs"], "/sync/runs", { refetchInterval: 30_000 })
