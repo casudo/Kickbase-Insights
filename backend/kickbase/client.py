@@ -317,32 +317,6 @@ class KickbaseClient:
     async def remove_scouted_player(self, league_id: str, player_id: str) -> dict:
         return await self.request("DELETE", f"/v4/leagues/{league_id}/scoutedplayers/{player_id}")
 
-    async def feed_page(self, league_id: str, start: int, size: int = 50) -> list[models.FeedItem]:
-        page = await self._get(
-            models.FeedPage, f"/v4/leagues/{league_id}/activitiesFeed", {"start": start, "max": size}
-        )
-        return page.items
-
-    async def feed_until(
-        self, league_id: str, known_ids: set[str], max_pages: int = 500
-    ) -> tuple[list[models.FeedItem], bool]:
-        """Page through the activity feed (newest first) until an already stored item shows up.
-
-        Also tells whether one did. If not, the feed ended first and transfers can be missing in between.
-        """
-        items: list[models.FeedItem] = []
-        start = 0
-        for _ in range(max_pages):
-            page = await self.feed_page(league_id, start)
-            if not page:
-                break
-            items.extend(item for item in page if item.id not in known_ids)
-            if any(item.id in known_ids for item in page):
-                return items, True
-            ### Advance by what actually arrived, in case Kickbase caps the page size
-            start += len(page)
-        return items, False
-
     async def manager_transfers(
         self,
         league_id: str,

@@ -5,9 +5,7 @@ A sync is incremental:
 - the teams come from the competition table, one request
 - ownership and purchase prices come from one squad request per manager
 - matchday rankings that are over are stored and never fetched again
-- the activity feed is only paged until the first already known entry
-- the feed forgets entries after about a month, so the rest of the season comes from each manager's
-  transfer list, once per season
+- transfers come from each manager's transfer list, paged until the first already known entry
 - player details and market value histories are only re-fetched when they can have changed
 
 A league is synced with the token of one of its members. What only a user may see (their budget and
@@ -21,7 +19,7 @@ import contextlib
 import logging
 import time
 from collections import defaultdict
-from collections.abc import Awaitable, Iterator
+from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, TypeVar
@@ -70,7 +68,6 @@ FALLBACK_BATTLES = [
     kb.OverviewBattle(t=8, n="Punktejäger", d="Die meisten Punkte an einem Spieltag"),
 ]
 
-TRANSFER_FEED_TYPE = 15
 ### Market value histories are refreshed at least this often, even when no update is due
 HISTORY_MAX_AGE = timedelta(hours=20)
 ### A history fetched this soon after an update is fetched once more, in case not all values have settled
@@ -89,8 +86,8 @@ class PlayerState:
 @dataclass
 class TransferState:
     """What is stored about the transfers of a league."""
-    ids: set[str]
-    keys: set[tuple[str, datetime]] # Player and date. The transfer lists of the managers have no ids.
+    known: dict[str, set[tuple[str, datetime]]] # By manager id: the player and date of each transfer
+    season_start: datetime | None
     complete_since: datetime | None
 
 
@@ -110,11 +107,9 @@ class FetchResult:
     battles: list[tuple[kb.OverviewBattle, kb.BattleUsers]]
     rankings: dict[int, kb.Ranking]
     current_day: int | None
-    feed: list[kb.FeedItem]
+    manager_transfers: dict[str, list[kb.ManagerTransfer]] # By manager id, without the lists that failed
     details: dict[str, kb.PlayerDetails]
     histories: dict[str, list[list[int]]]
-    ### By manager id, without the lists that failed. None if nothing had to be fetched.
-    manager_transfers: dict[str, list[kb.ManagerTransfer]] | None = None
     ### The picture of every player, see SyncService._pictures
     images: dict[str, str | None] = field(default_factory=dict)
     failures: list[str] = field(default_factory=list)
@@ -322,7 +317,7 @@ class SyncService:
         final_days, transfers, player_state = await asyncio.to_thread(self._load_state, league_id)
         days = [day for day in range(1, (current_day or 0) + 1) if day not in final_days]
 
-        profiles, squads, dashboards, battles, rankings, (feed, feed_connects) = await asyncio.gather(
+        profiles, squads, dashboards, battles, rankings, manager_transfers = await asyncio.gather(
             asyncio.gather(*(client.team_profile(competition_id, tid) for tid in team_ids)),
             asyncio.gather(*(client.manager_squad(league_id, mid) for mid in manager_ids)),
             asyncio.gather(
@@ -340,10 +335,7 @@ class SyncService:
             asyncio.gather(
                 *(self._optional(client.ranking(league_id, day), f"ranking {day}", failures) for day in days)
             ),
-            client.feed_until(league_id, transfers.ids),
-        )
-        manager_transfers = await self._manager_transfers(
-            league_id, client, overview, transfers, feed_connects, failures
+            self._manager_transfers(league_id, client, overview, transfers, failures),
         )
 
         ### Every player that shows up anywhere, with their current status
@@ -417,7 +409,6 @@ class SyncService:
             battles=[(b, users) for b, users in zip(battle_types, battles, strict=True) if users],
             rankings={day: r for day, r in zip(days, rankings, strict=True) if r},
             current_day=current_day,
-            feed=feed,
             manager_transfers=manager_transfers,
             details=details,
             histories={
@@ -435,24 +426,24 @@ class SyncService:
         client: KickbaseClient,
         overview: kb.LeagueOverview,
         stored: TransferState,
-        feed_connects: bool,
         failures: list[str],
-    ) -> dict[str, list[kb.ManagerTransfer]] | None:
-        """What the feed cannot deliver. None if nothing is missing.
+    ) -> dict[str, list[kb.ManagerTransfer]]:
+        """The transfers of every manager that are not stored yet.
 
-        The whole season is fetched once, and again after a reset. If the feed no longer reaches the
-        stored transfers, for example after a long break, only the gap is fetched.
+        Every list is paged until its first stored entry. Unless the stored transfers are complete, for
+        example after a reset or a failed list, all of them are read down to the season start.
         """
-        season_start = overview.started_at
-        complete = stored.complete_since == season_start
-        if season_start is None or (complete and feed_connects):
-            return None
-        log.info("Fetching the transfers of %d managers", len(overview.managers))
-        known = stored.keys if complete else set()
+        season_start = overview.started_at or stored.season_start
+        if season_start is None:
+            log.warning("Kickbase sent no season start, so it is unclear which transfers belong to it")
+            return {}
+        known = stored.known if stored.complete_since == season_start else {}
         lists = await asyncio.gather(
             *(
                 self._optional(
-                    client.manager_transfers(league_id, manager.id, season_start, known),
+                    client.manager_transfers(
+                        league_id, manager.id, season_start, known.get(manager.id, set())
+                    ),
                     f"transfers {manager.id}",
                     failures,
                 )
@@ -534,13 +525,19 @@ class SyncService:
                     .distinct()
                 )
             )
-            rows = session.exec(
-                select(Transfer.id, Transfer.player_id, Transfer.date).where(Transfer.league_id == league_id)
-            ).all()
+            known: dict[str, set[tuple[str, datetime]]] = defaultdict(set)
+            for player_id, date, buyer_id, seller_id in session.exec(
+                select(Transfer.player_id, Transfer.date, Transfer.buyer_id, Transfer.seller_id).where(
+                    Transfer.league_id == league_id
+                )
+            ):
+                for manager_id in (buyer_id, seller_id):
+                    if manager_id:
+                        known[manager_id].add((player_id, date))
             season = session.get(LeagueSeason, league_id)
             transfers = TransferState(
-                ids={transfer_id for transfer_id, _, _ in rows},
-                keys={(player_id, date) for _, player_id, date in rows},
+                known=known,
+                season_start=season.started_at if season else None,
                 complete_since=season.transfers_complete_since if season else None,
             )
             histories = dict(
@@ -741,10 +738,9 @@ class SyncService:
             season = session.get(LeagueSeason, league_id) or LeagueSeason(league_id=league_id)
             season.started_at = r.overview.started_at or season.started_at
             season.start_money = r.overview.start_budget or season.start_money
-            if r.manager_transfers is not None:
-                ### After a failure the next sync starts over, it could not tell that a gap is left
-                complete = len(r.manager_transfers) == len(r.overview.managers)
-                season.transfers_complete_since = season.started_at if complete else None
+            ### After a failed list the next sync reads all of them again
+            complete = len(r.manager_transfers) == len(r.overview.managers)
+            season.transfers_complete_since = season.started_at if complete else None
             session.add(season)
 
             ### Managers, rebuilt from scratch so people who left the league disappear
@@ -850,18 +846,7 @@ class SyncService:
                         )
                     )
 
-            ### Transfers. The feed goes first, `feed_until` can only stop at the ids it sent.
-            stored = set(
-                session.exec(select(Transfer.player_id, Transfer.date).where(Transfer.league_id == league_id))
-            )
-            new_transfers = 0
-            for transfer in (*_feed_transfers(r), *_listed_transfers(r)):
-                ### The feed and the lists overlap, and both managers of a trade list it
-                key = (transfer.player_id, transfer.date)
-                if key not in stored:
-                    stored.add(key)
-                    session.add(transfer)
-                    new_transfers += 1
+            new_transfers = _store_transfers(session, r)
 
             session.commit()
 
@@ -876,39 +861,40 @@ class SyncService:
         }
 
 
-def _feed_transfers(r: FetchResult) -> Iterator[Transfer]:
-    for item in r.feed:
-        data = item.data
-        if item.type != TRANSFER_FEED_TYPE or item.date is None or "pi" not in data:
-            continue
-        yield Transfer(
-            id=item.id,
-            league_id=r.league.id,
-            date=item.date,
-            player_id=str(data["pi"]),
-            player_name=data.get("pn"),
-            team_id=str(data["tid"]) if data.get("tid") is not None else None,
-            buyer=data.get("byr") or None,
-            seller=data.get("slr") or None,
-            price=int(data.get("trp") or 0),
-        )
+def _store_transfers(session: Session, r: FetchResult) -> int:
+    """Merge the managers' lists into the stored transfers and return how many are new.
 
-
-def _listed_transfers(r: FetchResult) -> Iterator[Transfer]:
-    """The entries of the managers' transfer lists. They have no id, so one is made from the rest."""
+    A list only knows its own manager for sure, so a trade gets its two ids from two lists. It has the
+    same player and date on both, the entries have no id of their own.
+    """
+    stored = {
+        (transfer.player_id, transfer.date): transfer
+        for transfer in session.exec(select(Transfer).where(Transfer.league_id == r.league.id))
+    }
+    new_transfers = 0
     for manager in r.overview.managers:
-        for entry in (r.manager_transfers or {}).get(manager.id, []):
-            yield Transfer(
-                id=f"{r.league.id}-{entry.player_id}-{int(entry.date.timestamp())}",
-                league_id=r.league.id,
-                date=entry.date,
-                player_id=entry.player_id,
-                player_name=entry.player_name,
-                team_id=entry.team_id,
-                buyer=manager.name if entry.bought else entry.other_manager or None,
-                seller=(entry.other_manager or None) if entry.bought else manager.name,
-                price=entry.price,
-            )
+        for entry in r.manager_transfers.get(manager.id, []):
+            key = (entry.player_id, entry.date)
+            transfer = stored.get(key)
+            if transfer is None:
+                transfer = stored[key] = Transfer(
+                    id=f"{r.league.id}-{entry.player_id}-{int(entry.date.timestamp())}",
+                    league_id=r.league.id,
+                    date=entry.date,
+                    player_id=entry.player_id,
+                    player_name=entry.player_name,
+                    team_id=entry.team_id,
+                    price=entry.price,
+                )
+                new_transfers += 1
+            if entry.bought:
+                transfer.buyer, transfer.buyer_id = manager.name, manager.id
+                transfer.seller = transfer.seller or entry.other_manager or None
+            else:
+                transfer.seller, transfer.seller_id = manager.name, manager.id
+                transfer.buyer = transfer.buyer or entry.other_manager or None
+            session.add(transfer)
+    return new_transfers
 
 
 def _write_personal(

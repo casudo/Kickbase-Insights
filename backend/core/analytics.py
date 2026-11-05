@@ -163,7 +163,7 @@ def choose_player_images(
 
 @dataclass(frozen=True)
 class TransferRecord:
-    """A transfer as stored from the activity feed. `None` on either side means Kickbase."""
+    """A transfer as stored. `None` on either side means Kickbase."""
     id: str
     date: datetime
     player_id: str

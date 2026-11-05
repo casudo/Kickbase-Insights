@@ -271,23 +271,6 @@ class ScoutedPlayers(KBModel):
     players: list[ScoutedPlayer] = Field(default_factory=list, alias="it")
 
 
-class FeedItem(KBModel):
-    """An entry of `/v4/leagues/{leagueId}/activitiesFeed`.
-
-    Known types: 3 player listed by Kickbase, 5 user joined, 15 transfer, 17 matchday result,
-    22 login bonus, 26 achievement. For type 15 `data` holds `byr` (buyer name), `slr` (seller name),
-    `pi`/`pn` (player id/name), `tid` (team) and `trp` (price).
-    """
-    id: Id = Field("", alias="i")
-    type: int = Field(0, alias="t")
-    date: Timestamp = Field(None, alias="dt")
-    data: dict[str, Any] = Field(default_factory=dict)
-
-
-class FeedPage(KBModel):
-    items: list[FeedItem] = Field(default_factory=list, alias="af")
-
-
 class ManagerTransfer(KBModel):
     """One manager's side of a transfer. A trade between two managers shows up on both of their lists."""
     player_id: Id = Field("", alias="pi")
@@ -306,8 +289,9 @@ class ManagerTransfer(KBModel):
 class ManagerTransfers(KBModel):
     """`/v4/leagues/{leagueId}/managers/{managerId}/transfer`, newest first, 25 per page.
 
-    It reaches back to earlier seasons, the activity feed only about a month. The entries have no id,
-    but the same date as in the feed.
+    It reaches back to earlier seasons. The activity feed is no use for transfers: it forgets entries
+    after about a month and only has the names of the managers. The entries here have no id either,
+    but a list belongs to one manager, so that side is certain.
     """
     transfers: list[ManagerTransfer] = Field(default_factory=list, alias="it")
 
