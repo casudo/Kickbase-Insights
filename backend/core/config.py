@@ -13,7 +13,7 @@ from typing import Annotated, Any
 from zoneinfo import ZoneInfo
 
 from croniter import croniter
-from pydantic import AwareDatetime, BaseModel, BeforeValidator, SecretStr, field_validator
+from pydantic import BaseModel, BeforeValidator, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 from sqlalchemy.engine import URL
 
@@ -106,8 +106,6 @@ class KickbaseSettings(BaseModel):
     password: SecretStr | None = None
     league: str | None = None # Defaults to the first league of the account.
     discord_webhook: SecretStr | None = None
-    start_date: AwareDatetime | None = None # The instant the season started or the league was reset. Feed events before it are ignored.
-    start_money: int = 50_000_000
     collect_bonus: bool = True # Collect the daily login bonus on every sync
 
     @property

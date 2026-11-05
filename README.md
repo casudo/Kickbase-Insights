@@ -93,8 +93,6 @@ All settings are environment variables with the `KBI_` prefix, nested settings u
 | `KBI_KICKBASE__EMAIL` | – | An account that keeps your leagues synced while nobody is logged in, and collects its daily bonus. |
 | `KBI_KICKBASE__PASSWORD` | – | Password of that account. |
 | `KBI_KICKBASE__LEAGUE` | all its leagues | Name or ID of the league that account keeps synced. It is listed first for everyone. Its owner still sees all their leagues after logging in. |
-| `KBI_KICKBASE__START_DATE` | estimated | The instant the season started or your league was reset, ISO 8601 with UTC offset, e.g. `2026-08-01T18:00:00Z`. Feed events before it are ignored and players assigned at the start are valued at their market value back then. |
-| `KBI_KICKBASE__START_MONEY` | `50000000` | Starting money, `200000000` for "Ohne Team". Used to estimate the other managers' balances. |
 | `KBI_KICKBASE__COLLECT_BONUS` | `true` | Collect the daily login bonus on every sync. |
 | `KBI_KICKBASE__DISCORD_WEBHOOK` | – | Discord webhook for failed syncs and collected bonuses. |
 | `KBI_SYNC__SCHEDULE` | `10 2,6,10,14,18,22 * * *` | Cron expression for the sync. |
