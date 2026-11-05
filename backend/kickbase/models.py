@@ -70,8 +70,8 @@ class LoginResponse(KBModel):
 ### Leagues
 ### ===============================================================================
 
-CLASSIC_GAME_MODE = 1 # 'gpm' parameter. 1 Classic, 3 Rush, 4 Arena
-
+### The 'gpm' parameter: 1 Classic (Random Team), 2 Classic (Without Squad), 3 Rush, 4 Arena
+ALLOWED_GAME_MODES = {1, 2}
 
 class LeagueInfo(KBModel):
     """An entry of `/v4/leagues/selection`."""
@@ -79,7 +79,7 @@ class LeagueInfo(KBModel):
     name: str = Field("", alias="n")
     ### The real league: 1 Bundesliga, 2 2. Bundesliga, 3 La Liga, 4 Frauen-Bundesliga, 9 MLS
     competition_id: Id = Field("1", alias="cpi")
-    game_mode: int = Field(CLASSIC_GAME_MODE, alias="gpm")
+    game_mode: int = Field(1, alias="gpm")
     budget: int | None = Field(None, alias="b")
     team_value: int | None = Field(None, alias="tv")
     placement: int | None = Field(None, alias="pl")
@@ -87,7 +87,7 @@ class LeagueInfo(KBModel):
 
     @property
     def supported(self) -> bool:
-        return self.game_mode == CLASSIC_GAME_MODE
+        return self.game_mode in ALLOWED_GAME_MODES
 
 
 class OverviewManager(KBModel):
