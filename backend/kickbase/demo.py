@@ -680,7 +680,6 @@ class DemoWorld:
     def _market(self, query, user_id, league: DemoLeague):
         return {
             "it": league.market_for(user_id),
-            "mvud": _iso(self.now.replace(hour=20, minute=0, second=0) - timedelta(days=1)),
             "day": CURRENT_DAY,
         }
 
