@@ -76,8 +76,20 @@ class Insights:
     def _managers(self) -> list[Manager]:
         return list(self.session.exec(select(Manager).where(Manager.league_id == self.league_id)))
 
-    def _name_to_id(self) -> dict[str, str]:
-        return {m.name: m.id for m in self._managers()}
+    def _manager_names(self) -> dict[str, str]:
+        """The name of every manager id. For managers who left it is the one stored on their transfers."""
+        names: dict[str, str] = {}
+        for buyer_id, buyer, seller_id, seller in self.session.exec(
+            select(Transfer.buyer_id, Transfer.buyer, Transfer.seller_id, Transfer.seller).where(
+                Transfer.league_id == self.league_id
+            )
+        ):
+            if buyer_id and buyer:
+                names[buyer_id] = buyer
+            if seller_id and seller:
+                names[seller_id] = seller
+        names.update({m.id: m.name for m in self._managers()})
+        return names
 
     def _histories(self, player_ids: list[str] | None = None) -> dict[str, list]:
         query = select(MarketValueHistory.player_id, MarketValueHistory.points)
@@ -109,7 +121,14 @@ class Insights:
         rows = self.session.exec(select(Transfer).where(Transfer.league_id == self.league_id))
         records = [
             analytics.TransferRecord(
-                t.id, t.date, t.player_id, t.player_name, t.team_id, t.buyer, t.seller, t.price
+                t.id,
+                t.date,
+                t.player_id,
+                t.player_name,
+                t.team_id,
+                t.buyer_id or t.buyer,
+                t.seller_id or t.seller,
+                t.price,
             )
             for t in rows
         ]
@@ -195,7 +214,7 @@ class Insights:
         if player is None:
             return None
         history = self._histories([player_id]).get(player_id) or []
-        name_to_id = self._name_to_id()
+        names = self._manager_names()
         transfers = self.session.exec(
             select(Transfer)
             .where(Transfer.league_id == self.league_id, Transfer.player_id == player_id)
@@ -208,7 +227,7 @@ class Insights:
             set(self._market()),
             PlayerDetailOut,
             history=[(analytics.day_to_date(day).isoformat(), value) for day, value in history],
-            transfers=[self._transfer_out(t, name_to_id) for t in transfers if self._this_season(t)],
+            transfers=[self._transfer_out(t, names) for t in transfers if self._this_season(t)],
         )
 
     def market(self) -> list[MarketPlayerOut]:
@@ -228,8 +247,7 @@ class Insights:
             else {}
         )
         ### Advice comes from others only
-        name_to_id = self._name_to_id()
-        rival_purchases = [p for p in self._purchases() if name_to_id.get(p.transfer.buyer) != self.viewer_id]
+        rival_purchases = [p for p in self._purchases() if p.transfer.buyer != self.viewer_id]
         result = []
         for listing in listings.values():
             player = players.get(listing.player_id)
@@ -351,26 +369,26 @@ class Insights:
             },
         )
 
-    def _transfer_out(self, t: Transfer, name_to_id: dict[str, str]) -> TransferOut:
+    def _transfer_out(self, t: Transfer, names: dict[str, str]) -> TransferOut:
         return TransferOut(
             id=t.id,
             date=t.date,
             player_id=t.player_id,
             player_name=t.player_name,
             team_id=t.team_id,
-            buyer=t.buyer,
-            buyer_id=name_to_id.get(t.buyer) if t.buyer else None,
-            seller=t.seller,
-            seller_id=name_to_id.get(t.seller) if t.seller else None,
+            buyer=names.get(t.buyer_id, t.buyer),
+            buyer_id=t.buyer_id,
+            seller=names.get(t.seller_id, t.seller),
+            seller_id=t.seller_id,
             price=t.price,
         )
 
     def transfers(self) -> list[TransferOut]:
-        name_to_id = self._name_to_id()
+        names = self._manager_names()
         rows = self.session.exec(
             select(Transfer).where(Transfer.league_id == self.league_id).order_by(Transfer.date.desc())
         )
-        return [self._transfer_out(t, name_to_id) for t in rows if self._this_season(t)]
+        return [self._transfer_out(t, names) for t in rows if self._this_season(t)]
 
     def _turnovers(self) -> list[analytics.Turnover]:
         season_start = self.season_start()
@@ -387,7 +405,7 @@ class Insights:
         return analytics.pair_turnovers(events, starter_price, season_start)
 
     def turnovers(self) -> list[TurnoverOut]:
-        name_to_id = self._name_to_id()
+        names = self._manager_names()
         turnovers = self._turnovers()
         players = {
             p.id: p
@@ -400,8 +418,8 @@ class Insights:
             player = players.get(t.player_id)
             result.append(
                 TurnoverOut(
-                    manager=t.manager,
-                    manager_id=name_to_id.get(t.manager),
+                    manager=names.get(t.manager, t.manager),
+                    manager_id=t.manager if t.manager in names else None,
                     player_id=t.player_id,
                     player_name=(player.last_name if player else None) or t.player_name,
                     first_name=player.first_name if player else None,
@@ -410,11 +428,11 @@ class Insights:
                     position=player.position if player else None,
                     buy_price=t.buy_price,
                     buy_date=t.buy_date,
-                    bought_from=t.bought_from,
+                    bought_from=names.get(t.bought_from, t.bought_from),
                     starter=t.starter,
                     sell_price=t.sell_price,
                     sell_date=t.sell_date,
-                    sold_to=t.sold_to,
+                    sold_to=names.get(t.sold_to, t.sold_to),
                     profit=t.profit,
                     days_held=t.days_held,
                 )
@@ -426,7 +444,7 @@ class Insights:
         purchases = self._purchases()
         if not purchases:
             return OverpayOut()
-        name_to_id = self._name_to_id()
+        names = self._manager_names()
         player_ids = list({p.transfer.player_id for p in purchases})
         players = {p.id: p for p in self.session.exec(select(Player).where(Player.id.in_(player_ids)))}
 
@@ -435,8 +453,8 @@ class Insights:
             by_manager[purchase.transfer.buyer].append(purchase)
         managers = [
             OverpayManagerOut(
-                manager=manager,
-                manager_id=name_to_id.get(manager),
+                manager=names.get(manager, manager),
+                manager_id=manager if manager in names else None,
                 **asdict(analytics.overpay_stats(own)),
             )
             for manager, own in by_manager.items()
@@ -451,8 +469,8 @@ class Insights:
                 OverpayPurchaseOut(
                     id=t.id,
                     date=t.date,
-                    manager=t.buyer,
-                    manager_id=name_to_id.get(t.buyer),
+                    manager=names.get(t.buyer, t.buyer),
+                    manager_id=t.buyer if t.buyer in names else None,
                     player_id=t.player_id,
                     player_name=(player.last_name if player else None) or t.player_name,
                     first_name=player.first_name if player else None,
@@ -490,13 +508,13 @@ class Insights:
         result = []
         previous_points: int | None = None
         for manager in managers:
-            own_events = [e for e in events if e.manager == manager.name]
-            estimated = analytics.estimate_balance(manager.name, own_events, start_money)
+            own_events = [e for e in events if e.manager == manager.id]
+            estimated = analytics.estimate_balance(manager.id, own_events, start_money)
             is_self = manager.id == self.viewer_id
             budget = own_budget if is_self else None
             balance = budget if budget is not None else estimated
             shown = balances or is_self
-            profits = [t.profit for t in turnovers if t.manager == manager.name and t.profit is not None]
+            profits = [t.profit for t in turnovers if t.manager == manager.id and t.profit is not None]
             result.append(
                 ManagerOut(
                     id=manager.id,
@@ -565,19 +583,12 @@ class Insights:
 
     def revenue_chart(self) -> ChartOut:
         managers = self._chart_managers()
-        names = {m.name: m.id for m in managers}
         turnovers = self._turnovers()
         start = self.season_start() or (min((t.sell_date for t in turnovers), default=datetime.now(UTC)))
         rows = analytics.cumulative_profit_rows(
-            turnovers, list(names), start.astimezone(UTC).date(), datetime.now(UTC).date()
+            turnovers, [m.id for m in managers], start.astimezone(UTC).date(), datetime.now(UTC).date()
         )
-        ### Key the series by manager id: names are free text and could collide with "date"
-        return ChartOut(
-            managers=managers,
-            rows=[
-                {"date": row["date"], **{names[n]: v for n, v in row.items() if n != "date"}} for row in rows
-            ],
-        )
+        return ChartOut(managers=managers, rows=rows)
 
     def matchday_charts(self) -> MatchdayChartsOut:
         managers = self._chart_managers()

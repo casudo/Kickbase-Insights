@@ -67,10 +67,31 @@ def init_db(engine: Engine) -> None:
         SQLModel.metadata.drop_all(engine)
 
     SQLModel.metadata.create_all(engine)
+    _add_transfer_ids(engine)
     with Session(engine) as session:
         session.merge(SchemaInfo(id=1, version=SCHEMA_VERSION))
         session.commit()
     log.info("Database ready (%s)", engine.url.render_as_string(hide_password=True))
+
+
+def _add_transfer_ids(engine: Engine) -> None:
+    """Add the manager ids to transfers of a database that only has their names.
+
+    The names give the ids of the current managers right away, so nothing looks wrong until the next
+    sync. That sync then reads every transfer list again, which also finds what a rename had cut off.
+    """
+    if "buyer_id" in {column["name"] for column in inspect(engine).get_columns("transfer")}:
+        return
+    log.info("Adding the manager ids to the stored transfers")
+    with engine.begin() as connection:
+        for side in ("buyer", "seller"):
+            connection.exec_driver_sql(f"ALTER TABLE transfer ADD COLUMN {side}_id VARCHAR")
+            ### MIN because two managers can share a name, the next sync sorts that out
+            connection.exec_driver_sql(
+                f"UPDATE transfer SET {side}_id = (SELECT MIN(manager.id) FROM manager "
+                f"WHERE manager.league_id = transfer.league_id AND manager.name = transfer.{side})"
+            )
+        connection.exec_driver_sql("UPDATE leagueseason SET transfers_complete_since = NULL")
 
 
 def session_scope(engine: Engine) -> Iterator[Session]:

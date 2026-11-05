@@ -170,7 +170,10 @@ class MarketListing(SQLModel, table=True):
 
 
 class Transfer(SQLModel, table=True):
-    """A transfer from the activity feed or a manager's transfer list. Kept forever."""
+    """A transfer from a manager's transfer list. Kept forever.
+
+    The ids say who it was. The names are only needed for managers who left before ids were stored.
+    """
     __table_args__ = (Index("ix_transfer_league_date", "league_id", "date"),)
 
     id: str = Field(primary_key=True)
@@ -180,7 +183,9 @@ class Transfer(SQLModel, table=True):
     player_name: str | None = None
     team_id: str | None = None
     buyer: str | None = None
+    buyer_id: str | None = None
     seller: str | None = None
+    seller_id: str | None = None
     price: int = _money(0)
 
 

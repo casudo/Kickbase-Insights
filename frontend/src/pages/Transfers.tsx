@@ -61,7 +61,7 @@ function ManagerFilter({ value, onChange }: { value: string; onChange: (value: s
       value={value}
       onChange={onChange}
       className="sm:w-56"
-      options={[{ value: "", label: "Alle Manager" }, ...managers.map((m) => ({ value: m.name, label: m.name }))]}
+      options={[{ value: "", label: "Alle Manager" }, ...managers.map((m) => ({ value: m.id, label: m.name }))]}
     />
   )
 }
@@ -69,6 +69,7 @@ function ManagerFilter({ value, onChange }: { value: string; onChange: (value: s
 function Turnovers() {
   const query = useTurnovers()
   const { open } = usePlayerSheet()
+  const managers = useManagerMap()
   const [manager, setManager] = useState("")
 
   const columns = useMemo<ColumnDef<Turnover, any>[]>(
@@ -113,7 +114,7 @@ function Turnovers() {
   return (
     <QueryState query={query}>
       {(turnovers) => {
-        const rows = manager ? turnovers.filter((t) => t.manager === manager) : turnovers
+        const rows = manager ? turnovers.filter((t) => t.managerId === manager) : turnovers
         const known = rows.filter((t) => t.profit != null)
         const best = known.reduce<Turnover | null>((top, t) => (!top || t.profit! > top.profit! ? t : top), null)
         const worst = known.reduce<Turnover | null>((low, t) => (!low || t.profit! < low.profit! ? t : low), null)
@@ -122,7 +123,7 @@ function Turnovers() {
           <div className="space-y-4">
             <Card className="grid grid-cols-2 gap-4 p-4 sm:p-5 lg:grid-cols-4">
               <Stat label="Verkäufe" value={number(rows.length)} hint={`${rows.filter((t) => t.starter).length} Startspieler`} />
-              <Stat label="Summe" value={<Delta value={total} compact />} hint={manager || "ganze Liga"} />
+              <Stat label="Summe" value={<Delta value={total} compact />} hint={managers.get(manager)?.name ?? "ganze Liga"} />
               <Stat
                 label="Bester Deal"
                 value={<Delta value={best?.profit} compact />}
@@ -205,13 +206,16 @@ function OverpayTab() {
   )
 }
 
+/** Managers who left before ids were stored only have a name */
+const managerKey = (deal: { manager: string; managerId: string | null }) => deal.managerId ?? deal.manager
+
 function OverpayView({ overpay, league }: { overpay: Overpay; league: OverpayStats }) {
   const { open } = usePlayerSheet()
   const managers = useManagerMap()
   const [manager, setManager] = useState("")
   const own = overpay.managers.find((m) => managers.get(m.managerId ?? "")?.isSelf)
   const top = overpay.purchases.reduce((high, p) => (p.overpayShare > high.overpayShare ? p : high))
-  const rows = manager ? overpay.purchases.filter((p) => p.manager === manager) : overpay.purchases
+  const rows = manager ? overpay.purchases.filter((p) => managerKey(p) === manager) : overpay.purchases
 
   const managerColumns = useMemo<ColumnDef<OverpayManager, any>[]>(
     () => [
@@ -296,9 +300,9 @@ function OverpayView({ overpay, league }: { overpay: Overpay; league: OverpaySta
           data={overpay.managers}
           columns={managerColumns}
           initialSorting={[{ id: "median", desc: true }]}
-          getRowId={(m) => m.manager}
-          onRowClick={(m) => setManager(m.manager === manager ? "" : m.manager)}
-          rowClassName={(m) => (m.manager === manager || managers.get(m.managerId ?? "")?.isSelf) && HIGHLIGHTED_ROW}
+          getRowId={managerKey}
+          onRowClick={(m) => setManager(managerKey(m) === manager ? "" : managerKey(m))}
+          rowClassName={(m) => (managerKey(m) === manager || managers.get(m.managerId ?? "")?.isSelf) && HIGHLIGHTED_ROW}
         />
       </Card>
       <Card>
@@ -400,7 +404,7 @@ function Feed() {
     <Card>
       <QueryState query={query}>
         {(transfers) => {
-          const rows = manager ? transfers.filter((t) => t.buyer === manager || t.seller === manager) : transfers
+          const rows = manager ? transfers.filter((t) => t.buyerId === manager || t.sellerId === manager) : transfers
           return (
             <>
               <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
