@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints
 
 ### ===============================================================================
 ### Helpers
@@ -39,6 +39,7 @@ def _lenient_datetime(value: Any) -> datetime | None:
 
 
 Id = Annotated[str, BeforeValidator(_to_str)]
+Name = Annotated[str, StringConstraints(strip_whitespace=True)] # Kickbase keeps stray spaces in user names
 Timestamp = Annotated[datetime | None, BeforeValidator(_lenient_datetime)]
 
 ### ===============================================================================
@@ -55,7 +56,7 @@ class KBModel(BaseModel):
 
 class LoginUser(KBModel):
     id: Id = ""
-    name: str = ""
+    name: Name = ""
     email: str | None = None
     image: str | None = Field(None, alias="uim")
 
@@ -92,7 +93,7 @@ class LeagueInfo(KBModel):
 
 class OverviewManager(KBModel):
     id: Id = Field("", alias="i")
-    name: str = Field("", alias="n")
+    name: Name = Field("", alias="n")
     image: str | None = Field(None, alias="uim")
 
 
@@ -121,7 +122,7 @@ class Budget(KBModel):
 class ManagerDashboard(KBModel):
     """`/v4/leagues/{leagueId}/managers/{managerId}/dashboard`"""
     id: Id = Field("", alias="u")
-    name: str = Field("", alias="unm")
+    name: Name = Field("", alias="unm")
     image: str | None = Field(None, alias="uim")
     average_points: int | None = Field(None, alias="ap")
     total_points: int | None = Field(None, alias="tp")
@@ -150,14 +151,14 @@ class SquadPlayer(KBModel):
 class ManagerSquad(KBModel):
     """`/v4/leagues/{leagueId}/managers/{managerId}/squad`"""
     id: Id = Field("", alias="u")
-    name: str = Field("", alias="unm")
+    name: Name = Field("", alias="unm")
     image: str | None = Field(None, alias="uim")
     players: list[SquadPlayer] = Field(default_factory=list, alias="it")
 
 
 class BattleUser(KBModel):
     id: Id = Field("", alias="i")
-    name: str = Field("", alias="n")
+    name: Name = Field("", alias="n")
     image: str | None = Field(None, alias="uim")
 
 
@@ -174,7 +175,7 @@ class BattleUsers(KBModel):
 
 class RankingUser(KBModel):
     id: Id = Field("", alias="i")
-    name: str = Field("", alias="n")
+    name: Name = Field("", alias="n")
     image: str | None = Field(None, alias="uim")
     season_points: int | None = Field(None, alias="sp")
     matchday_points: int | None = Field(None, alias="mdp")
@@ -201,7 +202,7 @@ class MarketOffer(KBModel):
 
 class MarketSeller(KBModel):
     id: Id | None = Field(None, alias="i")
-    name: str | None = Field(None, alias="n")
+    name: Name | None = Field(None, alias="n")
 
 
 class MarketPlayer(KBModel):
@@ -279,7 +280,7 @@ class ManagerTransfer(KBModel):
     kind: int = Field(0, alias="tty") # 1 bought, 2 sold
     price: int = Field(0, alias="trp")
     date: Timestamp = Field(None, alias="dt")
-    other_manager: str | None = Field(None, alias="othnm") # Left out when Kickbase is the other side
+    other_manager: Name | None = Field(None, alias="othnm") # Left out when Kickbase is the other side
 
     @property
     def bought(self) -> bool:

@@ -298,7 +298,7 @@ def cumulative_profit_rows(
 ) -> list[dict]:
     """Chart rows of the summed transfer profit per manager, one row per day something changed.
 
-    Rows look like `{"date": "2026-08-01", "Alice": 0, "Bob": 120000}`. Sales without a known buy
+    Rows look like `{"date": "2026-08-01", "1001": 0, "1002": 120000}`. Sales without a known buy
     price are left out.
     """
     daily: dict[date, dict[str, int]] = defaultdict(lambda: defaultdict(int))
