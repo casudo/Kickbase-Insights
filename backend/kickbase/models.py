@@ -249,7 +249,6 @@ class MarketPlayer(KBModel):
 class Market(KBModel):
     """`/v4/leagues/{leagueId}/market`"""
     players: list[MarketPlayer] = Field(default_factory=list, alias="it")
-    market_values_updated_at: Timestamp = Field(None, alias="mvud")
     day: int | None = None
 
 

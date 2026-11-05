@@ -16,7 +16,7 @@ POSITIONS = {1: "TW", 2: "ABW", 3: "MF", 4: "ANG"}
 ### Kickbase counts market value days from the unix epoch
 EPOCH = date(1970, 1, 1)
 
-### Kickbase sets the market values at 22:00 CEST time and files them under that day
+### Kickbase sets the market values at 22:00 German time and files them under that day
 MARKET_VALUE_TIMEZONE = ZoneInfo("Europe/Berlin")
 MARKET_VALUE_UPDATE_HOUR = 22
 
@@ -79,6 +79,19 @@ def market_value_day(moment: datetime) -> int:
     """
     local = moment.astimezone(MARKET_VALUE_TIMEZONE).replace(tzinfo=None)
     return day_number((local - timedelta(hours=MARKET_VALUE_UPDATE_HOUR)).date())
+
+
+def last_market_value_update(moment: datetime) -> datetime:
+    """The latest market value update at or before `moment`.
+
+    It comes from the clock because Kickbase only tells when the next update is due (`mvud`).
+    """
+    local = moment.astimezone(MARKET_VALUE_TIMEZONE)
+    update = local.replace(hour=MARKET_VALUE_UPDATE_HOUR, minute=0, second=0, microsecond=0)
+    if update > local:
+        ### Moves the local date, so it stays 22:00 when the clocks change
+        update -= timedelta(days=1)
+    return update.astimezone(UTC)
 
 
 def merge_history(

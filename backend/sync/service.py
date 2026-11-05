@@ -68,8 +68,10 @@ FALLBACK_BATTLES = [
 ]
 
 TRANSFER_FEED_TYPE = 15
-### Market value histories are refreshed at least this often, even if Kickbase reports no update
+### Market value histories are refreshed at least this often, even when no update is due
 HISTORY_MAX_AGE = timedelta(hours=20)
+### A history fetched this soon after an update is fetched once more, in case not all values have settled
+HISTORY_SETTLE = timedelta(hours=1)
 KEEP_SYNC_RUNS = 500
 
 
@@ -342,7 +344,7 @@ class SyncService:
         now = utcnow()
         details_max_age = timedelta(hours=self.settings.sync.player_details_max_age_hours)
         market_ids = {player.id for player in market.players}
-        mv_updated = market.market_values_updated_at
+        mv_updated = analytics.last_market_value_update(now)
 
         need_details = [
             pid
@@ -670,7 +672,7 @@ class SyncService:
             if current_ranking:
                 league.number_of_days = current_ranking.number_of_days or league.number_of_days
                 league.season_name = current_ranking.season_name or league.season_name
-            league.market_values_updated_at = r.market.market_values_updated_at
+            league.market_values_updated_at = analytics.last_market_value_update(now)
             league.synced_at = now
             session.add(league)
 
@@ -845,10 +847,10 @@ def _details_stale(state: PlayerState | None, status: int, now: datetime, max_ag
     return now - state.details_synced_at > max_age
 
 
-def _history_stale(state: PlayerState | None, market_values_updated: datetime | None, now: datetime) -> bool:
+def _history_stale(state: PlayerState | None, market_values_updated: datetime, now: datetime) -> bool:
     if state is None or state.history_synced_at is None:
         return True
-    if market_values_updated is not None and state.history_synced_at < market_values_updated:
+    if state.history_synced_at < market_values_updated + HISTORY_SETTLE:
         return True
     return now - state.history_synced_at > HISTORY_MAX_AGE
 
