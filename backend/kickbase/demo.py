@@ -672,6 +672,7 @@ class DemoWorld:
             "i": league.id,
             "lnm": league.name,
             "cpi": "1",
+            "dt": _iso(self.season_start),
             "b": 50_000_000,
             "us": [{"i": mid, "n": name, "uim": None} for mid, name in league.managers],
             "btls": [{"t": t, "n": n, "d": d} for t, n, d in BATTLES],
