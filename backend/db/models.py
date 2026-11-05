@@ -9,6 +9,7 @@ from sqlalchemy.types import TypeDecorator
 from sqlmodel import Field, SQLModel
 
 ### Bump when a table or what is stored in it changes. Older databases are rebuilt on startup, see db.init_db.
+### NOTE: A rebuild deletes everything! A new table needs no bump.
 ### 2: leagues in another game mode than Classic are no longer stored
 SCHEMA_VERSION = 2
 
