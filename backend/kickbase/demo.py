@@ -141,8 +141,6 @@ SQUAD_QUOTA = {1: 2, 2: 5, 3: 5, 4: 3}
 TEAM_QUOTA = {1: 3, 2: 7, 3: 7, 4: 5}
 LINEUP_QUOTA = {1: 1, 2: 4, 3: 4, 4: 2}
 CURRENT_DAY = 8
-### How far back the activity feed reaches, older entries are only on the managers' transfer lists
-FEED_REACH = timedelta(days=30)
 NUMBER_OF_DAYS = 34
 ### Kick-off of the nine matches of a matchday, relative to the start of that matchday
 MATCH_OFFSETS = [timedelta(hours=h) for h in (0, 21, 21, 21, 21, 24, 45, 47, 48)]
@@ -325,9 +323,7 @@ class DemoLeague:
             data["byr"] = buyer
         if seller:
             data["slr"] = seller
-        ### Feed ids are unique across leagues, like Kickbase's
-        item_id = f"{self.id}{len(self.transfers):06d}"
-        self.transfers.append({"i": item_id, "t": 15, "dt": _iso(when), "data": data})
+        self.transfers.append({"dt": _iso(when), "data": data})
 
     def _lineup(self, rng: random.Random, squad: list[str]) -> list[str | None]:
         lineup: list[str | None] = []
@@ -643,7 +639,6 @@ class DemoWorld:
             (r"/v4/leagues/(\w+)/battles/(\d+)/users", self._battle),
             (r"/v4/leagues/(\w+)/ranking", self._ranking),
             (r"/v4/leagues/(\w+)/market", self._market),
-            (r"/v4/leagues/(\w+)/activitiesFeed/?", self._feed),
             (r"/v4/bonus/collect", lambda q, uid: {"it": []}),
             (r"/v4/competitions/(\d+)/table", self._table),
             (
@@ -740,12 +735,6 @@ class DemoWorld:
     def _ranking(self, query, user_id, league: DemoLeague):
         day = int(query.get("dayNumber") or CURRENT_DAY)
         return {"us": league.rankings.get(day, []), "day": day, "nd": NUMBER_OF_DAYS, "sn": "26/27"}
-
-    def _feed(self, query, user_id, league: DemoLeague):
-        start = int(query.get("start", 0))
-        size = min(int(query.get("max", 26)), 26)
-        recent = [item for item in league.transfers if item["dt"] >= _iso(self.now - FEED_REACH)]
-        return {"af": recent[start : start + size]}
 
     def _manager_transfers(self, query, user_id, league: DemoLeague, manager_id):
         name = dict(league.managers)[manager_id]
