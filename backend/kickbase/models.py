@@ -288,6 +288,30 @@ class FeedPage(KBModel):
     items: list[FeedItem] = Field(default_factory=list, alias="af")
 
 
+class ManagerTransfer(KBModel):
+    """One manager's side of a transfer. A trade between two managers shows up on both of their lists."""
+    player_id: Id = Field("", alias="pi")
+    player_name: str | None = Field(None, alias="pn")
+    team_id: Id | None = Field(None, alias="tid")
+    kind: int = Field(0, alias="tty") # 1 bought, 2 sold
+    price: int = Field(0, alias="trp")
+    date: Timestamp = Field(None, alias="dt")
+    other_manager: str | None = Field(None, alias="othnm") # Left out when Kickbase is the other side
+
+    @property
+    def bought(self) -> bool:
+        return self.kind == 1
+
+
+class ManagerTransfers(KBModel):
+    """`/v4/leagues/{leagueId}/managers/{managerId}/transfer`, newest first, 25 per page.
+
+    It reaches back to earlier seasons, the activity feed only about a month. The entries have no id,
+    but the same date as in the feed.
+    """
+    transfers: list[ManagerTransfer] = Field(default_factory=list, alias="it")
+
+
 ### ===============================================================================
 ### Competitions
 ### ===============================================================================

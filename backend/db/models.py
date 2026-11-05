@@ -170,7 +170,7 @@ class MarketListing(SQLModel, table=True):
 
 
 class Transfer(SQLModel, table=True):
-    """A transfer from the activity feed. Kept forever, the feed itself forgets old entries."""
+    """A transfer from the activity feed or a manager's transfer list. Kept forever."""
     __table_args__ = (Index("ix_transfer_league_date", "league_id", "date"),)
 
     id: str = Field(primary_key=True)
