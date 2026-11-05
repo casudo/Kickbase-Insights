@@ -578,6 +578,10 @@ def fair_rating(gap: float) -> FairRating:
 ### Balances
 ### ===============================================================================
 
+### Only used until Kickbase has reported the start money of a league
+DEFAULT_START_MONEY = 50_000_000
+
+
 def estimate_balance(manager: str, events: Iterable[TransferEvent], start_money: int) -> int:
     """Start money minus purchases plus sales. Login bonuses and achievements are not visible."""
     balance = start_money

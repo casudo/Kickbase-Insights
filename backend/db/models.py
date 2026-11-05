@@ -9,6 +9,7 @@ from sqlalchemy.types import TypeDecorator
 from sqlmodel import Field, SQLModel
 
 ### Bump when a table or what is stored in it changes. Older databases are rebuilt on startup, see db.init_db.
+### NOTE: A rebuild deletes everything! A new table needs no bump.
 ### 2: leagues in another game mode than Classic are no longer stored
 SCHEMA_VERSION = 2
 
@@ -125,6 +126,17 @@ class League(SQLModel, table=True):
     synced_at: datetime | None = _ts()
 
 
+class LeagueSeason(SQLModel, table=True):
+    """Kickbase reports the start of a league season and its initial money.
+
+    Kickbase moves the date when a league is reset.
+    """
+    league_id: str = Field(primary_key=True)
+    started_at: datetime | None = _ts()
+    start_money: int | None = _money()
+    transfers_complete_since: datetime | None = _ts() # The stored transfers reach back to this moment
+
+
 class Manager(SQLModel, table=True):
     league_id: str = Field(primary_key=True)
     id: str = Field(primary_key=True)
@@ -158,7 +170,7 @@ class MarketListing(SQLModel, table=True):
 
 
 class Transfer(SQLModel, table=True):
-    """A transfer from the activity feed. Kept forever, the feed itself forgets old entries."""
+    """A transfer from the activity feed or a manager's transfer list. Kept forever."""
     __table_args__ = (Index("ix_transfer_league_date", "league_id", "date"),)
 
     id: str = Field(primary_key=True)

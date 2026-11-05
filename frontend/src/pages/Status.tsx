@@ -50,7 +50,7 @@ export default function Status() {
                   </Row>
                   <Row label="Liga">{data.league?.name ?? "–"}</Row>
                   <Row label="Saison">{data.league?.seasonName ?? "–"}</Row>
-                  <Row label="Saisonstart">{data.startDate ? dateLong(data.startDate) : "nicht gesetzt"}</Row>
+                  <Row label="Saisonstart">{data.startDate ? dateLong(data.startDate) : "unbekannt"}</Row>
                   <Row label="Startkapital">{compactMoney(data.startMoney)}</Row>
                   <Row label="Marktwerte vom">{data.league?.marketValuesUpdatedAt ? dateTime(data.league.marketValuesUpdatedAt) : "–"}</Row>
                 </dl>

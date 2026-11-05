@@ -70,8 +70,8 @@ class LoginResponse(KBModel):
 ### Leagues
 ### ===============================================================================
 
-CLASSIC_GAME_MODE = 1 # 'gpm' parameter. 1 Classic, 3 Rush, 4 Arena
-
+### The 'gpm' parameter: 1 Classic (Random Team), 2 Classic (Without Squad), 3 Rush, 4 Arena
+ALLOWED_GAME_MODES = {1, 2}
 
 class LeagueInfo(KBModel):
     """An entry of `/v4/leagues/selection`."""
@@ -79,7 +79,7 @@ class LeagueInfo(KBModel):
     name: str = Field("", alias="n")
     ### The real league: 1 Bundesliga, 2 2. Bundesliga, 3 La Liga, 4 Frauen-Bundesliga, 9 MLS
     competition_id: Id = Field("1", alias="cpi")
-    game_mode: int = Field(CLASSIC_GAME_MODE, alias="gpm")
+    game_mode: int = Field(1, alias="gpm")
     budget: int | None = Field(None, alias="b")
     team_value: int | None = Field(None, alias="tv")
     placement: int | None = Field(None, alias="pl")
@@ -87,7 +87,7 @@ class LeagueInfo(KBModel):
 
     @property
     def supported(self) -> bool:
-        return self.game_mode == CLASSIC_GAME_MODE
+        return self.game_mode in ALLOWED_GAME_MODES
 
 
 class OverviewManager(KBModel):
@@ -107,6 +107,7 @@ class LeagueOverview(KBModel):
     id: Id = Field("", alias="i")
     name: str = Field("", alias="lnm")
     competition_id: Id = Field("1", alias="cpi")
+    started_at: Timestamp = Field(None, alias="dt") # The start of the season, NOT when the league was created
     start_budget: int | None = Field(None, alias="b")
     managers: list[OverviewManager] = Field(default_factory=list, alias="us")
     battles: list[OverviewBattle] = Field(default_factory=list, alias="btls")
@@ -140,7 +141,8 @@ class SquadPlayer(KBModel):
     market_value: int = Field(0, alias="mv")
     market_value_trend: int = Field(0, alias="mvt")
     market_value_change: int | None = Field(None, alias="sdmvt")
-    purchase_price: int | None = Field(None, alias="prc") # What the manager paid. For players assigned at the season start this is their value back then.
+    ### What the manager paid. Kickbase leaves it out for players assigned at the season start.
+    purchase_price: int | None = Field(None, alias="prc")
     market_value_gain: int | None = Field(None, alias="mvgl")
     image: str | None = Field(None, alias="pim")
 
@@ -284,6 +286,30 @@ class FeedItem(KBModel):
 
 class FeedPage(KBModel):
     items: list[FeedItem] = Field(default_factory=list, alias="af")
+
+
+class ManagerTransfer(KBModel):
+    """One manager's side of a transfer. A trade between two managers shows up on both of their lists."""
+    player_id: Id = Field("", alias="pi")
+    player_name: str | None = Field(None, alias="pn")
+    team_id: Id | None = Field(None, alias="tid")
+    kind: int = Field(0, alias="tty") # 1 bought, 2 sold
+    price: int = Field(0, alias="trp")
+    date: Timestamp = Field(None, alias="dt")
+    other_manager: str | None = Field(None, alias="othnm") # Left out when Kickbase is the other side
+
+    @property
+    def bought(self) -> bool:
+        return self.kind == 1
+
+
+class ManagerTransfers(KBModel):
+    """`/v4/leagues/{leagueId}/managers/{managerId}/transfer`, newest first, 25 per page.
+
+    It reaches back to earlier seasons, the activity feed only about a month. The entries have no id,
+    but the same date as in the feed.
+    """
+    transfers: list[ManagerTransfer] = Field(default_factory=list, alias="it")
 
 
 ### ===============================================================================
