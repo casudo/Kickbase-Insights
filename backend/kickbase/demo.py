@@ -141,6 +141,8 @@ SQUAD_QUOTA = {1: 2, 2: 5, 3: 5, 4: 3}
 TEAM_QUOTA = {1: 3, 2: 7, 3: 7, 4: 5}
 LINEUP_QUOTA = {1: 1, 2: 4, 3: 4, 4: 2}
 CURRENT_DAY = 8
+### How far back the activity feed reaches, older entries are only on the managers' transfer lists
+FEED_REACH = timedelta(days=30)
 NUMBER_OF_DAYS = 34
 ### Kick-off of the nine matches of a matchday, relative to the start of that matchday
 MATCH_OFFSETS = [timedelta(hours=h) for h in (0, 21, 21, 21, 21, 24, 45, 47, 48)]
@@ -637,6 +639,7 @@ class DemoWorld:
             (r"/v4/leagues/(\w+)/me/budget", lambda q, uid, league: {"b": league.budgets[uid]}),
             (r"/v4/leagues/(\w+)/managers/(\w+)/dashboard", self._dashboard),
             (r"/v4/leagues/(\w+)/managers/(\w+)/squad", self._squad),
+            (r"/v4/leagues/(\w+)/managers/(\w+)/transfer", self._manager_transfers),
             (r"/v4/leagues/(\w+)/battles/(\d+)/users", self._battle),
             (r"/v4/leagues/(\w+)/ranking", self._ranking),
             (r"/v4/leagues/(\w+)/market", self._market),
@@ -741,7 +744,31 @@ class DemoWorld:
     def _feed(self, query, user_id, league: DemoLeague):
         start = int(query.get("start", 0))
         size = min(int(query.get("max", 26)), 26)
-        return {"af": league.transfers[start : start + size]}
+        recent = [item for item in league.transfers if item["dt"] >= _iso(self.now - FEED_REACH)]
+        return {"af": recent[start : start + size]}
+
+    def _manager_transfers(self, query, user_id, league: DemoLeague, manager_id):
+        name = dict(league.managers)[manager_id]
+        items = []
+        for item in league.transfers:
+            data = item["data"]
+            if name not in (data.get("byr"), data.get("slr")):
+                continue
+            bought = data.get("byr") == name
+            entry = {
+                "pi": data["pi"],
+                "pn": data["pn"],
+                "tid": data["tid"],
+                "tty": 1 if bought else 2,
+                "trp": data["trp"],
+                "dt": item["dt"],
+            }
+            other = data.get("slr" if bought else "byr")
+            if other:
+                entry["othnm"] = other
+            items.append(entry)
+        start = int(query.get("start", 0))
+        return {"u": manager_id, "unm": name, "it": items[start : start + 25]}
 
     def _table(self, query, user_id, competition_id):
         rng = random.Random(self.seed)
