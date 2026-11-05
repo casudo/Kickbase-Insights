@@ -40,12 +40,12 @@ from api.schemas import (
     WatchedPlayerOut,
 )
 from core import analytics
-from core.config import Settings
 from db.models import (
     Battle,
     BattleEntry,
     Fixture,
     League,
+    LeagueSeason,
     Manager,
     MarketBid,
     MarketListing,
@@ -61,12 +61,13 @@ from kickbase.models import ScoutedPlayer
 
 
 class Insights:
-    def __init__(self, settings: Settings, session: Session, league: League, viewer_id: str | None = None):
-        self.settings = settings
+    def __init__(self, session: Session, league: League, viewer_id: str | None = None):
         self.session = session
         self.league = league
         self.league_id = league.id
         self.viewer_id = viewer_id
+        ### Empty until the first sync after an update has stored it
+        self.season = session.get(LeagueSeason, league.id) or LeagueSeason(league_id=league.id)
 
     ### ================================================================================================
     ### Shared lookups
@@ -85,9 +86,9 @@ class Insights:
         return dict(self.session.exec(query).all())
 
     def season_start(self) -> datetime | None:
-        """KBI_KICKBASE__START_DATE if set. Otherwise the first stored transfer or the first kick-off."""
-        if self.settings.kickbase.start_date:
-            return self.settings.kickbase.start_date.astimezone(UTC)
+        """The start Kickbase reports. Otherwise the first stored transfer or the first kick-off."""
+        if self.season.started_at:
+            return self.season.started_at
         first_transfer = self.session.exec(
             select(Transfer.date).where(Transfer.league_id == self.league_id).order_by(Transfer.date).limit(1)
         ).first()
@@ -100,6 +101,10 @@ class Insights:
         candidates = [d for d in (first_transfer, first_kickoff) if d is not None]
         return min(candidates) if candidates else None
 
+    def _this_season(self, transfer: Transfer) -> bool:
+        """Only the start Kickbase reports cuts transfers off, a guessed start drops nothing."""
+        return self.season.started_at is None or transfer.date >= self.season.started_at
+
     def _transfer_records(self) -> list[analytics.TransferRecord]:
         rows = self.session.exec(select(Transfer).where(Transfer.league_id == self.league_id))
         records = [
@@ -108,9 +113,7 @@ class Insights:
             )
             for t in rows
         ]
-        ### Only an explicit KBI_KICKBASE__START_DATE cuts transfers off, a guessed start drops nothing
-        start = self.settings.kickbase.start_date
-        return analytics.transfers_since(records, start.astimezone(UTC) if start else None)
+        return analytics.transfers_since(records, self.season.started_at)
 
     def _purchases(self) -> list[analytics.Purchase]:
         records = self._transfer_records()
@@ -205,7 +208,7 @@ class Insights:
             set(self._market()),
             PlayerDetailOut,
             history=[(analytics.day_to_date(day).isoformat(), value) for day, value in history],
-            transfers=[self._transfer_out(t, name_to_id) for t in transfers],
+            transfers=[self._transfer_out(t, name_to_id) for t in transfers if self._this_season(t)],
         )
 
     def market(self) -> list[MarketPlayerOut]:
@@ -367,12 +370,11 @@ class Insights:
         rows = self.session.exec(
             select(Transfer).where(Transfer.league_id == self.league_id).order_by(Transfer.date.desc())
         )
-        start = self.settings.kickbase.start_date
-        return [self._transfer_out(t, name_to_id) for t in rows if start is None or t.date >= start]
+        return [self._transfer_out(t, name_to_id) for t in rows if self._this_season(t)]
 
     def _turnovers(self) -> list[analytics.Turnover]:
         season_start = self.season_start()
-        start_day = analytics.day_number(season_start) if season_start else None
+        start_day = analytics.market_value_day(season_start) if season_start else None
         events = analytics.transfer_events(self._transfer_records())
         sold_ids = list({e.player_id for e in events if e.kind == "sell"})
         histories = self._histories(sold_ids)
@@ -476,7 +478,7 @@ class Insights:
         events = analytics.transfer_events(self._transfer_records())
         turnovers = self._turnovers()
         squad_sizes = Counter(e.manager_id for e in self._squad().values())
-        start_money = self.settings.kickbase.start_money
+        start_money = self.season.start_money or analytics.DEFAULT_START_MONEY
         ### The real budget is private, it is only ever shown to its owner
         own_budget = None
         if self.viewer_id:

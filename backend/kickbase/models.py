@@ -107,6 +107,7 @@ class LeagueOverview(KBModel):
     id: Id = Field("", alias="i")
     name: str = Field("", alias="lnm")
     competition_id: Id = Field("1", alias="cpi")
+    started_at: Timestamp = Field(None, alias="dt") # The start of the season, NOT when the league was created
     start_budget: int | None = Field(None, alias="b")
     managers: list[OverviewManager] = Field(default_factory=list, alias="us")
     battles: list[OverviewBattle] = Field(default_factory=list, alias="btls")
@@ -140,7 +141,8 @@ class SquadPlayer(KBModel):
     market_value: int = Field(0, alias="mv")
     market_value_trend: int = Field(0, alias="mvt")
     market_value_change: int | None = Field(None, alias="sdmvt")
-    purchase_price: int | None = Field(None, alias="prc") # What the manager paid. For players assigned at the season start this is their value back then.
+    ### What the manager paid. Kickbase leaves it out for players assigned at the season start.
+    purchase_price: int | None = Field(None, alias="prc")
     market_value_gain: int | None = Field(None, alias="mvgl")
     image: str | None = Field(None, alias="pim")
 

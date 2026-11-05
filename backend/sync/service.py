@@ -34,6 +34,7 @@ from db.models import (
     BattleEntry,
     Fixture,
     League,
+    LeagueSeason,
     Manager,
     MarketBid,
     MarketListing,
@@ -675,6 +676,12 @@ class SyncService:
             league.market_values_updated_at = analytics.last_market_value_update(now)
             league.synced_at = now
             session.add(league)
+
+            ### Season, the last known values stay if Kickbase leaves them out
+            season = session.get(LeagueSeason, league_id) or LeagueSeason(league_id=league_id)
+            season.started_at = r.overview.started_at or season.started_at
+            season.start_money = r.overview.start_budget or season.start_money
+            session.add(season)
 
             ### Managers, rebuilt from scratch so people who left the league disappear
             session.exec(delete(Manager).where(Manager.league_id == league_id))

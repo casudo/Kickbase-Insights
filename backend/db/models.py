@@ -126,6 +126,17 @@ class League(SQLModel, table=True):
     synced_at: datetime | None = _ts()
 
 
+class LeagueSeason(SQLModel, table=True):
+    """Kickbase reports the start of a league season and its initial money.
+
+    Kickbase moves the date when a league is reset.
+    """
+    league_id: str = Field(primary_key=True)
+    started_at: datetime | None = _ts()
+    start_money: int | None = _money()
+    transfers_complete_since: datetime | None = _ts() # The stored transfers reach back to this moment
+
+
 class Manager(SQLModel, table=True):
     league_id: str = Field(primary_key=True)
     id: str = Field(primary_key=True)

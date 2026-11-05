@@ -50,8 +50,9 @@ from api.schemas import (
     WatchOut,
 )
 from auth.accounts import Accounts, LoginError, Viewer
+from core import analytics
 from core.config import Settings
-from db.models import League, SyncRun, utcnow
+from db.models import League, LeagueSeason, SyncRun, utcnow
 from kickbase import KickbaseAuthError, KickbaseClient, KickbaseError
 from sync.scheduler import Scheduler
 from sync.service import SyncService
@@ -151,7 +152,7 @@ def cached(
 
 
 def insights(state: AppState, session: Session, league: League, viewer: Viewer | None = None) -> Insights:
-    return Insights(state.settings, session, league, viewer.user_id if viewer else None)
+    return Insights(session, league, viewer.user_id if viewer else None)
 
 
 ### ===============================================================================
@@ -239,8 +240,9 @@ def status(
         league_id = league if league in viewer.league_ids else viewer.league_ids[0]
         league_row = session.get(League, league_id)
 
-    last_run = last_success = None
+    last_run = last_success = season = None
     if league_row is not None:
+        season = session.get(LeagueSeason, league_row.id)
         last_run = session.exec(
             select(SyncRun).where(SyncRun.league_id == league_row.id).order_by(SyncRun.id.desc()).limit(1)
         ).first()
@@ -252,9 +254,9 @@ def status(
         ).first()
 
     warnings = []
-    if viewer is not None and not settings.kickbase.start_date and not settings.demo:
+    if league_row is not None and not (season and season.started_at):
         warnings.append(
-            "KBI_KICKBASE__START_DATE ist nicht gesetzt. Der Saisonstart wird geschätzt, "
+            "Der Saisonstart dieser Liga ist noch nicht bekannt und wird geschätzt. "
             "Erlöse von Startspielern können ungenau sein."
         )
     if last_run and last_run.status == "failed":
@@ -268,8 +270,8 @@ def status(
         authenticated=viewer is not None,
         league=LeagueOut.model_validate(league_row) if league_row else None,
         own_manager_id=viewer.user_id if viewer else None,
-        start_date=settings.kickbase.start_date if viewer else None,
-        start_money=settings.kickbase.start_money,
+        start_date=season.started_at if season else None,
+        start_money=(season.start_money if season else None) or analytics.DEFAULT_START_MONEY,
         sync=SyncStatus(
             running=state.sync.running(league_row.id) if league_row else False,
             next_run=state.scheduler.next_run if viewer else None,
