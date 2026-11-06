@@ -1,8 +1,9 @@
 import { ArrowRight, Coffee, Eye, EyeOff, Lock, Mail, Moon, Sun } from "lucide-react"
-import { type FormEvent, useState } from "react"
+import { type FormEvent, useCallback, useState } from "react"
 import { Navigate, useNavigate, useSearchParams } from "react-router"
 import { ApiError } from "@/api/client"
 import { useLogin, useMe, useStatus } from "@/api/hooks"
+import { Dialog } from "@/components/Dialog"
 import { KickbaseMark } from "@/components/kickbase"
 import { Button } from "@/components/ui"
 import { LINKS } from "@/lib/links"
@@ -54,8 +55,6 @@ export default function Login() {
             <h2 className="text-lg font-semibold tracking-tight">Anmelden</h2>
             <p className="mt-1 text-sm text-muted">Mit deinem Kickbase-Konto.</p>
 
-            {/* TODO: add info if user has OAuth2.0 acc via Google/Apple */}
-
             <form onSubmit={submit} className="mt-6 space-y-4">
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium">E-Mail</span>
@@ -102,6 +101,8 @@ export default function Login() {
               </Button>
             </form>
 
+            <SocialLoginHelp />
+
             {/* Info text if KBI_DEMO=true */}
             {status.data?.demo && (
               <div className="mt-5 flex items-center justify-between gap-3 rounded-xl bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
@@ -133,6 +134,46 @@ export default function Login() {
 
       <Footer />
     </div>
+  )
+}
+
+/** Info box for OAuth2.0 login users */
+function SocialLoginHelp() {
+  const [open, setOpen] = useState(false)
+  const close = useCallback(() => setOpen(false), [])
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-4 block w-full text-center text-xs text-muted underline-offset-2 hover:text-fg hover:underline"
+      >
+        Über Apple, Google oder Facebook registriert?
+      </button>
+      <Dialog open={open} onClose={close} title="Anmelden mit Apple, Google oder Facebook" size="small">
+        <div className="space-y-3 p-6 text-sm leading-relaxed sm:p-7">
+          <h2 className="pr-8 text-lg font-semibold tracking-tight">Kann ich mich mit Apple, Google oder Facebook anmelden?</h2>
+          <p>
+            <b>Nicht direkt – aber es gibt einen Umweg.</b>
+          </p>
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              Die E-Mail-Adresse herausfinden, die Kickbase verwendet. <b>Bei Apple:</b> iPhone-Einstellungen → Apple Account → Mit Apple anmelden → Kickbase.
+              Dort steht die Adresse, z.B. <code>platzhalter@privaterelay.appleid.com</code>. In der Kickbase-App selbst wird sie nicht immer
+              angezeigt. <b>Bei Google/Facebook</b> ist es in der Regel die Adresse deines Google-Kontos.
+            </li>
+            <li>In der Kickbase-App abmelden, auf dem Login-Bildschirm „Mit E-Mail fortfahren“ wählen, die Adresse eingeben und auf „Passwort vergessen?“ tippen.</li>
+            <li>Die Mail landet in deinem normalen Postfach – bei Apple leitet Apple sie weiter. Schau auch im Spam-Ordner nach.</li>
+            <li>Über den Link in der Mail ein neues Passwort setzen.</li>
+            <li>Hier mit dieser Adresse und dem neuen Passwort anmelden.</li>
+          </ol>
+          <p className="rounded-xl bg-amber-500/10 px-3.5 py-2.5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+            Bestätigt ist der Weg bisher mit Apple-Login. Bitte wende dich NICHT an den Kickbase-Support. Eine manuelle Umstellung auf E-Mail-Login
+            wird dort nicht mehr angeboten.
+          </p>
+        </div>
+      </Dialog>
+    </>
   )
 }
 
