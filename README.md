@@ -162,6 +162,8 @@ npm run build
 
 `KBI_DEMO=true` runs the whole app with two generated leagues, handy to work on the frontend without touching your Kickbase account. Log in with `demo@demo.de` and the password `demo`.
 
+[DEVELOPMENT.md](DEVELOPMENT.md) explains how the database works and where its data comes from.
+
 ---
 
 ## Planned for the future
